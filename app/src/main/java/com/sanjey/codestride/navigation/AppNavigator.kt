@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sanjey.codestride.ui.screens.splash.SplashScreen
 import androidx.compose.material3.Text
+import com.sanjey.codestride.ui.screens.onboarding.OnboardingScreen
 
 @Composable
 fun AppNavigator() {
@@ -16,8 +17,12 @@ fun AppNavigator() {
             SplashScreen(navController)
         }
         composable("onboarding") {
-            // Placeholder for now
-            Text("Onboarding Screen")
+            OnboardingScreen(navController)
+        }
+
+        // ADD NEXT SCREEN:
+        composable("login") {
+            Text("Login Screen Placeholder") // replace with actual LoginScreen later
         }
     }
 }
