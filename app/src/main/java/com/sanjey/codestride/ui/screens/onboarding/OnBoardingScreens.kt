@@ -24,11 +24,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import com.sanjey.codestride.data.prefs.OnboardingPreferences
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OnboardingScreen(navController: NavController) {
     val pixelFont = FontFamily(Font(R.font.pixel_font))
+    val context = LocalContext.current
 
     val pages = listOf(
         OnboardPage(R.drawable.onboardingscreen1, "Start Learning", "Master concepts through structured modules."),
@@ -79,12 +82,13 @@ fun OnboardingScreen(navController: NavController) {
                 )
                 Button(
                     onClick = {
-                        if (page == pages.lastIndex) {
-                            navController.navigate("login") {
-                                popUpTo("onboarding") { inclusive = true }
-                            }
-                        } else {
-                            scope.launch {
+                        scope.launch {
+                            if (page == pages.lastIndex) {
+                                OnboardingPreferences.setOnboardingSeen(context, true)
+                                navController.navigate("login") {
+                                    popUpTo("onboarding") { inclusive = true }
+                                }
+                            } else {
                                 pagerState.animateScrollToPage(page + 1)
                             }
                         }
