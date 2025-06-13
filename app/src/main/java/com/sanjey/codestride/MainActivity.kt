@@ -3,9 +3,9 @@ package com.sanjey.codestride
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import com.sanjey.codestride.navigation.AppNavigator
 import com.sanjey.codestride.ui.theme.CodeStrideTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,21 +13,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CodeStrideTheme {
-                Greeting("CodeStride")
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    AppNavigator()
+                }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello, $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CodeStrideTheme {
-        Greeting("CodeStride")
     }
 }
