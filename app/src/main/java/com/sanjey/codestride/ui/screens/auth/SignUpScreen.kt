@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import com.sanjey.codestride.viewmodel.SignupViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -72,7 +73,9 @@ fun SignupScreen(navController: NavController) {
 
     signupResult?.let { result ->
         result.onSuccess {
-            Toast.makeText(context, "Signup Successful!", Toast.LENGTH_SHORT).show()
+            navController.navigate("home") {
+                popUpTo("signup") { inclusive = true }
+            }
             viewModel.clearResult()
         }.onFailure { error ->
             Toast.makeText(context, error.message ?: "Signup failed", Toast.LENGTH_LONG).show()
@@ -80,6 +83,11 @@ fun SignupScreen(navController: NavController) {
         }
     }
 
+    BackHandler {
+        navController.navigate("login") {
+            popUpTo("signup") { inclusive = true }
+        }
+    }
 
 
     Box(modifier = Modifier.fillMaxSize()) {

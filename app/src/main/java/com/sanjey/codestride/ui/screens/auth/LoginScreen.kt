@@ -1,5 +1,6 @@
 package com.sanjey.codestride.ui.screens.auth
 
+import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -39,9 +40,15 @@ import com.sanjey.codestride.ui.theme.SoraFont
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sanjey.codestride.viewmodel.LoginViewModel
+
 
 @Composable
-fun LoginScreen(navController: NavController, onLogin: (String, String) -> Unit) {
+fun LoginScreen(navController: NavController){
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
@@ -49,6 +56,30 @@ fun LoginScreen(navController: NavController, onLogin: (String, String) -> Unit)
     var showPassword by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val shakeOffset = remember { Animatable(0f) }
+    var backPressedOnce by remember { mutableStateOf(false) }
+    val viewModel: LoginViewModel = viewModel()
+    val loginResult by viewModel.loginResult.observeAsState()
+    val context = LocalContext.current
+
+
+    LaunchedEffect(backPressedOnce) {
+        if (backPressedOnce) {
+            delay(2000)
+            backPressedOnce = false
+        }
+    }
+
+    BackHandler {
+        if (backPressedOnce) {
+            // Exit the app
+            android.os.Process.killProcess(android.os.Process.myPid())
+        } else {
+            backPressedOnce = true
+            Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
+
+        }
+    }
+
 
     LaunchedEffect(Unit) {
         val fullText = "LOGIN"
@@ -57,6 +88,18 @@ fun LoginScreen(navController: NavController, onLogin: (String, String) -> Unit)
             delay(150)
         }
     }
+    loginResult?.let { result ->
+        result.onSuccess {
+            navController.navigate("home") {
+                popUpTo("login") { inclusive = true }
+            }
+            viewModel.clearResult()
+        }.onFailure { error ->
+            Toast.makeText(context, error.message ?: "Login failed", Toast.LENGTH_LONG).show()
+            viewModel.clearResult()
+        }
+    }
+
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -93,7 +136,7 @@ fun LoginScreen(navController: NavController, onLogin: (String, String) -> Unit)
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Username", fontFamily = PixelFont, fontSize = 18.sp, color = Color.White) },
+                label = { Text("Email", fontFamily = PixelFont, fontSize = 18.sp, color = Color.White) },
                 singleLine = true,
                 interactionSource = emailInteraction,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -147,15 +190,15 @@ fun LoginScreen(navController: NavController, onLogin: (String, String) -> Unit)
             Button(
                 onClick = {
                     if (email.isNotBlank() && password.isNotBlank()) {
-                        onLogin(email, password)
+                        viewModel.loginUser(email, password)
                     } else {
                         coroutineScope.launch {
                             errorMessage = "Please enter all fields"
-                            shakeOffset.animateTo(-16f, animationSpec = tween(100))
-                            shakeOffset.animateTo(16f, animationSpec = tween(100))
-                            shakeOffset.animateTo(-8f, animationSpec = tween(100))
-                            shakeOffset.animateTo(8f, animationSpec = tween(100))
-                            shakeOffset.animateTo(0f, animationSpec = tween(100))
+                            shakeOffset.animateTo(-16f, tween(100))
+                            shakeOffset.animateTo(16f, tween(100))
+                            shakeOffset.animateTo(-8f, tween(100))
+                            shakeOffset.animateTo(8f, tween(100))
+                            shakeOffset.animateTo(0f, tween(100))
                         }
                     }
                 },
@@ -192,16 +235,19 @@ fun LoginScreen(navController: NavController, onLogin: (String, String) -> Unit)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Sign up here",
-                fontSize = 14.sp,
-                color = Color.White,
-                fontFamily = PixelFont,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.clickable {
-                    navController.navigate("signup")
+            Button(
+                onClick = { navController.navigate("signup") {
+                    popUpTo("login") { inclusive = true }
                 }
-            )
+                          },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text("Sign Up", color = Color.Black, fontFamily = PixelFont, fontSize = 16.sp)
+            }
+
 
             if (errorMessage.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -218,6 +264,6 @@ fun LoginScreenPreview() {
     // Fake NavController for preview only
     val navController = rememberNavController()
 
-    LoginScreen(navController = navController, onLogin = { _, _ -> })
+    LoginScreen(navController = navController)
 }
 
