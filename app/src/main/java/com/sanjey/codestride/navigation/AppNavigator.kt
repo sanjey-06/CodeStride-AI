@@ -7,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import com.sanjey.codestride.ui.screens.splash.SplashScreen
 import com.sanjey.codestride.ui.screens.onboarding.OnboardingScreen
 import com.sanjey.codestride.ui.screens.auth.LoginScreen
+import com.sanjey.codestride.ui.screens.auth.SignupScreen
 
 @Composable
 fun AppNavigator() {
@@ -23,6 +24,11 @@ fun AppNavigator() {
             LoginScreen(navController = navController) { _, _ ->
                 // temp login action
             }
+
         }
+        composable("signup") {
+            SignupScreen(navController)
+        }
+
     }
 }

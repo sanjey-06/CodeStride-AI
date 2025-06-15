@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
+    id("com.google.gms.google-services")
 
 }
 
@@ -49,11 +50,14 @@ android {
 dependencies {
 
     implementation("androidx.activity:activity-compose:1.9.0")
+    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    implementation("com.google.firebase:firebase-auth-ktx:22.1.2")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.compose.ui:ui:1.6.7")
     implementation("androidx.compose.material3:material3:1.2.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.7")
-    implementation(libs.firebase.auth.ktx)
+    implementation("com.google.firebase:firebase-firestore-ktx:24.9.1")
+    implementation(libs.androidx.runtime.livedata)
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.7")
     implementation("androidx.compose.foundation:foundation:1.6.7")
     implementation("androidx.compose.material:material-icons-extended")

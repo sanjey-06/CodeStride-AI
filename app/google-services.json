@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "904738833176",
+    "project_id": "codestride-65cba",
+    "storage_bucket": "codestride-65cba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:904738833176:android:7f79331b6479e551f9546d",
+        "android_client_info": {
+          "package_name": "com.sanjey.codestride"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEBe5vOVtDmBGJhxEY2Paxv8RAZ9PWHYM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
