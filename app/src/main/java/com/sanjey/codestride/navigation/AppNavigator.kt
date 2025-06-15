@@ -5,8 +5,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sanjey.codestride.ui.screens.splash.SplashScreen
-import androidx.compose.material3.Text
 import com.sanjey.codestride.ui.screens.onboarding.OnboardingScreen
+import com.sanjey.codestride.ui.screens.auth.LoginScreen
 
 @Composable
 fun AppNavigator() {
@@ -19,10 +19,10 @@ fun AppNavigator() {
         composable("onboarding") {
             OnboardingScreen(navController)
         }
-
-        // ADD NEXT SCREEN:
         composable("login") {
-            Text("Login Screen Placeholder") // replace with actual LoginScreen later
+            LoginScreen(navController = navController) { _, _ ->
+                // temp login action
+            }
         }
     }
 }

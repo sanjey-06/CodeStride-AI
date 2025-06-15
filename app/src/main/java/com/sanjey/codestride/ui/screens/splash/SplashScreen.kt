@@ -16,7 +16,6 @@ import com.sanjey.codestride.data.prefs.OnboardingPreferences
 import kotlinx.coroutines.delay
 import com.sanjey.codestride.ui.theme.PixelFont
 
-
 @Composable
 fun SplashScreen(navController: NavController) {
     val context = LocalContext.current
@@ -30,14 +29,9 @@ fun SplashScreen(navController: NavController) {
             delay(150)
         }
         delay(800)
-        if (hasSeenOnboarding) {
-            navController.navigate("login") {
-                popUpTo("splash") { inclusive = true }
-            }
-        } else {
-            navController.navigate("onboarding") {
-                popUpTo("splash") { inclusive = true }
-            }
+
+        navController.navigate("login") {
+            popUpTo("splash") { inclusive = true }
         }
     }
 
@@ -56,6 +50,5 @@ fun SplashScreen(navController: NavController) {
                 color = Color.White
             )
         )
-
     }
 }

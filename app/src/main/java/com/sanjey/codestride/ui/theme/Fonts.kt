@@ -6,3 +6,4 @@ import androidx.compose.ui.text.font.FontFamily
 import com.sanjey.codestride.R
 
 val PixelFont = FontFamily(Font(R.font.pixel_font))
+val SoraFont = FontFamily(Font(R.font.sora))
