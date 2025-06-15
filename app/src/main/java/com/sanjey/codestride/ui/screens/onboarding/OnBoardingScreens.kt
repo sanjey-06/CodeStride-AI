@@ -17,8 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -26,11 +24,12 @@ import com.sanjey.codestride.R
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import com.sanjey.codestride.data.prefs.OnboardingPreferences
+import com.sanjey.codestride.ui.theme.PixelFont
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OnboardingScreen(navController: NavController) {
-    val pixelFont = FontFamily(Font(R.font.pixel_font))
     val context = LocalContext.current
 
     val pages = listOf(
@@ -68,7 +67,7 @@ fun OnboardingScreen(navController: NavController) {
                     text = pages[page].title,
                     style = TextStyle(
                         fontSize = 24.sp,
-                        fontFamily = pixelFont,
+                        fontFamily = PixelFont,
                         color = Color.White
                     )
                 )
@@ -76,7 +75,7 @@ fun OnboardingScreen(navController: NavController) {
                     text = pages[page].description,
                     style = TextStyle(
                         fontSize = 14.sp,
-                        fontFamily = pixelFont,
+                        fontFamily = PixelFont,
                         color = Color.White
                     )
                 )
@@ -101,7 +100,7 @@ fun OnboardingScreen(navController: NavController) {
                 ) {
                     Text(
                         text = if (page == pages.lastIndex) "Finish ➤" else "Next ➤",
-                        fontFamily = pixelFont,
+                        fontFamily = PixelFont,
                         fontSize = 14.sp
                     )
                 }
