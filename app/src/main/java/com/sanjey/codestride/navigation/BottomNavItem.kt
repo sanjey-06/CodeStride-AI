@@ -1,15 +1,15 @@
 package com.sanjey.codestride.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.annotation.DrawableRes
+import com.sanjey.codestride.R
 
-sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
-    object Home : BottomNavItem("home", Icons.Default.Home, "Home")
-    object Roadmap : BottomNavItem("roadmap", Icons.Default.Map, "Roadmap")
-    object Profile : BottomNavItem("profile", Icons.Default.Person, "Profile")
-    object Settings : BottomNavItem("settings", Icons.Default.Settings, "Settings")
+sealed class BottomNavItem(
+    val route: String,
+    @DrawableRes val iconRes: Int,
+    val label: String
+) {
+    object Home : BottomNavItem("home", R.drawable.ic_home, "Home")
+    object Roadmap : BottomNavItem("roadmap", R.drawable.ic_roadmap, "Roadmap")
+    object Profile : BottomNavItem("profile", R.drawable.ic_profile, "Profile")
+    object Settings : BottomNavItem("settings", R.drawable.ic_settings, "Settings")
 }

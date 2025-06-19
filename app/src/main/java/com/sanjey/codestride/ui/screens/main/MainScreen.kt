@@ -9,8 +9,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.*
+import androidx.compose.foundation.layout.size
 import com.sanjey.codestride.navigation.BottomNavItem
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import com.sanjey.codestride.ui.screens.home.HomeScreen
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.SoraFont
@@ -38,8 +40,10 @@ fun MainScreen() {
                     NavigationBarItem(
                         icon = {
                             Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label
+                                painter = painterResource(id = item.iconRes),
+                                contentDescription = item.label,
+                                modifier = Modifier.size(30.dp), // ✅ LIMIT ICON SIZE
+                                tint = Color.Unspecified // 👈 Use this so the icon keeps its original white color
                             )
                         },
                         label = {
