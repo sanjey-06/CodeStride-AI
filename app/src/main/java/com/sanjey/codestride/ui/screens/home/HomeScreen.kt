@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -16,10 +19,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,7 +47,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .background(Color.Black) // so we can see the rounded edge
+            .background(Color.Black)
     ) {
         // Top 75% black background
         Box(
@@ -101,14 +107,19 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 }
             }
         }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+        ) {
 
-        // White container overlapping slightly, rounded top corners (50.dp)
+        // White scrollable section with rounded corners
         Column(
             modifier = Modifier
-                .offset(y = (-30).dp) // lift it into the image
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp)) // clip shape
-                .background(Color.White) // shape background
+                .offset(y = (-30).dp)
+                .wrapContentHeight()
+                .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
+                .background(Color.White)
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
             Text(
@@ -138,7 +149,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                     .height(4.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 color = Color.Black,
-                trackColor = Color.LightGray,
+                trackColor = Color.LightGray
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -156,8 +167,9 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 onClick = { /* TODO */ },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
                     .height(48.dp),
-                shape = RoundedCornerShape(50.dp),
+                    shape = RoundedCornerShape(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
             ) {
                 Text(
@@ -168,6 +180,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                     color = Color.White
                 )
             }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             RoadmapCard(
@@ -176,10 +189,18 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 progressPercent = 50
             )
 
-            Spacer(modifier = Modifier.height(500.dp)) // allows scroll
+            Spacer(modifier = Modifier.height(28.dp))
+
+            BadgePreviewSection()
+
+//            Spacer(modifier = Modifier.height(10.dp)) // ✅ Minimal scroll padding
+
+
+        }
         }
     }
 }
+
 @Composable
 fun RoadmapCard(
     iconResId: Int,
@@ -197,10 +218,9 @@ fun RoadmapCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(140.dp) // taller card
+                .height(160.dp)
         ) {
-
-            // 🔳 Left 35% - Icon Area
+            // Left side icon
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -212,40 +232,42 @@ fun RoadmapCard(
                     painter = painterResource(id = iconResId),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(72.dp) // Larger icon
+                    modifier = Modifier.size(72.dp)
                 )
             }
 
-            // 🟦 Right 65% - Info Area
+            // Right side content
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(0.65f)
                     .background(CustomBlue)
-                    .padding(horizontal = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .padding(start = 12.dp, top = 16.dp, end = 12.dp, bottom = 20.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = "Your current Learning",
                     fontFamily = SoraFont,
                     fontSize = 10.sp,
                     color = Color.White,
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
                     text = title,
                     fontFamily = PixelFont,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 8.dp),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 LinearProgressIndicator(
                     progress = { progressPercent / 100f },
@@ -257,14 +279,12 @@ fun RoadmapCard(
                     trackColor = Color.White
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
-
                 Text(
                     text = "$progressPercent % completed",
                     fontFamily = PixelFont,
                     fontSize = 12.sp,
                     color = Color.White,
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -272,13 +292,93 @@ fun RoadmapCard(
     }
 }
 
+@Composable
+fun RoadmapCardLockedDensity(
+    iconResId: Int,
+    title: String,
+    progressPercent: Int
+) {
+    val currentDensity = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(currentDensity.density, 1f)) {
+        RoadmapCard(
+            iconResId = iconResId,
+            title = title,
+            progressPercent = progressPercent
+        )
+    }
+}
+
+@Composable
+fun BadgePreviewSection() {
+    val badges = listOf(
+        Triple("Kotlin Novice", R.drawable.kotlin_novice_badge, true),
+        Triple("Security Specialist", R.drawable.security_specialist_badge, false),
+        Triple("Jetpack Explorer", R.drawable.jetpack_explorer_badge, false)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = "Your Achievements",
+            fontFamily = PixelFont,
+            fontSize = 16.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            badges.forEach { (_, imageRes, unlocked) ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(100.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = imageRes),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(top = 6.dp)
+                    ) {
+                        Text(
+                            text = if (unlocked) "Unlocked" else "Locked",
+                            fontFamily = SoraFont,
+                            fontSize = 12.sp,
+                            color = if (unlocked) Color(0xFFB4FF63) else Color.Gray
+                        )
+                        if (!unlocked) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(14.dp).padding(start = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 @Preview(showBackground = true)
 @Composable
 fun RoadmapCardPreview() {
-    RoadmapCard(
-        iconResId = R.drawable.ic_python, // replace with your actual icon name
+    RoadmapCardLockedDensity(
+        iconResId = R.drawable.ic_python,
         title = "Python Programming",
         progressPercent = 50
     )
 }
-
