@@ -155,7 +155,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "You're 1 day away from earning the Bronze badge!",
+                text = "You're 1 day away from earning the Silver badge!",
                 fontFamily = SoraFont,
                 fontSize = 12.sp,
                 color = Color.Gray
