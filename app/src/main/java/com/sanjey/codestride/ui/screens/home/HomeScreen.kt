@@ -45,9 +45,9 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
             .verticalScroll(scrollState)
             .background(Color.Black)
+            .wrapContentHeight()
     ) {
         // Top 75% black background
         Box(
@@ -107,18 +107,13 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 }
             }
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-        ) {
 
-        // White scrollable section with rounded corners
+        // ✅ Fixed white section with no extra scroll
         Column(
             modifier = Modifier
-                .offset(y = (-30).dp)
                 .wrapContentHeight()
-                .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                 .background(Color.White)
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
@@ -169,7 +164,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .height(48.dp),
-                    shape = RoundedCornerShape(50.dp),
+                shape = RoundedCornerShape(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
             ) {
                 Text(
@@ -192,11 +187,6 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             Spacer(modifier = Modifier.height(28.dp))
 
             BadgePreviewSection()
-
-//            Spacer(modifier = Modifier.height(10.dp)) // ✅ Minimal scroll padding
-
-
-        }
         }
     }
 }
@@ -220,7 +210,6 @@ fun RoadmapCard(
                 .fillMaxWidth()
                 .height(160.dp)
         ) {
-            // Left side icon
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -236,7 +225,6 @@ fun RoadmapCard(
                 )
             }
 
-            // Right side content
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -289,22 +277,6 @@ fun RoadmapCard(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun RoadmapCardLockedDensity(
-    iconResId: Int,
-    title: String,
-    progressPercent: Int
-) {
-    val currentDensity = LocalDensity.current
-    CompositionLocalProvider(LocalDensity provides Density(currentDensity.density, 1f)) {
-        RoadmapCard(
-            iconResId = iconResId,
-            title = title,
-            progressPercent = progressPercent
-        )
     }
 }
 
@@ -370,15 +342,4 @@ fun BadgePreviewSection() {
             }
         }
     }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun RoadmapCardPreview() {
-    RoadmapCardLockedDensity(
-        iconResId = R.drawable.ic_python,
-        title = "Python Programming",
-        progressPercent = 50
-    )
 }

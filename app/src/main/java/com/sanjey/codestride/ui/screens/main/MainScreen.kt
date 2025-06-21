@@ -19,73 +19,78 @@ import com.sanjey.codestride.ui.theme.SoraFont
 
 @Composable
 fun MainScreen() {
-    val navController = rememberNavController()
-    val items = listOf(
-        BottomNavItem.Home,
-        BottomNavItem.Roadmap,
-        BottomNavItem.Profile,
-        BottomNavItem.Settings
-    )
+    Surface(
+        modifier = Modifier,
+        color = Color.Black // 🔥 sets the whole screen background
+    ) {
+        val navController = rememberNavController()
+        val items = listOf(
+            BottomNavItem.Home,
+            BottomNavItem.Roadmap,
+            BottomNavItem.Profile,
+            BottomNavItem.Settings
+        )
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar(modifier = Modifier.clip(RoundedCornerShape(50.dp)),
-                containerColor = Color.Black, // Pure black nav bar, no border/padding
-                contentColor = Color.White
-            ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+        Scaffold(
+            bottomBar = {
+                NavigationBar(modifier = Modifier.clip(RoundedCornerShape(50.dp)),
+                    containerColor = Color.Black,
+                    contentColor = Color.White
+                ) {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
 
-                items.forEach { item ->
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = item.iconRes),
-                                contentDescription = item.label,
-                                modifier = Modifier.size(30.dp), // ✅ LIMIT ICON SIZE
-                                tint = Color.Unspecified // 👈 Use this so the icon keeps its original white color
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = item.label,
-                                fontFamily = SoraFont,
-                                fontSize = 11.sp
-                            )
-                        },
-                        selected = currentRoute == item.route,
-                        onClick = {
-                            if (currentRoute != item.route) {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
+                    items.forEach { item ->
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    painter = painterResource(id = item.iconRes),
+                                    contentDescription = item.label,
+                                    modifier = Modifier.size(30.dp),
+                                    tint = Color.Unspecified
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = item.label,
+                                    fontFamily = SoraFont,
+                                    fontSize = 11.sp
+                                )
+                            },
+                            selected = currentRoute == item.route,
+                            onClick = {
+                                if (currentRoute != item.route) {
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.startDestinationId) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = CustomBlue,
-                            selectedTextColor = CustomBlue,
-                            indicatorColor = Color.Black,
-                            unselectedIconColor = Color.White,
-                            unselectedTextColor = Color.White
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = CustomBlue,
+                                selectedTextColor = CustomBlue,
+                                indicatorColor = Color.Black,
+                                unselectedIconColor = Color.White,
+                                unselectedTextColor = Color.White
+                            )
                         )
-                    )
+                    }
                 }
             }
-        }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavItem.Home.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(BottomNavItem.Home.route) { HomeScreen() }
-            composable(BottomNavItem.Roadmap.route) { TODO("RoadmapScreen is not implemented yet") }
-            composable(BottomNavItem.Profile.route) { TODO("ProfileScreen is not implemented yet") }
-            composable(BottomNavItem.Settings.route) { TODO("SettingsScreen is not implemented yet") }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavItem.Home.route,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable(BottomNavItem.Home.route) { HomeScreen() }
+                composable(BottomNavItem.Roadmap.route) { TODO("RoadmapScreen is not implemented yet") }
+                composable(BottomNavItem.Profile.route) { TODO("ProfileScreen is not implemented yet") }
+                composable(BottomNavItem.Settings.route) { TODO("SettingsScreen is not implemented yet") }
+            }
         }
     }
 }
