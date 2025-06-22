@@ -10,7 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -19,14 +18,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sanjey.codestride.R
@@ -187,6 +184,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             Spacer(modifier = Modifier.height(28.dp))
 
             BadgePreviewSection()
+            ExploreOtherRoadmapsSection()
         }
     }
 }
@@ -343,3 +341,58 @@ fun BadgePreviewSection() {
         }
     }
 }
+@Composable
+fun ExploreOtherRoadmapsSection() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = "Explore other Roadmaps",
+            fontFamily = PixelFont,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
+        ) {
+            val roadmaps = listOf(
+                R.drawable.ic_cpp to "C++",
+                R.drawable.ic_java to "Java",
+                R.drawable.ic_kotlin to "Kotlin"
+            )
+
+            roadmaps.forEach { (icon, label) ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Surface(
+                        modifier = Modifier.size(84.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.Black // Or any themed background
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Image(
+                                painter = painterResource(id = icon),
+                                contentDescription = label,
+                                modifier = Modifier.size(80.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = label,
+                        fontFamily = PixelFont,
+                        fontSize = 12.sp,
+                        color = Color.Black
+                    )
+                }
+            }
+        }
+    }
+}
+
