@@ -9,7 +9,6 @@ import com.sanjey.codestride.ui.screens.splash.SplashScreen
 import com.sanjey.codestride.ui.screens.onboarding.OnboardingScreen
 import com.sanjey.codestride.ui.screens.auth.LoginScreen
 import com.sanjey.codestride.ui.screens.auth.SignupScreen
-import com.sanjey.codestride.ui.screens.home.HomeScreen
 import com.sanjey.codestride.ui.screens.main.MainScreen
 
 @Composable
@@ -33,9 +32,7 @@ fun AppNavigator() {
         composable("forgot_password") {
             ForgotPasswordScreen(navController)
         }
-        composable("home") {
-            HomeScreen()
-        }
+
         composable("main") {
             MainScreen()
         }

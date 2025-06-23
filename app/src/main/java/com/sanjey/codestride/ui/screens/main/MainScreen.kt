@@ -16,6 +16,8 @@ import androidx.compose.ui.res.painterResource
 import com.sanjey.codestride.ui.screens.home.HomeScreen
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.ui.screens.roadmap.RoadmapScreen
+
 
 @Composable
 fun MainScreen() {
@@ -86,8 +88,10 @@ fun MainScreen() {
                 startDestination = BottomNavItem.Home.route,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(BottomNavItem.Home.route) { HomeScreen() }
-                composable(BottomNavItem.Roadmap.route) { TODO("RoadmapScreen is not implemented yet") }
+                composable(BottomNavItem.Home.route) { HomeScreen(navController) }
+                composable(BottomNavItem.Roadmap.route) {
+                    RoadmapScreen(navController)
+                }
                 composable(BottomNavItem.Profile.route) { TODO("ProfileScreen is not implemented yet") }
                 composable(BottomNavItem.Settings.route) { TODO("SettingsScreen is not implemented yet") }
             }
