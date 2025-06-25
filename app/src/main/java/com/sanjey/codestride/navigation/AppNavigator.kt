@@ -38,7 +38,7 @@ fun AppNavigator() {
             MainScreen(navController = navController)
         }
         composable("chatbot") {
-            ChatbotScreen()
+            ChatbotScreen(navController = navController)
         }
 
     }

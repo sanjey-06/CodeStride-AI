@@ -8,33 +8,69 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.sanjey.codestride.R
+import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 
+
 @Composable
-fun ChatbotScreen() {
+
+fun ChatbotScreen(navController: NavHostController) {
+    val backgroundColor = colorResource(id = R.color.ChatBotBlue)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Bot Image
-        Image(
-            painter = painterResource(id = R.drawable.chatbot_background), // Replace with your bot image
-            contentDescription = "AI Bot",
+
+        // Back Button
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp),
-            contentScale = ContentScale.Crop
-        )
+                .height(250.dp) // ✅ adjust this if needed
+                .background(color = backgroundColor)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.chatbot_background),
+                contentDescription = "AI Bot",
+                modifier = Modifier
+                    .fillMaxSize(),
+//                contentScale = ContentScale.Crop,
+                alignment = Alignment.Center
+            )
 
-        // CodeBot Header
+        IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier
+                    .padding(start = 12.dp, top = 12.dp)
+                    .size(32.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+        }
+
+
+
+
+
+
+
+        // Header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -50,7 +86,7 @@ fun ChatbotScreen() {
             )
         }
 
-        // Chat messages (Dummy)
+        // Messages
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -64,7 +100,7 @@ fun ChatbotScreen() {
             }
         }
 
-        // Input Section
+        // Input
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -84,15 +120,22 @@ fun ChatbotScreen() {
             )
 
             Spacer(modifier = Modifier.width(8.dp))
+
+            // ✅ Themed button
             Button(
                 onClick = { /* TODO: Send logic */ },
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = CustomBlue // your app's theme color
+                )
             ) {
-                Text("Send")
+                Text("Send",
+                    fontFamily = PixelFont,
+                    fontSize = 12.sp)
             }
         }
 
-        // BottomNav – Reuse your BottomNavItem logic here
+
     }
 }
 

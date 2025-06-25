@@ -12,4 +12,5 @@ sealed class BottomNavItem(
     object Roadmap : BottomNavItem("roadmap", R.drawable.ic_roadmap, "Roadmap")
     object Profile : BottomNavItem("profile", R.drawable.ic_profile, "Profile")
     object Settings : BottomNavItem("settings", R.drawable.ic_settings, "Settings")
+
 }

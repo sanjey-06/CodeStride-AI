@@ -26,7 +26,7 @@ import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 
 @Composable
-fun RoadmapScreen(navController: NavController) {
+fun RoadmapScreen(appNavController: NavController) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
 
@@ -202,7 +202,7 @@ fun RoadmapScreen(navController: NavController) {
                         color = Color.Black
                     )
                     Button(
-                        onClick = { /*TODO */ },
+                        onClick = {  appNavController.navigate("chatbot") },
                         shape = RoundedCornerShape(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
