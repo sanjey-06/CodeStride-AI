@@ -10,36 +10,40 @@ import com.sanjey.codestride.ui.screens.onboarding.OnboardingScreen
 import com.sanjey.codestride.ui.screens.auth.LoginScreen
 import com.sanjey.codestride.ui.screens.auth.SignupScreen
 import com.sanjey.codestride.ui.screens.chatbot.ChatbotScreen
+import com.sanjey.codestride.ui.screens.home.HomeScreen
 import com.sanjey.codestride.ui.screens.main.MainScreen
+import com.sanjey.codestride.ui.screens.roadmap.LearningScreen
+import com.sanjey.codestride.ui.screens.roadmap.RoadmapScreen
 
 @Composable
 fun AppNavigator() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "splash") {
-        composable("splash") {
-            SplashScreen(navController)
-        }
-        composable("onboarding") {
-            OnboardingScreen(navController)
-        }
-        composable("login") {
-            LoginScreen(navController = navController)
+        composable("splash") { SplashScreen(navController) }
+        composable("onboarding") { OnboardingScreen(navController) }
+        composable("login") { LoginScreen(navController) }
+        composable("signup") { SignupScreen(navController) }
+        composable("forgot_password") { ForgotPasswordScreen(navController) }
 
-        }
-        composable("signup") {
-            SignupScreen(navController)
-        }
-        composable("forgot_password") {
-            ForgotPasswordScreen(navController)
+        // ✅ Now here’s your main tab routes
+        composable("home") {
+            MainScreen(navController = navController, currentRoute = "home") {
+                HomeScreen(navController)
+            }
         }
 
-        composable("main") {
-            MainScreen(navController = navController)
+        composable("roadmap") {
+            MainScreen(navController = navController, currentRoute = "roadmap") {
+                RoadmapScreen(appNavController = navController)
+            }
         }
-        composable("chatbot") {
-            ChatbotScreen(navController = navController)
+        composable("profile") { /* TODO */ }
+        composable("settings") { /* TODO */ }
+        composable("learning/{roadmapId}") { backStackEntry ->
+            val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""
+            LearningScreen(roadmapId = roadmapId)
         }
-
+        composable("chatbot") { ChatbotScreen(navController) }
     }
 }

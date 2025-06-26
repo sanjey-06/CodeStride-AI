@@ -3,27 +3,25 @@ package com.sanjey.codestride.ui.screens.main
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import com.sanjey.codestride.navigation.BottomNavItem
-import com.sanjey.codestride.ui.screens.home.HomeScreen
-import com.sanjey.codestride.ui.screens.roadmap.RoadmapScreen
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.SoraFont
 
 @Composable
-fun MainScreen(navController: NavHostController) {
-    val bottomNavController = rememberNavController()
-
-    val items = listOf(
+fun MainScreen(
+    navController: NavHostController,
+    currentRoute: String,
+    content: @Composable () -> Unit
+) {
+    val bottomNavItems = listOf(
         BottomNavItem.Home,
         BottomNavItem.Roadmap,
         BottomNavItem.Profile,
@@ -31,29 +29,16 @@ fun MainScreen(navController: NavHostController) {
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-
-        // 🧠 Main content with padding to avoid overlap
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 80.dp)) { // 👈 enough to avoid overlay
-
-            NavHost(
-                navController = bottomNavController,
-                startDestination = BottomNavItem.Home.route,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                composable(BottomNavItem.Home.route) {
-                    HomeScreen(navController = bottomNavController)
-                }
-                composable(BottomNavItem.Roadmap.route) {
-                    RoadmapScreen(appNavController = navController)
-                }
-                composable(BottomNavItem.Profile.route) { /* TODO */ }
-                composable(BottomNavItem.Settings.route) { /* TODO */ }
-            }
+        // Main content area (screen content like Home, Roadmap, etc.)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 80.dp) // Leave space for nav bar
+        ) {
+            content()
         }
 
-        // 🎯 Floating Bottom Navigation
+        // Bottom Navigation Bar
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -63,17 +48,13 @@ fun MainScreen(navController: NavHostController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(50.dp)),
-                color = Color.Black,
-                tonalElevation = 0.dp
+                color = Color.Black
             ) {
                 NavigationBar(
                     containerColor = Color.Transparent,
                     contentColor = Color.White
                 ) {
-                    val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
-
-                    items.forEach { item ->
+                    bottomNavItems.forEach { item ->
                         NavigationBarItem(
                             icon = {
                                 Icon(
@@ -93,10 +74,8 @@ fun MainScreen(navController: NavHostController) {
                             selected = currentRoute == item.route,
                             onClick = {
                                 if (currentRoute != item.route) {
-                                    bottomNavController.navigate(item.route) {
-                                        popUpTo(bottomNavController.graph.startDestinationId) {
-                                            saveState = true
-                                        }
+                                    navController.navigate(item.route) {
+                                        popUpTo("home") { inclusive = false }
                                         launchSingleTop = true
                                         restoreState = true
                                     }

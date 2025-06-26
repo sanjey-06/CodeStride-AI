@@ -92,6 +92,7 @@ fun LoginScreen(navController: NavController){
         result.onSuccess {
             navController.navigate("home") {
                 popUpTo("login") { inclusive = true }
+                launchSingleTop = true
             }
             viewModel.clearResult()
         }.onFailure { error ->

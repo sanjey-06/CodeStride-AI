@@ -75,6 +75,7 @@ fun SignupScreen(navController: NavController) {
         result.onSuccess {
             navController.navigate("home") {
                 popUpTo("signup") { inclusive = true }
+                launchSingleTop = true
             }
             viewModel.clearResult()
         }.onFailure { error ->
@@ -222,7 +223,7 @@ fun SignupScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    showValidationErrors = true // 👈 This triggers error messages
+                    showValidationErrors = true
 
                     if (!firstNameError && !lastNameError && !mobileError && !emailError && !passwordError && !confirmPasswordError) {
                         errorMessage = ""
@@ -272,7 +273,7 @@ fun SignupScreen(navController: NavController) {
     }
 }
 
-// ✅ Shared input field color style
+// Shared input field color style
 @Composable
 private fun inputColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = CustomBlue,
@@ -288,7 +289,7 @@ private fun inputColors() = OutlinedTextFieldDefaults.colors(
 fun SignupScreenPreview() {
     val navController = rememberNavController()
 
-    // ViewModel isn't needed for preview; pass dummy logic
+
     SignupScreen(
         navController = navController
     )

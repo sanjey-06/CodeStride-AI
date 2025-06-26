@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
@@ -33,7 +34,7 @@ import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.HomeViewModel
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
     val firstName by viewModel.firstName.observeAsState()
     val quote by viewModel.quoteOfTheDay.observeAsState()
     val scrollState = rememberScrollState()
@@ -156,7 +157,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = { /* TODO */ },
+                onClick = {  navController.navigate("roadmap") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
