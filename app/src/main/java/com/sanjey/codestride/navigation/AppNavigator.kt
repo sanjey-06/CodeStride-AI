@@ -42,7 +42,8 @@ fun AppNavigator() {
         composable("settings") { /* TODO */ }
         composable("learning/{roadmapId}") { backStackEntry ->
             val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""
-            LearningScreen(roadmapId = roadmapId)
+            LearningScreen(roadmapId = roadmapId,
+                navController = navController)
         }
         composable("chatbot") { ChatbotScreen(navController) }
     }
