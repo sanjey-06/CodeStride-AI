@@ -2,6 +2,7 @@ package com.sanjey.codestride.ui.screens.roadmap
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -31,6 +37,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()
+    var expandedCardIndex by remember { mutableStateOf(-1) }
 
     val modules = listOf(
         Module("1", "Introduction", 1),
@@ -62,13 +69,11 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.6f))
             )
-
             IconButton(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier
@@ -81,7 +86,6 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                     tint = Color.White
                 )
             }
-
             Text(
                 text = "Python",
                 fontFamily = PixelFont,
@@ -91,7 +95,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
             )
         }
 
-        // 🔽 Scrollable Area
+        // 🔽 Scrollable Section
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,10 +129,12 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                         else -> 1000.dp
                     }
 
-                    val backgroundColor = when (index) {
-                        0, 1 -> Color(0xFF4CAF50) // Green
-                        2 -> CustomBlue            // Theme Blue
-                        else -> Color(0xFFBDBDBD)  // Gray for locked
+                    val isUnlocked = index <= 2
+                    val isExpanded = expandedCardIndex == index
+                    val backgroundColor = when {
+                        index == 2 -> CustomBlue
+                        isUnlocked -> Color(0xFF4CAF50)
+                        else -> Color(0xFFBDBDBD)
                     }
 
                     Box(
@@ -136,6 +142,9 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                             .fillMaxWidth()
                             .offset(y = verticalOffset)
                             .padding(horizontal = 24.dp)
+                            .clickable(enabled = isUnlocked) {
+                                expandedCardIndex = if (isExpanded) -1 else index
+                            }
                     ) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
@@ -143,17 +152,40 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                             modifier = Modifier
                                 .align(if (isLeft) Alignment.CenterStart else Alignment.CenterEnd)
                                 .width(180.dp)
-                                .height(48.dp)
                         ) {
-                            Text(
-                                text = "${module.order}. ${module.title}",
-                                color = Color.White,
-                                fontFamily = SoraFont,
-                                fontSize = 14.sp,
-                                modifier = Modifier
-                                    .padding(12.dp)
-                                    .wrapContentHeight(Alignment.CenterVertically)
-                            )
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = "${module.order}. ${module.title}",
+                                    color = Color.White,
+                                    fontFamily = SoraFont,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                if (isExpanded) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "This is a short description of ${module.title}.",
+                                        fontSize = 12.sp,
+                                        color = Color.White,
+                                        fontFamily = SoraFont
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Button(
+                                        onClick = { /* TODO: Navigate to lesson */ },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                                    ) {
+                                        Text(
+                                            text = "Start Module",
+                                            fontSize = 12.sp,
+                                            fontFamily = PixelFont,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -175,7 +207,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBDBDBD))
                     ) {
                         Text(
-                            text = " Get Certificate",
+                            text = "🎓 Get Certificate",
                             fontSize = 14.sp,
                             fontFamily = PixelFont,
                             color = Color.White
@@ -186,8 +218,3 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
         }
     }
 }
-
-
-
-
-
