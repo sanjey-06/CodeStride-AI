@@ -14,6 +14,8 @@ import com.sanjey.codestride.ui.screens.home.HomeScreen
 import com.sanjey.codestride.ui.screens.main.MainScreen
 import com.sanjey.codestride.ui.screens.roadmap.LearningScreen
 import com.sanjey.codestride.ui.screens.roadmap.RoadmapScreen
+import com.sanjey.codestride.ui.screens.quiz.QuizScreen
+
 
 @Composable
 fun AppNavigator() {
@@ -46,5 +48,9 @@ fun AppNavigator() {
                 navController = navController)
         }
         composable("chatbot") { ChatbotScreen(navController) }
+        composable("quiz_screen") {
+            QuizScreen(navController)
+        }
+
     }
 }

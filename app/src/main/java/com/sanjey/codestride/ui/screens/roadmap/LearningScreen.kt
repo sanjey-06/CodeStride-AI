@@ -22,9 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.data.model.Module
@@ -130,11 +130,90 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                     }
 
                     val isUnlocked = index <= 2
-                    val isExpanded = expandedCardIndex == index
                     val backgroundColor = when {
                         index == 2 -> CustomBlue
                         isUnlocked -> Color(0xFF4CAF50)
                         else -> Color(0xFFBDBDBD)
+                    }
+
+                    var showDialog by remember { mutableStateOf(false) }
+
+                    if (showDialog) {
+                        Dialog(onDismissRequest = { showDialog = false }) {
+                            Surface(
+                                shape = RoundedCornerShape(32.dp),
+                                color = Color.Black,
+                                modifier = Modifier
+                                    .fillMaxWidth(0.95f)
+                                    .wrapContentHeight()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = module.title,
+                                        fontFamily = PixelFont,
+                                        fontSize = 18.sp,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "A beginner-friendly introduction to what ${module.title.lowercase()} is, what it can do, and why it is used.",
+                                        fontFamily = SoraFont,
+                                        fontSize = 14.sp,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    Button(
+                                        onClick = { /* TODO: Navigate to lesson */ },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text="Start Learn ➤",
+                                            fontFamily = PixelFont,
+                                            color = Color.White
+                                            )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    Button(
+                                        onClick = { /* TODO: Open YouTube */ },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("Watch it on Youtube", fontFamily = PixelFont, color = Color.White)
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    Button(
+                                        onClick = { navController.navigate("quiz_screen") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("Take Quiz", fontFamily = PixelFont, color = Color.White)
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    Button(
+                                        onClick = { navController.navigate("chatbot") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("CodeBot", fontFamily = PixelFont, color = Color.White)
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     Box(
@@ -143,7 +222,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                             .offset(y = verticalOffset)
                             .padding(horizontal = 24.dp)
                             .clickable(enabled = isUnlocked) {
-                                expandedCardIndex = if (isExpanded) -1 else index
+                                showDialog = true
                             }
                     ) {
                         Surface(
@@ -152,43 +231,21 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                             modifier = Modifier
                                 .align(if (isLeft) Alignment.CenterStart else Alignment.CenterEnd)
                                 .width(180.dp)
+                                .height(48.dp)
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    text = "${module.order}. ${module.title}",
-                                    color = Color.White,
-                                    fontFamily = SoraFont,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                if (isExpanded) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "This is a short description of ${module.title}.",
-                                        fontSize = 12.sp,
-                                        color = Color.White,
-                                        fontFamily = SoraFont
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Button(
-                                        onClick = { /* TODO: Navigate to lesson */ },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(8.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
-                                    ) {
-                                        Text(
-                                            text = "Start Module",
-                                            fontSize = 12.sp,
-                                            fontFamily = PixelFont,
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-                            }
+                            Text(
+                                text = "${module.order}. ${module.title}",
+                                color = Color.White,
+                                fontFamily = SoraFont,
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .wrapContentHeight(Alignment.CenterVertically)
+                            )
                         }
                     }
                 }
+
 
                 // 🎓 Final certificate button
                 Box(
@@ -207,7 +264,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBDBDBD))
                     ) {
                         Text(
-                            text = "🎓 Get Certificate",
+                            text = "Get Certificate",
                             fontSize = 14.sp,
                             fontFamily = PixelFont,
                             color = Color.White
