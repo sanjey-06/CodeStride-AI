@@ -338,7 +338,7 @@ fun EditProfileCard(
                     }
 
                     Button(
-                        onClick = { /* cancel logic */ },
+                        onClick = { onCancel() },
                         shape = RoundedCornerShape(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                         modifier = Modifier
