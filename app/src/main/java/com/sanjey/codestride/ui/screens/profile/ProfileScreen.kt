@@ -25,12 +25,22 @@ import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.ui.screens.home.BadgePreviewSection
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 
 @Composable
 fun ProfileScreen(navController: NavController) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
+    var showEditDialog by remember { mutableStateOf(false) }
+
 
     Column(
         modifier = Modifier
@@ -124,7 +134,7 @@ fun ProfileScreen(navController: NavController) {
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Button(
-                            onClick = { /* TODO: Navigate to EditProfile */ },
+                            onClick = { showEditDialog = true },
                             shape = RoundedCornerShape(50.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                             modifier = Modifier.fillMaxWidth()
@@ -235,5 +245,151 @@ fun ProfileScreen(navController: NavController) {
                 }
             }
         }
+        if (showEditDialog) {
+            Dialog(onDismissRequest = { showEditDialog = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                EditProfileCard(
+                    onSave = { showEditDialog = false /* TODO: Save changes */ },
+                    onCancel = { showEditDialog = false }
+                )
+            }
+        }
+
     }
 }
+
+@Composable
+fun EditProfileCard(
+    onSave: () -> Unit = {},
+    onCancel: () -> Unit = {}
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp), // Small edge margin
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(36.dp)),
+            color = Color.Black
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                // 🖼️ Avatar
+                Image(
+                    painter = painterResource(id = R.drawable.avatar_1),
+                    contentDescription = "Profile Image",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { /* TODO: Image picker */ },
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
+                ) {
+                    Text(
+                        text = "Edit Image",
+                        fontFamily = PixelFont,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // ✏️ Fields
+                EditProfileField("Name", "Sanjey T.S") { /* TODO */ }
+                EditProfileField("Email", "sanjey@example.com") { /* TODO */ }
+                EditProfileField("Password", "********") { /* TODO */ }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // ✅ Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Button(
+                        onClick = onSave,
+                        shape = RoundedCornerShape(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = "Save",
+                            fontFamily = PixelFont,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
+
+                    Button(
+                        onClick = { /* cancel logic */ },
+                        shape = RoundedCornerShape(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            fontFamily = PixelFont,
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EditProfileField(label: String, value: String, onEditClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Text(
+                text = label,
+                fontFamily = SoraFont,
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+            Text(
+                text = value,
+                fontFamily = PixelFont,
+                fontSize = 14.sp,
+                color = Color.White
+            )
+        }
+
+        IconButton(onClick = onEditClick) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit",
+                tint = Color.White
+            )
+
+        }
+    }
+}
+
