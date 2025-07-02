@@ -2,22 +2,12 @@ package com.sanjey.codestride.ui.screens.profile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,12 +19,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
+import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.ui.screens.home.BadgePreviewSection
+
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navController: NavController) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
 
@@ -145,7 +139,100 @@ fun ProfileScreen() {
                     }
                 }
 
-                // 🟡 TODO: Add streak, progress, badges...
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 🔥 Streak Section
+                Text(
+                    text = "\uD83D\uDD25 Streak : 3 days",
+                    fontFamily = PixelFont,
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                LinearProgressIndicator(
+                    progress = { 0.3f },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(50.dp)),
+                    color = CustomBlue,
+                    trackColor = Color.LightGray,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 📘 Current Learning
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp)),
+                    color = Color.Black
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "\uD83D\uDCD8 Current Learning",
+                            fontFamily = PixelFont,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = "Python Programming",
+                            fontFamily = PixelFont,
+                            fontSize = 16.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 📊 Module Progress
+                Text(
+                    text = "Modules completed: 2/10",
+                    fontFamily = PixelFont,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                BadgePreviewSection()
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 🤖 Ask CodeBot
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Need any help?",
+                        fontFamily = SoraFont,
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    )
+                    Button(
+                        onClick = { navController.navigate("chatbot") },
+                        shape = RoundedCornerShape(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "Ask CodeBot",
+                            fontFamily = PixelFont,
+                            fontSize = 12.sp,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
     }

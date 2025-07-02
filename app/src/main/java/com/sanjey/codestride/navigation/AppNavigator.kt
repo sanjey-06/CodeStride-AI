@@ -44,7 +44,7 @@ fun AppNavigator() {
         }
         composable("profile") {
             MainScreen(navController = navController, currentRoute = "profile") {
-                ProfileScreen()
+                ProfileScreen(navController)
             }
         }
 
