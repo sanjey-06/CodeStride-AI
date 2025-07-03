@@ -16,7 +16,7 @@ import com.sanjey.codestride.ui.screens.roadmap.LearningScreen
 import com.sanjey.codestride.ui.screens.roadmap.RoadmapScreen
 import com.sanjey.codestride.ui.screens.quiz.QuizScreen
 import com.sanjey.codestride.ui.screens.profile.ProfileScreen
-
+import com.sanjey.codestride.ui.screens.settings.SettingsScreen
 
 
 @Composable
@@ -48,7 +48,9 @@ fun AppNavigator() {
             }
         }
 
-        composable("settings") { /* TODO */ }
+        composable("settings") { MainScreen(navController = navController, currentRoute = "settings") {
+            SettingsScreen(navController)
+        } }
 
         composable("learning/{roadmapId}") { backStackEntry ->
             val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""
