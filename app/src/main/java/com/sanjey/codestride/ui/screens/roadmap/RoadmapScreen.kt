@@ -195,10 +195,12 @@ fun RoadmapScreen(appNavController: NavController) {
                         )
                     }
                     // Show the dialog only when showDialog is true
-                    GenerateRoadmapDialog(
-                        showDialog = showDialog,
-                        onDismiss = { showDialog = false },
-                        navController = appNavController)
+                    if (showDialog) {
+                        GenerateRoadmapDialog(
+                            onDismiss = { showDialog = false },
+                            navController = appNavController
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -233,7 +235,7 @@ fun RoadmapScreen(appNavController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // 🔷 Explore Other Roadmaps (reused)
-                ExploreOtherRoadmapsSection()
+                ExploreOtherRoadmapsSection(navController = appNavController)
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -241,90 +243,65 @@ fun RoadmapScreen(appNavController: NavController) {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GenerateRoadmapDialog(
-    showDialog: Boolean,
     onDismiss: () -> Unit,
     navController: NavController
 ) {
     var userInput by remember { mutableStateOf("") }
 
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { onDismiss() },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (userInput.isNotBlank()) {
-                            onDismiss()
-                            navController.navigate("learning/${Uri.encode(userInput)}")
-                        }
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (userInput.isNotBlank()) {
+                        onDismiss()
+                        navController.navigate("learning/${Uri.encode(userInput)}")
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
+            ) {
+                Text("Generate", fontFamily = PixelFont, color = Color.White)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = { onDismiss() },
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+            ) {
+                Text("Cancel", fontFamily = PixelFont)
+            }
+        },
+        title = {
+            Text("Generate Your Own Roadmap", fontFamily = PixelFont, fontSize = 20.sp, color = Color.White)
+        },
+        text = {
+            Column {
+                Text("Enter a topic to generate your AI roadmap.", fontFamily = SoraFont, fontSize = 14.sp, color = Color.White)
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = userInput,
+                    onValueChange = { userInput = it },
+                    placeholder = {
+                        Text("e.g., Kotlin Basics", fontFamily = SoraFont, color = Color.Gray)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
-                ) {
-                    Text(
-                        text = "Generate",
-                        fontFamily = PixelFont,
-                        color = Color.White
+                    singleLine = true,
+                    colors = TextFieldDefaults.textFieldColors(
+                        containerColor = Color.DarkGray,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedPlaceholderColor = Color.Gray,
+                        unfocusedPlaceholderColor = Color.Gray,
+                        focusedIndicatorColor = CustomBlue,
+                        unfocusedIndicatorColor = Color.Gray,
+                        cursorColor = CustomBlue
                     )
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = { onDismiss() },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                ) {
-                    Text(
-                        text = "Cancel",
-                        fontFamily = PixelFont
-                    )
-                }
-            },
-            title = {
-                Text(
-                    text = "Generate Your Own Roadmap",
-                    fontFamily = PixelFont,
-                    fontSize = 20.sp,
-                    color = Color.White
                 )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "Enter a topic to generate your AI roadmap.",
-                        fontFamily = SoraFont,
-                        fontSize = 14.sp,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextField(
-                        value = userInput,
-                        onValueChange = { userInput = it },
-                        placeholder = {
-                            Text(
-                                "e.g., Kotlin Basics",
-                                fontFamily = SoraFont,
-                                color = Color.Gray
-                            )
-                        },
-                        singleLine = true,
-                        colors = TextFieldDefaults.textFieldColors(
-                            containerColor = Color.DarkGray,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray,
-                            focusedIndicatorColor = CustomBlue,
-                            unfocusedIndicatorColor = Color.Gray,
-                            cursorColor = CustomBlue
-                        )
-                    )
-                }
-            },
-            containerColor = Color.Black
-        )
-    }
+            }
+        },
+        containerColor = Color.Black
+    )
 }
-
-

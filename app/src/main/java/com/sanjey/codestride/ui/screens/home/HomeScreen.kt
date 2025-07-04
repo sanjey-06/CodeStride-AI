@@ -2,6 +2,7 @@ package com.sanjey.codestride.ui.screens.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -185,7 +187,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             Spacer(modifier = Modifier.height(28.dp))
 
             BadgePreviewSection()
-            ExploreOtherRoadmapsSection()
+            ExploreOtherRoadmapsSection(navController)
         }
     }
 }
@@ -343,20 +345,40 @@ fun BadgePreviewSection() {
     }
 }
 @Composable
-fun ExploreOtherRoadmapsSection() {
+fun ExploreOtherRoadmapsSection(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = "Explore other Roadmaps",
-            fontFamily = PixelFont,
-            fontSize = 14.sp,
-            color = Color.Black,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+        // 🠊 Title Row with Arrow
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Explore Roadmaps",
+                fontFamily = PixelFont,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
 
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                tint = Color.Black,
+                contentDescription = "Go to Explore Roadmaps",
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable {
+                        navController.navigate("explore_roadmaps")
+                    }
+            )
+        }
+
+        // 🠊 Static 3 Roadmaps Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
@@ -374,7 +396,7 @@ fun ExploreOtherRoadmapsSection() {
                     Surface(
                         modifier = Modifier.size(84.dp),
                         shape = RoundedCornerShape(16.dp),
-                        color = Color.Black // Or any themed background
+                        color = Color.Black
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Image(
