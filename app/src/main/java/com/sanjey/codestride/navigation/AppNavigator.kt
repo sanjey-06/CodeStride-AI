@@ -16,6 +16,8 @@ import com.sanjey.codestride.ui.screens.roadmap.LearningScreen
 import com.sanjey.codestride.ui.screens.roadmap.RoadmapScreen
 import com.sanjey.codestride.ui.screens.quiz.QuizScreen
 import com.sanjey.codestride.ui.screens.profile.ProfileScreen
+import com.sanjey.codestride.ui.screens.roadmap.ExploreCareerScreen
+import com.sanjey.codestride.ui.screens.roadmap.ExploreRoadmapsScreen
 import com.sanjey.codestride.ui.screens.settings.SettingsScreen
 
 
@@ -62,6 +64,13 @@ fun AppNavigator() {
         composable("quiz_screen") {
             QuizScreen(navController)
         }
+        composable("explore_roadmaps") {
+            ExploreRoadmapsScreen(navController)
+        }
+        composable("explore_career"){
+            ExploreCareerScreen(navController)
+        }
+
 
     }
 }

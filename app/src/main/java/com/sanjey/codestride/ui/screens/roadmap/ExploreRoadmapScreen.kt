@@ -152,6 +152,30 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                                 color = Color.White
                             )
                         }
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Want to get placed in MAANG?",
+                            fontFamily = SoraFont,
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { navController.navigate("explore_career")
+                            },
+                            shape = RoundedCornerShape(50.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
+                        ) {
+                            Text(
+                                text = "Click Here",
+                                fontFamily = PixelFont,
+                                fontSize = 14.sp,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
