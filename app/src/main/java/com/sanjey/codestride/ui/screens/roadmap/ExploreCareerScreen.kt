@@ -39,35 +39,35 @@ val staticCareers = listOf(
         title = "Meta",
         icon = R.drawable.ic_meta,
         description = "Explore opportunities at Meta in AR/VR, AI, and large-scale social platforms.",
-        roles = listOf("Software Engineer", "QA Engineer", "Frontend Developer", "Backend Developer", "Data Analyst")
+        roles = listOf("Software Engineer", "Product Manager", "Data Engineer", "Backend Developer", "Frontend Developer")
     ),
     StaticCareer(
         id = "apple",
         title = "Apple",
         icon = R.drawable.ic_apple,
         description = "Dive into Apple’s world of innovative hardware, iOS development, and elegant design.",
-        roles = listOf("Software Engineer", "QA Engineer", "Frontend Developer", "Backend Developer", "Data Analyst")
+        roles = listOf("Software Engineer", "Embedded Engineer", "Frontend/UI Developer", "Infrastructure Developer", "ML/AI Engineer")
     ),
     StaticCareer(
         id = "amazon",
         title = "Amazon",
         icon = R.drawable.ic_amazon,
         description = "Build scalable systems and contribute to global e-commerce, AWS, and AI products.",
-        roles = listOf("Software Engineer", "QA Engineer", "Frontend Developer", "Backend Developer", "Data Analyst")
+        roles = listOf("Software Developer", "AWS Cloud Developer", "Frontend Engineering", "Data Scientist", "Product Management")
     ),
     StaticCareer(
         id = "netflix",
         title = "Netflix",
         icon = R.drawable.ic_netflix,
         description = "Create engaging digital experiences in entertainment, streaming optimization, and data science.",
-        roles = listOf("Software Engineer", "QA Engineer", "Frontend Developer", "Backend Developer", "Data Analyst")
+        roles = listOf("Software Engineer", "Data Engineer", "UX Developer", "Infrastructure Developer", "Interactive Engineer")
     ),
     StaticCareer(
         id = "google",
         title = "Google",
         icon = R.drawable.ic_google,
         description = "Innovate with machine learning, search, Android, and cutting-edge cloud infrastructure.",
-        roles = listOf("Software Engineer", "QA Engineer", "Frontend Developer", "Backend Developer", "Data Analyst")
+        roles = listOf("Software Engineer", "Infrastructure Engineer", "Frontend Engineer", "AI/ML Developer", "Product Management")
     )
 )
 
