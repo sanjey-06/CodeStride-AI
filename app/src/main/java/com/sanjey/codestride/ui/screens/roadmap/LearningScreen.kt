@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,7 +38,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()
-    var expandedCardIndex by remember { mutableStateOf(-1) }
+    var expandedCardIndex by remember { mutableIntStateOf(-1) }
 
     val modules = listOf(
         Module("1", "Introduction", 1),
@@ -167,7 +168,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                                     Spacer(modifier = Modifier.height(20.dp))
 
                                     Button(
-                                        onClick = { /* TODO: Navigate to lesson */ },
+                                        onClick = { navController.navigate("learning_content") },
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
                                         shape = RoundedCornerShape(12.dp)
