@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,10 +30,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
-import com.sanjey.codestride.data.model.Module
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.viewmodel.ModuleViewModel
 
 @Composable
 fun LearningScreen(roadmapId: String, navController: NavController) {
@@ -40,18 +42,13 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
     val scrollState = rememberScrollState()
     var expandedCardIndex by remember { mutableIntStateOf(-1) }
 
-    val modules = listOf(
-        Module("1", "Introduction", 1),
-        Module("2", "Basics", 2),
-        Module("3", "Variables", 3),
-        Module("4", "Data Types", 4),
-        Module("5", "Loops", 5),
-        Module("6", "Functions", 6),
-        Module("7", "Conditionals", 7),
-        Module("8", "Arrays", 8),
-        Module("9", "OOP", 9),
-        Module("10", "Projects", 10)
-    )
+    val viewModel = remember { ModuleViewModel() }
+    val moduleList by viewModel.modules.collectAsState()
+
+    LaunchedEffect(roadmapId) {
+        viewModel.loadModules(roadmapId)
+    }
+
 
     Column(
         modifier = Modifier
@@ -114,7 +111,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                     contentScale = ContentScale.Fit
                 )
 
-                modules.forEachIndexed { index, module ->
+                moduleList.forEachIndexed { index, module ->
                     val isLeft = index % 2 == 0
                     val verticalOffset = when (index) {
                         0 -> 25.dp
