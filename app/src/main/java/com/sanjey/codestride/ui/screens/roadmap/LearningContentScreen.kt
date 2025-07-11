@@ -17,12 +17,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 @Composable
-fun LearningContentScreen() {
+fun LearningContentScreen(navController: NavController) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
 
@@ -32,7 +35,7 @@ fun LearningContentScreen() {
             .background(Color.Black)
             .verticalScroll(rememberScrollState())
     ) {
-        // 🔷 Top Banner with Image + Title
+        // 🔷 Top Banner with Image + Title and Back Button
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -51,10 +54,24 @@ fun LearningContentScreen() {
                     .background(Color.Black.copy(alpha = 0.6f))
             )
 
+            // 🔙 Back Button
+            IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+
             Text(
                 text = "Module Content",
                 fontFamily = PixelFont,
-                fontSize = 28.sp,
+                fontSize = 20.sp,
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Center)
             )
