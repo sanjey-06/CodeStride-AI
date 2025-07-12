@@ -33,6 +33,10 @@ import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.ModuleViewModel
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
+
 
 @Composable
 fun LearningScreen(roadmapId: String, navController: NavController) {
@@ -143,6 +147,8 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                                     .fillMaxWidth(0.95f)
                                     .wrapContentHeight()
                             ) {
+                                val context = LocalContext.current
+
                                 Column(
                                     modifier = Modifier.padding(24.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -155,7 +161,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "A beginner-friendly introduction to what ${module.title.lowercase()} is, what it can do, and why it is used.",
+                                        text = module.description,
                                         fontFamily = SoraFont,
                                         fontSize = 14.sp,
                                         color = Color.White
@@ -177,13 +183,19 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
 
                                     Spacer(modifier = Modifier.height(10.dp))
 
-                                    Button(
-                                        onClick = { /* TODO: Open YouTube */ },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text("Watch it on Youtube", fontFamily = PixelFont, color = Color.White)
+                                    if (module.yt_url.isNotBlank()) {
+                                        Button(
+                                            onClick = {
+                                                val intent = Intent(Intent.ACTION_VIEW,
+                                                    module.yt_url.toUri())
+                                                context.startActivity(intent)
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text("Watch on YouTube", fontFamily = PixelFont, fontSize = 12.sp, color = Color.White)
+                                        }
                                     }
 
                                     Spacer(modifier = Modifier.height(10.dp))

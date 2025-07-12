@@ -7,5 +7,7 @@ data class Module(
     val roadmap_id: String = "",
     val custom_content: String = "",
     val yt_url: String = "",
-    val quiz_id: String = ""
+    val quiz_id: String = "",
+    val description: String = ""
+
 )
