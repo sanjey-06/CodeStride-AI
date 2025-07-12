@@ -71,9 +71,11 @@ fun AppNavigator() {
         composable("explore_career"){
             ExploreCareerScreen(navController)
         }
-        composable("learning_content"){
-            LearningContentScreen(navController)
+        composable("learning_content/{moduleId}") { backStackEntry ->
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            LearningContentScreen(navController, moduleId)
         }
+
 
 
     }
