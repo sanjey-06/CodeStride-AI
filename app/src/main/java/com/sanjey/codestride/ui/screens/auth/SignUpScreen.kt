@@ -4,7 +4,6 @@ import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.lifecycle.viewmodel.compose.viewModel
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import com.sanjey.codestride.viewmodel.SignupViewModel
@@ -28,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.sanjey.codestride.R
@@ -38,7 +38,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SignupScreen(navController: NavController) {
-    val viewModel: SignupViewModel = viewModel()
+    val viewModel: SignupViewModel = hiltViewModel()
     val signupResult by viewModel.signupResult.observeAsState()
     val context = LocalContext.current
 
