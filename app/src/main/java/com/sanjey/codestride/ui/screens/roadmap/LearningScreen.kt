@@ -36,6 +36,7 @@ import com.sanjey.codestride.viewmodel.ModuleViewModel
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
+import androidx.hilt.navigation.compose.hiltViewModel
 
 
 @Composable
@@ -44,7 +45,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()
 
-    val viewModel = remember { ModuleViewModel() }
+    val viewModel: ModuleViewModel = hiltViewModel()
     val moduleList by viewModel.modules.collectAsState()
 
     LaunchedEffect(roadmapId) {
