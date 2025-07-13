@@ -16,23 +16,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.google.firebase.auth.FirebaseAuth
 import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.ui.theme.CustomBlue
+import com.sanjey.codestride.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
 
 @Composable
 fun ForgotPasswordScreen(navController: NavController) {
+    val viewModel: AuthViewModel = hiltViewModel()
     var email by remember { mutableStateOf("") }
     val context = LocalContext.current
-    val auth = FirebaseAuth.getInstance()
+    val resetSuccess by viewModel.resetSuccess
+    val resetError by viewModel.resetError
     var titleText by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -43,13 +44,20 @@ fun ForgotPasswordScreen(navController: NavController) {
         }
     }
 
+    // Result observer
+    LaunchedEffect(resetSuccess) {
+        if (resetSuccess == true) {
+            Toast.makeText(context, "Reset email sent!", Toast.LENGTH_SHORT).show()
+            navController.popBackStack()
+        } else if (resetSuccess == false) {
+            Toast.makeText(context, resetError ?: "Failed to send email", Toast.LENGTH_SHORT).show()
+        }
+    }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.forgotpassword_backgroundimage),
-            contentDescription = "Forgot Password Background",
+            contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
@@ -67,7 +75,6 @@ fun ForgotPasswordScreen(navController: NavController) {
                 textAlign = TextAlign.Center,
                 color = Color.White
             )
-
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -97,15 +104,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                     if (email.isBlank()) {
                         Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
                     } else {
-                        auth.sendPasswordResetEmail(email)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    Toast.makeText(context, "Reset email sent!", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack() // go back to login
-                                } else {
-                                    Toast.makeText(context, "Failed to send email", Toast.LENGTH_SHORT).show()
-                                }
-                            }
+                        viewModel.sendPasswordReset(email)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
@@ -131,9 +130,3 @@ fun ForgotPasswordScreen(navController: NavController) {
         }
     }
 }
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ForgotPasswordPreview() {
-    ForgotPasswordScreen(navController = rememberNavController())
-}
-
