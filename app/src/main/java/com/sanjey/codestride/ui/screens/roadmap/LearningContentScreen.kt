@@ -24,29 +24,23 @@ import com.sanjey.codestride.ui.theme.SoraFont
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.google.firebase.firestore.FirebaseFirestore
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.sanjey.codestride.viewmodel.ModuleViewModel
 
 
 @Composable
 fun LearningContentScreen(navController: NavController, moduleId: String) {
-    val firestore = FirebaseFirestore.getInstance()
-    var content by remember { mutableStateOf("Loading...") }
-    var title by remember { mutableStateOf("Loading") }
+    val viewModel: ModuleViewModel = hiltViewModel()
+    val moduleData by viewModel.selectedModuleContent.collectAsState()
 
     LaunchedEffect(moduleId) {
-        firestore.collection("modules").document(moduleId).get()
-            .addOnSuccessListener { doc ->
-                title = doc.getString("title") ?: "No Title"
-                content = doc.getString("custom_content") ?: "No content available."
-            }
-            .addOnFailureListener {
-                content = "Failed to load content."
-            }
+        viewModel.loadModuleContent(moduleId)
     }
+
+    val title = moduleData?.first ?: "Loading..."
+    val content = moduleData?.second ?: "Loading..."
 
     // 🔽 KEEP your existing layout code — just replace static text with dynamic values
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp

@@ -40,7 +40,7 @@ import kotlin.math.roundToInt
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sanjey.codestride.viewmodel.LoginViewModel
 
 
@@ -54,7 +54,7 @@ fun LoginScreen(navController: NavController){
     val coroutineScope = rememberCoroutineScope()
     val shakeOffset = remember { Animatable(0f) }
     var backPressedOnce by remember { mutableStateOf(false) }
-    val viewModel: LoginViewModel = viewModel()
+    val viewModel: LoginViewModel = hiltViewModel()
     val loginResult by viewModel.loginResult.observeAsState()
     val context = LocalContext.current
 

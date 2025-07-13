@@ -3,11 +3,11 @@ package com.sanjey.codestride.data.repository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.data.model.Module
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class ModuleRepository {
-
-    private val firestore = FirebaseFirestore.getInstance()
-
+class ModuleRepository @Inject constructor(
+    private val firestore: FirebaseFirestore
+) {
     suspend fun getModulesForRoadmap(roadmapId: String): List<Module> {
         return try {
             val snapshot = firestore.collection("modules")
@@ -22,3 +22,4 @@ class ModuleRepository {
         }
     }
 }
+

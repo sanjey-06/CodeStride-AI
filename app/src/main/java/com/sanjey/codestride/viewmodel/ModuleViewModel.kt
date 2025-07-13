@@ -3,6 +3,7 @@ package com.sanjey.codestride.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.data.model.Module
 import com.sanjey.codestride.data.repository.ModuleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,11 +14,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ModuleViewModel @Inject constructor(
-    private val repository: ModuleRepository
+    private val repository: ModuleRepository,
+    private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
     private val _modules = MutableStateFlow<List<Module>>(emptyList())
     val modules: StateFlow<List<Module>> = _modules
+
+    private val _selectedModuleContent = MutableStateFlow<Pair<String, String>?>(null)
+    val selectedModuleContent: StateFlow<Pair<String, String>?> = _selectedModuleContent
 
     fun loadModules(roadmapId: String) {
         viewModelScope.launch {
@@ -28,5 +33,18 @@ class ModuleViewModel @Inject constructor(
             }
             _modules.value = fetchedModules
         }
+    }
+
+    fun loadModuleContent(moduleId: String) {
+        firestore.collection("modules").document(moduleId)
+            .get()
+            .addOnSuccessListener { doc ->
+                val title = doc.getString("title") ?: "No Title"
+                val content = doc.getString("custom_content") ?: "No content available."
+                _selectedModuleContent.value = title to content
+            }
+            .addOnFailureListener {
+                _selectedModuleContent.value = "Error" to "Failed to load content."
+            }
     }
 }
