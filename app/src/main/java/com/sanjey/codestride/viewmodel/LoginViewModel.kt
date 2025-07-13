@@ -4,10 +4,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class LoginViewModel : ViewModel() {
 
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val auth: FirebaseAuth
+) : ViewModel() {
 
     private val _loginResult = MutableLiveData<Result<Boolean>?>()
     val loginResult: LiveData<Result<Boolean>?> = _loginResult
