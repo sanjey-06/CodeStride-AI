@@ -202,7 +202,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                                     Spacer(modifier = Modifier.height(10.dp))
 
                                     Button(
-                                        onClick = { navController.navigate("quiz_screen") },
+                                        onClick = { navController.navigate("quiz_screen/${module.quiz_id}") },
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
                                         shape = RoundedCornerShape(12.dp)
