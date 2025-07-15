@@ -1,5 +1,6 @@
 package com.sanjey.codestride.data.repository
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
@@ -28,28 +29,36 @@ class FirebaseRepository @Inject constructor(
     }
 
     // ✅ New function for fetching questions dynamically
-    fun getQuestionsByQuizId(
+    fun getQuestionsByQuiz(
+        roadmapId: String,
+        moduleId: String,
         quizId: String,
         onSuccess: (List<Question>) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        firestore.collection("quizzes").document(quizId)
+        Log.d("QuizDebug", "Fetching questions for $roadmapId -> $moduleId -> $quizId")
+
+        firestore.collection("roadmaps")
+            .document(roadmapId)
+            .collection("modules")
+            .document(moduleId)
+            .collection("quizzes")
+            .document(quizId)
+            .collection("questions")
             .get()
-            .addOnSuccessListener { quizDoc ->
-                val questionIds = quizDoc.get("question_ids") as? List<*>
-                if (!questionIds.isNullOrEmpty()) {
-                    firestore.collection("questions")
-                        .whereIn("id", questionIds)
-                        .get()
-                        .addOnSuccessListener { snapshot ->
-                            val questions = snapshot.map { it.toObject(Question::class.java) }
-                            onSuccess(questions)
-                        }
-                        .addOnFailureListener { onFailure(it) }
-                } else {
-                    onSuccess(emptyList())
+            .addOnSuccessListener { snapshot ->
+                Log.d("QuizDebug", "Documents fetched: ${snapshot.size()}")
+                snapshot.documents.forEach {
+                    Log.d("QuizDebug", "Question Doc: ${it.id}, Data: ${it.data}")
                 }
+
+                val questions = snapshot.map { it.toObject(Question::class.java) }
+                Log.d("QuizDebug", "Mapped questions: ${questions.size}")
+                onSuccess(questions)
             }
-            .addOnFailureListener { onFailure(it) }
+            .addOnFailureListener {
+                Log.e("QuizDebug", "Failed to fetch: ${it.message}")
+                onFailure(it)
+            }
     }
 }

@@ -35,16 +35,31 @@ class ModuleViewModel @Inject constructor(
         }
     }
 
-    fun loadModuleContent(moduleId: String) {
-        firestore.collection("modules").document(moduleId)
+    fun loadModuleContent(roadmapId: String, moduleId: String) {
+        Log.d("ModuleContentDebug", "Fetching content for $roadmapId -> $moduleId")
+
+        firestore.collection("roadmaps")
+            .document(roadmapId)
+            .collection("modules")
+            .document(moduleId)
             .get()
             .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    Log.d("ModuleContentDebug", "Document Data: ${doc.data}")
+                } else {
+                    Log.d("ModuleContentDebug", "Document does not exist!")
+                }
+
                 val title = doc.getString("title") ?: "No Title"
                 val content = doc.getString("custom_content") ?: "No content available."
+                Log.d("ModuleContentDebug", "Mapped Title: $title | Content: $content")
+
                 _selectedModuleContent.value = title to content
             }
             .addOnFailureListener {
+                Log.e("ModuleContentDebug", "Failed to fetch: ${it.message}")
                 _selectedModuleContent.value = "Error" to "Failed to load content."
             }
     }
+
 }

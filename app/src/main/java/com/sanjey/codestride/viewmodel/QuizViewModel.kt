@@ -20,9 +20,9 @@ class QuizViewModel @Inject constructor(
     private val _errorMessage = mutableStateOf<String?>(null)
     val errorMessage: State<String?> = _errorMessage
 
-    fun loadQuestions(quizId: String) {
-        firebaseRepository.getQuestionsByQuizId(
-            quizId,
+    fun loadQuestions(roadmapId: String, moduleId: String, quizId: String) {
+        firebaseRepository.getQuestionsByQuiz(
+            roadmapId, moduleId, quizId,
             onSuccess = { _questions.value = it },
             onFailure = { _errorMessage.value = it.message }
         )

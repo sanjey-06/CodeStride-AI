@@ -31,12 +31,13 @@ import com.sanjey.codestride.viewmodel.ModuleViewModel
 
 
 @Composable
-fun LearningContentScreen(navController: NavController, moduleId: String) {
+fun LearningContentScreen(navController: NavController, roadmapId: String, moduleId: String)
+{
     val viewModel: ModuleViewModel = hiltViewModel()
     val moduleData by viewModel.selectedModuleContent.collectAsState()
 
     LaunchedEffect(moduleId) {
-        viewModel.loadModuleContent(moduleId)
+        viewModel.loadModuleContent(roadmapId, moduleId)
     }
 
     val title = moduleData?.first ?: "Loading..."

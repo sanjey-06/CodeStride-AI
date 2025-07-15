@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,19 +30,23 @@ import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.QuizViewModel
 
 @Composable
-fun QuizScreen(navController: NavController, quizId: String) {
-    val context = LocalContext.current
+fun QuizScreen(
+    navController: NavController,
+    roadmapId: String,
+    moduleId: String,
+    quizId: String
+) {
     val viewModel: QuizViewModel = hiltViewModel()
 
     val questions by viewModel.questions
     val errorMessage by viewModel.errorMessage
 
-    var currentIndex by remember { mutableStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableStateOf<String?>(null) }
-    var score by remember { mutableStateOf(0) }
+    var score by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(quizId) {
-        viewModel.loadQuestions(quizId)
+    LaunchedEffect(roadmapId, moduleId, quizId) {
+        viewModel.loadQuestions(roadmapId, moduleId, quizId)
     }
 
     when {
@@ -79,7 +82,6 @@ fun QuizScreen(navController: NavController, quizId: String) {
                         currentIndex++
                         selectedOption = null
                     } else {
-                        // Navigate to result screen with score
                         navController.navigate("quiz_result/$score/${questions.size}")
                     }
                 },
@@ -88,6 +90,7 @@ fun QuizScreen(navController: NavController, quizId: String) {
         }
     }
 }
+
 
 @Composable
 fun QuizContentUI(
@@ -100,7 +103,7 @@ fun QuizContentUI(
     onSubmit: () -> Unit,
     submitEnabled: Boolean
 ) {
-    val context = LocalContext.current
+//    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()

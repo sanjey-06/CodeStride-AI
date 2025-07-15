@@ -62,19 +62,33 @@ fun AppNavigator() {
         }
         composable("chatbot") { ChatbotScreen(navController) }
 
-        composable("quiz_screen") {
-            QuizScreen(navController)
+        composable("quiz_screen/{roadmapId}/{moduleId}/{quizId}") { backStackEntry ->
+            val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""
+            val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            val quizId = backStackEntry.arguments?.getString("quizId") ?: ""
+            QuizScreen(navController = navController, roadmapId = roadmapId, moduleId = moduleId, quizId = quizId)
         }
+
+        // ✅ QuizResultScreen Route (for score)
+//        composable("quiz_result/{score}/{total}") { backStackEntry ->
+//            val score = backStackEntry.arguments?.getString("score")?.toInt() ?: 0
+//            val total = backStackEntry.arguments?.getString("total")?.toInt() ?: 0
+//            QuizResultScreen(score = score, total = total, navController = navController)
+//        }
         composable("explore_roadmaps") {
             ExploreRoadmapsScreen(navController)
         }
         composable("explore_career"){
             ExploreCareerScreen(navController)
         }
-        composable("learning_content/{moduleId}") { backStackEntry ->
+        composable("learning_content/{roadmapId}/{moduleId}") { backStackEntry ->
+            val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""
             val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
-            LearningContentScreen(navController, moduleId)
+            LearningContentScreen(navController = navController, roadmapId = roadmapId, moduleId = moduleId)
         }
+
+
+
 
 
 
