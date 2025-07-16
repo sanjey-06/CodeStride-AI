@@ -1,6 +1,5 @@
 package com.sanjey.codestride.ui.screens.quiz
 
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,6 +27,7 @@ import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.QuizViewModel
+import com.sanjey.codestride.viewmodel.QuizResultState
 
 @Composable
 fun QuizScreen(
@@ -40,6 +40,7 @@ fun QuizScreen(
 
     val questions by viewModel.questions
     val errorMessage by viewModel.errorMessage
+    val quizState by viewModel.quizResultState.collectAsState()
 
     var currentIndex by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableStateOf<String?>(null) }
@@ -65,32 +66,95 @@ fun QuizScreen(
         }
 
         else -> {
-            val currentQuestion = questions[currentIndex]
+            when (quizState) {
+                QuizResultState.None -> {
+                    val currentQuestion = questions[currentIndex]
+                    QuizContentUI(
+                        navController = navController,
+                        questionText = currentQuestion.questionText,
+                        questionNumber = "Question ${currentIndex + 1} of ${questions.size}",
+                        options = currentQuestion.options,
+                        selectedOption = selectedOption,
+                        onOptionSelect = { selectedOption = it },
+                        onSubmit = {
+                            if (selectedOption == currentQuestion.correctAnswer) {
+                                score++
+                            }
+                            if (currentIndex < questions.size - 1) {
+                                currentIndex++
+                                selectedOption = null
+                            } else {
+                                // Call ViewModel to process result
+                                viewModel.onQuizCompleted(
+                                    score = score,
+                                    passingScore = viewModel.passingScore,
+                                    roadmapId = roadmapId,
+                                    moduleId = moduleId
+                                )
+                            }
+                        },
+                        submitEnabled = selectedOption != null
+                    )
+                }
 
-            QuizContentUI(
-                navController = navController,
-                questionText = currentQuestion.questionText,
-                questionNumber = "Question ${currentIndex + 1} of ${questions.size}",
-                options = currentQuestion.options,
-                selectedOption = selectedOption,
-                onOptionSelect = { selectedOption = it },
-                onSubmit = {
-                    if (selectedOption == currentQuestion.correctAnswer) {
-                        score++
+                QuizResultState.Passed -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "🎉 Congratulations! Module Completed",
+                            fontFamily = PixelFont,
+                            color = Color.White,
+                            fontSize = 22.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { navController.popBackStack() }, // Or navigate to next module
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                        ) {
+                            Text("Go Back", fontFamily = PixelFont)
+                        }
                     }
-                    if (currentIndex < questions.size - 1) {
-                        currentIndex++
-                        selectedOption = null
-                    } else {
-                        navController.navigate("quiz_result/$score/${questions.size}")
+                }
+
+                QuizResultState.Failed -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "❌ Try Again!",
+                            fontFamily = PixelFont,
+                            color = Color.White,
+                            fontSize = 22.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                viewModel.resetQuiz()
+                                score = 0
+                                currentIndex = 0
+                                selectedOption = null
+                            },
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722))
+                        ) {
+                            Text("Retry", fontFamily = PixelFont)
+                        }
                     }
-                },
-                submitEnabled = selectedOption != null
-            )
+                }
+            }
         }
     }
 }
-
 
 @Composable
 fun QuizContentUI(
@@ -103,7 +167,6 @@ fun QuizContentUI(
     onSubmit: () -> Unit,
     submitEnabled: Boolean
 ) {
-//    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()
