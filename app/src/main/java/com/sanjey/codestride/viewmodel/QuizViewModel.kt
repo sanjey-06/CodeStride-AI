@@ -27,35 +27,52 @@ class QuizViewModel @Inject constructor(
     private val _errorMessage = mutableStateOf<String?>(null)
     val errorMessage: State<String?> = _errorMessage
 
-    // ✅ Quiz Result State
     private val _quizResultState = MutableStateFlow(QuizResultState.None)
     val quizResultState: StateFlow<QuizResultState> = _quizResultState
 
-    // ✅ Passing Score (temp static; later fetch from Firestore)
     var passingScore: Int = 3
         private set
 
     fun loadQuestions(roadmapId: String, moduleId: String, quizId: String) {
+        // ✅ Load quiz details first
+        firebaseRepository.getQuizDetails(
+            roadmapId,
+            moduleId,
+            quizId,
+            onSuccess = { fetchedScore ->
+                passingScore = fetchedScore
+            },
+            onFailure = {
+                _errorMessage.value = it.message
+            }
+        )
+
+        // ✅ Load questions
         firebaseRepository.getQuestionsByQuiz(
-            roadmapId, moduleId, quizId,
+            roadmapId,
+            moduleId,
+            quizId,
             onSuccess = { _questions.value = it },
             onFailure = { _errorMessage.value = it.message }
         )
     }
 
-    // ✅ Called when quiz ends
-    fun onQuizCompleted(score: Int, passingScore: Int, roadmapId: String, moduleId: String) {
+    fun onQuizCompleted(score: Int, roadmapId: String, moduleId: String) {
         if (score >= passingScore) {
             _quizResultState.value = QuizResultState.Passed
 
-            // TODO: Update Firestore roadmap progress
-            // firebaseRepository.markModuleCompleted(roadmapId, moduleId)
+            // ✅ Update Firestore roadmap progress
+            firebaseRepository.markModuleCompleted(
+                roadmapId,
+                moduleId,
+                onSuccess = { println("Module marked as completed!") },
+                onFailure = { e -> println("Failed to update progress: ${e.message}") }
+            )
         } else {
             _quizResultState.value = QuizResultState.Failed
         }
     }
 
-    // ✅ Reset quiz state for retry
     fun resetQuiz() {
         _quizResultState.value = QuizResultState.None
     }
