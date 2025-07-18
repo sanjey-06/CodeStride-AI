@@ -37,5 +37,27 @@ class ModuleRepository @Inject constructor(
             emptyList()
         }
     }
+    // ✅ NEW FUNCTION: Fetch custom_content for a specific module
+    suspend fun getModuleContent(roadmapId: String, moduleId: String): String? {
+        return try {
+            val docSnapshot = firestore.collection("roadmaps")
+                .document(roadmapId)
+                .collection("modules")
+                .document(moduleId)
+                .get()
+                .await()
+
+            if (docSnapshot.exists()) {
+                docSnapshot.getString("custom_content")
+            } else {
+                Log.e("ModuleRepository", "Module document not found")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("ModuleRepository", "Error fetching module content: ${e.message}")
+            null
+        }
+    }
 }
+
 

@@ -69,12 +69,6 @@ fun AppNavigator() {
             QuizScreen(navController = navController, roadmapId = roadmapId, moduleId = moduleId, quizId = quizId)
         }
 
-        // ✅ QuizResultScreen Route (for score)
-//        composable("quiz_result/{score}/{total}") { backStackEntry ->
-//            val score = backStackEntry.arguments?.getString("score")?.toInt() ?: 0
-//            val total = backStackEntry.arguments?.getString("total")?.toInt() ?: 0
-//            QuizResultScreen(score = score, total = total, navController = navController)
-//        }
         composable("explore_roadmaps") {
             ExploreRoadmapsScreen(navController)
         }

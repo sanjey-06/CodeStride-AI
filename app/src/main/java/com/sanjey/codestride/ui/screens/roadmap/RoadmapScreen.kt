@@ -144,7 +144,7 @@ fun RoadmapScreen(appNavController: NavController) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Button(
-                    onClick = {  val roadmapId = "python"
+                    onClick = {  val roadmapId = "java"
                         appNavController.navigate("learning/$roadmapId") },
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
+import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Module
 import com.sanjey.codestride.data.repository.ModuleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,6 +25,10 @@ class ModuleViewModel @Inject constructor(
     private val _selectedModuleContent = MutableStateFlow<Pair<String, String>?>(null)
     val selectedModuleContent: StateFlow<Pair<String, String>?> = _selectedModuleContent
 
+    // ✅ NEW: StateFlow for HTML content with UiState
+    private val _moduleHtmlState = MutableStateFlow<UiState<String>>(UiState.Loading)
+    val moduleHtmlState: StateFlow<UiState<String>> = _moduleHtmlState
+
     fun loadModules(roadmapId: String) {
         viewModelScope.launch {
             val fetchedModules = repository.getModulesForRoadmap(roadmapId)
@@ -35,31 +40,38 @@ class ModuleViewModel @Inject constructor(
         }
     }
 
-    fun loadModuleContent(roadmapId: String, moduleId: String) {
-        Log.d("ModuleContentDebug", "Fetching content for $roadmapId -> $moduleId")
+    // ✅ NEW FUNCTION: Fetch HTML content for a module
+    fun fetchModuleContent(roadmapId: String, moduleId: String) {
+        viewModelScope.launch {
+            _moduleHtmlState.value = UiState.Loading
+            try {
+                val htmlContent = repository.getModuleContent(roadmapId, moduleId)
+                if (!htmlContent.isNullOrBlank()) {
+                    _moduleHtmlState.value = UiState.Success(htmlContent)
+                } else {
+                    _moduleHtmlState.value = UiState.Error("Content not found")
+                }
+            } catch (e: Exception) {
+                _moduleHtmlState.value = UiState.Error("Failed to load content")
+                Log.e("ModuleViewModel", "Error: ${e.message}")
+            }
+        }
+    }
 
+    // ✅ Keep existing loadModuleContent() intact for title + fallback
+    fun loadModuleContent(roadmapId: String, moduleId: String) {
         firestore.collection("roadmaps")
             .document(roadmapId)
             .collection("modules")
             .document(moduleId)
             .get()
             .addOnSuccessListener { doc ->
-                if (doc.exists()) {
-                    Log.d("ModuleContentDebug", "Document Data: ${doc.data}")
-                } else {
-                    Log.d("ModuleContentDebug", "Document does not exist!")
-                }
-
                 val title = doc.getString("title") ?: "No Title"
                 val content = doc.getString("custom_content") ?: "No content available."
-                Log.d("ModuleContentDebug", "Mapped Title: $title | Content: $content")
-
                 _selectedModuleContent.value = title to content
             }
             .addOnFailureListener {
-                Log.e("ModuleContentDebug", "Failed to fetch: ${it.message}")
                 _selectedModuleContent.value = "Error" to "Failed to load content."
             }
     }
-
 }
