@@ -36,11 +36,15 @@ fun LearningContentScreen(navController: NavController, roadmapId: String, modul
 
     // ✅ Fetch content on launch
     LaunchedEffect(moduleId) {
+        viewModel.loadModuleContent(roadmapId, moduleId)
         viewModel.fetchModuleContent(roadmapId, moduleId)
     }
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
+
+    val moduleData by viewModel.selectedModuleContent.collectAsState()
+    val title = moduleData?.first ?: "Module Content"
 
     Column(
         modifier = Modifier
@@ -80,7 +84,7 @@ fun LearningContentScreen(navController: NavController, roadmapId: String, modul
             }
 
             Text(
-                text = "Module Content",
+                text = title,
                 fontFamily = PixelFont,
                 fontSize = 20.sp,
                 color = Color.White,
