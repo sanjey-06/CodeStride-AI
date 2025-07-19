@@ -1,5 +1,6 @@
 package com.sanjey.codestride.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.sanjey.codestride.data.model.Question
@@ -34,6 +35,8 @@ class QuizViewModel @Inject constructor(
         private set
 
     fun loadQuestions(roadmapId: String, moduleId: String, quizId: String) {
+        Log.d("QUIZ_DEBUG", "Fetching from: roadmaps/$roadmapId/modules/$moduleId/quizzes/$quizId/questions")
+
         // ✅ Load quiz details first
         firebaseRepository.getQuizDetails(
             roadmapId,

@@ -184,11 +184,11 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
 
                                     Spacer(modifier = Modifier.height(10.dp))
 
-                                    if (module.yt_url.isNotBlank()) {
+                                    if (module.ytUrl.isNotBlank()) {
                                         Button(
                                             onClick = {
                                                 val intent = Intent(Intent.ACTION_VIEW,
-                                                    module.yt_url.toUri())
+                                                    module.ytUrl.toUri())
                                                 context.startActivity(intent)
                                             },
                                             modifier = Modifier.fillMaxWidth(),
@@ -202,7 +202,8 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                                     Spacer(modifier = Modifier.height(10.dp))
 
                                     Button(
-                                        onClick = { navController.navigate("quiz_screen/$roadmapId/${module.id}/quiz1") },
+                                        onClick = {
+                                            navController.navigate("quiz_screen/$roadmapId/${module.id}/${module.quizId}") },
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
                                         shape = RoundedCornerShape(12.dp)
