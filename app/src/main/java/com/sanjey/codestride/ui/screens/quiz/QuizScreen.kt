@@ -1,5 +1,6 @@
 package com.sanjey.codestride.ui.screens.quiz
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +28,8 @@ import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.QuizViewModel
+import coil.compose.AsyncImage
+import com.sanjey.codestride.data.model.Quiz
 import com.sanjey.codestride.viewmodel.QuizResultState
 
 @Composable
@@ -46,9 +49,16 @@ fun QuizScreen(
     var selectedOption by remember { mutableStateOf<String?>(null) }
     var score by remember { mutableIntStateOf(0) }
 
+    val quizDetails by viewModel.quizDetails.collectAsState()
+
+
     LaunchedEffect(roadmapId, moduleId, quizId) {
         viewModel.loadQuestions(roadmapId, moduleId, quizId)
     }
+    LaunchedEffect(quizDetails) {
+        println("DEBUG Badge URL: ${quizDetails?.badgeImage}")
+    }
+
 
     when {
         errorMessage != null -> {
@@ -77,56 +87,39 @@ fun QuizScreen(
                         selectedOption = selectedOption,
                         onOptionSelect = { selectedOption = it },
                         onSubmit = {
+                            Log.d("QUIZ_DEBUG", "Before submit → Selected: $selectedOption, Correct: ${currentQuestion.correctAnswer}, Score: $score")
+
                             if (selectedOption == currentQuestion.correctAnswer) {
                                 score++
+                                Log.d("QUIZ_DEBUG", "Correct answer → Score incremented to $score")
                             }
+
                             if (currentIndex < questions.size - 1) {
                                 currentIndex++
                                 selectedOption = null
+                                Log.d("QUIZ_DEBUG", "Next question → currentIndex = $currentIndex, Score = $score")
                             } else {
-                                // Call ViewModel to process result
-                                viewModel.onQuizCompleted(
-                                    score = score,
-                                    roadmapId = roadmapId,
-                                    moduleId = moduleId
-                                )
+                                Log.d("QUIZ_DEBUG", "Final submit → Passing score = $score")
+                                viewModel.onQuizCompleted(score, roadmapId, moduleId)
                             }
                         },
-                        submitEnabled = selectedOption != null
+                                submitEnabled = selectedOption != null
                     )
                 }
 
-                QuizResultState.Passed -> {
+                QuizResultState.Passed, QuizResultState.Failed -> {
                     ResultUI(
                         score = score,
                         totalQuestions = questions.size,
-                        isPassed = true,
+                        isPassed = (quizState == QuizResultState.Passed), // ✅ FIXED LOGIC
+                        quizDetails = quizDetails, // ✅ Pass full quiz details
                         onRetry = {
                             viewModel.resetQuiz()
                             score = 0
                             currentIndex = 0
                             selectedOption = null
                         },
-                        onNext = {
-                            navController.popBackStack() // Go back to roadmap or next module
-                        }
-                    )
-                }
-
-                QuizResultState.Failed -> {
-                    ResultUI(
-                        score = score,
-                        totalQuestions = questions.size,
-                        isPassed = false,
-                        onRetry = {
-                            viewModel.resetQuiz()
-                            score = 0
-                            currentIndex = 0
-                            selectedOption = null
-                        },
-                        onNext = {
-                            navController.popBackStack()
-                        }
+                        onNext = { navController.popBackStack() }
                     )
                 }
             }
@@ -279,7 +272,7 @@ fun ResultUI(
     score: Int,
     totalQuestions: Int,
     isPassed: Boolean,
-    moduleName: String = "Java",
+    quizDetails: Quiz?,  // ✅ NEW
     onRetry: () -> Unit,
     onNext: () -> Unit
 ) {
@@ -343,33 +336,35 @@ fun ResultUI(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // ✅ Badge (only if passed)
-                        if (isPassed) {
-                            // ✅ Show real badge when passed
-                            Image(
-                                painter = painterResource(id = R.drawable.java_badge1),
+                        if (isPassed && quizDetails != null && quizDetails.badgeImage.isNotEmpty()) {
+                            AsyncImage(
+                                model = quizDetails.badgeImage,
                                 contentDescription = "Badge",
                                 modifier = Modifier.size(100.dp)
                             )
-
                             Spacer(modifier = Modifier.height(12.dp))
-
                             Text(
-                                text = "You earned $moduleName Learner Badge !!",
+                                text = quizDetails.badgeTitle,
                                 fontFamily = PixelFont,
                                 fontSize = 16.sp,
-                                color = Color(0xFFFFD700), // Gold text
-                                modifier = Modifier.padding(bottom = 8.dp)
+                                color = Color(0xFFFFD700)
                             )
-                        } else {
-                            // ✅ Show placeholder when failed
+                            Text(
+                                text = quizDetails.badgeDescription,
+                                fontFamily = SoraFont,
+                                fontSize = 14.sp,
+                                color = Color.White,
+                                modifier = Modifier
+                                    .fillMaxWidth() // ✅ Use full width
+                            )
+
+                        } else if (!isPassed) {
                             Image(
-                                painter = painterResource(id = R.drawable.ic_failed), // Add placeholder in drawable
+                                painter = painterResource(id = R.drawable.ic_failed),
                                 contentDescription = "Try Again Placeholder",
                                 modifier = Modifier.size(80.dp)
                             )
-
                             Spacer(modifier = Modifier.height(12.dp))
-
                             Text(
                                 text = "Try Again to Earn Your Badge!",
                                 fontFamily = PixelFont,
@@ -377,7 +372,6 @@ fun ResultUI(
                                 color = Color.Gray
                             )
                         }
-
                         Spacer(modifier = Modifier.height(12.dp))
 
                         // ✅ Performance Message
@@ -405,7 +399,7 @@ fun ResultUI(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // ✅ Status (inline)
+                        // ✅ Status
                         Text(
                             text = if (isPassed) "Status: Passed" else "Status: Failed",
                             fontFamily = PixelFont,
@@ -415,7 +409,7 @@ fun ResultUI(
 
                         Spacer(modifier = Modifier.height(28.dp))
 
-                        // ✅ Buttons with spacing
+                        // ✅ Buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween

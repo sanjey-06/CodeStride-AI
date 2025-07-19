@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.data.model.Question
+import com.sanjey.codestride.data.model.Quiz
 import javax.inject.Inject
 
 class FirebaseRepository @Inject constructor(
@@ -13,7 +14,7 @@ class FirebaseRepository @Inject constructor(
     private val auth: FirebaseAuth
 ) {
 
-    // Existing function for user name
+    // ✅ Fetch user first name
     fun getFirstName(): LiveData<String> {
         val firstNameLiveData = MutableLiveData<String>()
         val uid = auth.currentUser?.uid ?: return firstNameLiveData
@@ -28,7 +29,7 @@ class FirebaseRepository @Inject constructor(
         return firstNameLiveData
     }
 
-    // ✅ New function for fetching questions dynamically
+    // ✅ Fetch questions for the quiz
     fun getQuestionsByQuiz(
         roadmapId: String,
         moduleId: String,
@@ -60,16 +61,14 @@ class FirebaseRepository @Inject constructor(
                 Log.e("QuizDebug", "Failed to fetch: ${it.message}")
                 onFailure(it)
             }
-
-
     }
 
-    // ✅ Fetch quiz details (passing_score & total_questions)
+    // ✅ Fetch full quiz details (with badge info)
     fun getQuizDetails(
         roadmapId: String,
         moduleId: String,
         quizId: String,
-        onSuccess: (Int) -> Unit,  // passingScore
+        onSuccess: (Quiz) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
         firestore.collection("roadmaps")
@@ -80,8 +79,12 @@ class FirebaseRepository @Inject constructor(
             .document(quizId)
             .get()
             .addOnSuccessListener { doc ->
-                val passingScore = doc.getLong("passing_score")?.toInt() ?: 3
-                onSuccess(passingScore)
+                val quiz = doc.toObject(Quiz::class.java)
+                if (quiz != null) {
+                    onSuccess(quiz)
+                } else {
+                    onFailure(Exception("Quiz not found"))
+                }
             }
             .addOnFailureListener { onFailure(it) }
     }
@@ -101,5 +104,4 @@ class FirebaseRepository @Inject constructor(
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onFailure(it) }
     }
-
 }
