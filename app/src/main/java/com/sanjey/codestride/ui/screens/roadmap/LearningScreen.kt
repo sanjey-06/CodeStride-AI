@@ -130,7 +130,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                         else -> 1000.dp
                     }
 
-                    val isUnlocked = index <= 2
+                    val isUnlocked = true
                     val backgroundColor = when {
                         index == 2 -> CustomBlue
                         isUnlocked -> Color(0xFF4CAF50)
