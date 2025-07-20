@@ -1,5 +1,6 @@
 package com.sanjey.codestride.ui.screens.roadmap
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,12 +20,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
+// ✅ Temporary static list for Explore
 data class StaticRoadmap(
     val id: String,
     val title: String,
@@ -42,18 +46,19 @@ val staticRoadmaps = listOf(
 
 @Composable
 fun ExploreRoadmapsScreen(navController: NavController) {
+    val roadmapViewModel: RoadmapViewModel = hiltViewModel()
+
     var selectedRoadmap by remember { mutableStateOf<StaticRoadmap?>(null) }
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     var showDialog by remember { mutableStateOf(false) }
-
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // 🔷 Top Banner with Centered Heading + Back Button
+        // 🔷 Top Banner
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -84,8 +89,7 @@ fun ExploreRoadmapsScreen(navController: NavController) {
             )
 
             Box(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -97,7 +101,7 @@ fun ExploreRoadmapsScreen(navController: NavController) {
             }
         }
 
-        // 🔲 Grid Section
+        // 🔲 Grid of Roadmaps
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -110,20 +114,13 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(28.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                itemsIndexed(
-                    staticRoadmaps,
-                    span = { index, _ ->
-                        val isLastItem = index == staticRoadmaps.lastIndex && staticRoadmaps.size % 2 != 0
-                        if (isLastItem) GridItemSpan(2) else GridItemSpan(1)
-                    }
-                ) { _, roadmap ->
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                itemsIndexed(staticRoadmaps) { _, roadmap ->
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         RoadmapIconCard(roadmap) { selectedRoadmap = roadmap }
                     }
                 }
+
+                // ✅ AI Generator & Career Section
                 item(span = { GridItemSpan(2) }) {
                     Column(
                         modifier = Modifier
@@ -152,37 +149,11 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                                 color = Color.White
                             )
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Want to get placed in MAANG?",
-                            fontFamily = SoraFont,
-                            fontSize = 14.sp,
-                            color = Color.Black
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { navController.navigate("explore_career")
-                            },
-                            shape = RoundedCornerShape(50.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
-                        ) {
-                            Text(
-                                text = "Click Here",
-                                fontFamily = PixelFont,
-                                fontSize = 14.sp,
-                                color = Color.White
-                            )
-                        }
                     }
                 }
             }
-
         }
     }
-
 
     // 🔳 Pop-Up Dialog When a Card is Clicked
     if (selectedRoadmap != null) {
@@ -191,18 +162,14 @@ fun ExploreRoadmapsScreen(navController: NavController) {
             confirmButton = {
                 Button(
                     onClick = {
+                        roadmapViewModel.startRoadmap(selectedRoadmap!!.id)
                         navController.navigate("learning/${selectedRoadmap!!.id}")
                         selectedRoadmap = null
                     },
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White)
                 ) {
-                    Text(
-                        text = "Start",
-                        fontFamily = PixelFont,
-                        fontSize = 14.sp,
-                        color = Color.Black
-                    )
+                    Text("Start", fontFamily = PixelFont, fontSize = 14.sp, color = Color.Black)
                 }
             },
             title = {
@@ -225,6 +192,7 @@ fun ExploreRoadmapsScreen(navController: NavController) {
             shape = RoundedCornerShape(20.dp)
         )
     }
+
     if (showDialog) {
         GenerateRoadmapDialog(
             onDismiss = { showDialog = false },
@@ -232,7 +200,6 @@ fun ExploreRoadmapsScreen(navController: NavController) {
         )
     }
 }
-
 
 @Composable
 fun RoadmapIconCard(roadmap: StaticRoadmap, onClick: () -> Unit) {
@@ -263,4 +230,64 @@ fun RoadmapIconCard(roadmap: StaticRoadmap, onClick: () -> Unit) {
             color = Color.Black
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GenerateRoadmapDialog(
+    onDismiss: () -> Unit,
+    navController: NavController
+) {
+    var userInput by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (userInput.isNotBlank()) {
+                        onDismiss()
+                        navController.navigate("learning/${Uri.encode(userInput)}")
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
+            ) {
+                Text("Generate", fontFamily = PixelFont, color = Color.White)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = { onDismiss() },
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+            ) {
+                Text("Cancel", fontFamily = PixelFont)
+            }
+        },
+        title = {
+            Text("Generate Your Own Roadmap", fontFamily = PixelFont, fontSize = 20.sp, color = Color.White)
+        },
+        text = {
+            Column {
+                Text("Enter a topic to generate your AI roadmap.", fontFamily = SoraFont, fontSize = 14.sp, color = Color.White)
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = userInput,
+                    onValueChange = { userInput = it },
+                    placeholder = {
+                        Text("e.g., Kotlin Basics", fontFamily = SoraFont, color = Color.Gray)
+                    },
+                    singleLine = true,
+                    colors = TextFieldDefaults.textFieldColors(
+                        containerColor = Color.DarkGray,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedIndicatorColor = CustomBlue,
+                        unfocusedIndicatorColor = Color.Gray,
+                        cursorColor = CustomBlue
+                    )
+                )
+            }
+        },
+        containerColor = Color.Black
+    )
 }

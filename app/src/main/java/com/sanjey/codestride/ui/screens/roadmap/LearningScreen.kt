@@ -1,5 +1,7 @@
 package com.sanjey.codestride.ui.screens.roadmap
 
+import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,55 +12,59 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.net.toUri
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.ModuleViewModel
-import android.content.Intent
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.net.toUri
-import androidx.hilt.navigation.compose.hiltViewModel
-
+import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
-fun LearningScreen(roadmapId: String, navController: NavController) {
+fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewModel: RoadmapViewModel) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()
 
-    val viewModel: ModuleViewModel = hiltViewModel()
-    val moduleList by viewModel.modules.collectAsState()
+    val moduleViewModel: ModuleViewModel = hiltViewModel()
+
+    val moduleList by moduleViewModel.modules.collectAsState()
+    val progressState by roadmapViewModel.progressState.collectAsState()
+
+    var roadmapTitle by remember { mutableStateOf("Loading...") }
 
     LaunchedEffect(roadmapId) {
-        viewModel.loadModules(roadmapId)
+        moduleViewModel.loadModules(roadmapId)
+        roadmapTitle = when (roadmapId) {
+            "java" -> "Java Programming"
+            "python" -> "Python Programming"
+            "cpp" -> "C++ Programming"
+            "kotlin" -> "Kotlin Programming"
+            "js" -> "JavaScript Programming"
+            else -> roadmapId.replaceFirstChar { it.uppercase() }
+        }
     }
-
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // 🔷 Top Banner
+        // 🔷 Top Banner with dynamic title
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -87,16 +93,17 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                     tint = Color.White
                 )
             }
+
             Text(
-                text = "Python",
+                text = roadmapTitle,
                 fontFamily = PixelFont,
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Center)
             )
         }
 
-        // 🔽 Scrollable Section
+        // 🔽 Scrollable White Section with roadmap steps
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -115,27 +122,11 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                 )
 
                 moduleList.forEachIndexed { index, module ->
-                    val isLeft = index % 2 == 0
-                    val verticalOffset = when (index) {
-                        0 -> 25.dp
-                        1 -> 125.dp
-                        2 -> 215.dp
-                        3 -> 308.dp
-                        4 -> 400.dp
-                        5 -> 515.dp
-                        6 -> 645.dp
-                        7 -> 737.dp
-                        8 -> 830.dp
-                        9 -> 920.dp
-                        else -> 1000.dp
-                    }
+                    val isFirstModule = index == 0
 
-                    val isUnlocked = true
-                    val backgroundColor = when {
-                        index == 2 -> CustomBlue
-                        isUnlocked -> Color(0xFF4CAF50)
-                        else -> Color(0xFFBDBDBD)
-                    }
+                    val isUnlocked = isFirstModule || progressState.completedModules.contains(moduleList[index - 1].id)
+                    Log.d("LearningScreen", "Index=$index, ModuleId=${module.id}, IsUnlocked=$isUnlocked, Completed=${progressState.completedModules}")
+                    val backgroundColor = if (isUnlocked) Color(0xFF4CAF50) else Color(0xFFBDBDBD)
 
                     var showDialog by remember { mutableStateOf(false) }
 
@@ -170,16 +161,14 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                                     Spacer(modifier = Modifier.height(20.dp))
 
                                     Button(
-                                        onClick = { navController.navigate("learning_content/$roadmapId/${module.id}") },
+                                        onClick = {
+                                            navController.navigate("learning_content/$roadmapId/${module.id}")
+                                        },
                                         modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
+                                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
-                                        Text(
-                                            text="Start Learn ➤",
-                                            fontFamily = PixelFont,
-                                            color = Color.White
-                                            )
+                                        Text("Start Learn ➤", fontFamily = PixelFont, color = Color.White)
                                     }
 
                                     Spacer(modifier = Modifier.height(10.dp))
@@ -187,8 +176,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                                     if (module.ytUrl.isNotBlank()) {
                                         Button(
                                             onClick = {
-                                                val intent = Intent(Intent.ACTION_VIEW,
-                                                    module.ytUrl.toUri())
+                                                val intent = Intent(Intent.ACTION_VIEW, module.ytUrl.toUri())
                                                 context.startActivity(intent)
                                             },
                                             modifier = Modifier.fillMaxWidth(),
@@ -203,9 +191,10 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
 
                                     Button(
                                         onClick = {
-                                            navController.navigate("quiz_screen/$roadmapId/${module.id}/${module.quizId}") },
+                                            navController.navigate("quiz_screen/$roadmapId/${module.id}/${module.quizId}")
+                                        },
                                         modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
+                                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
                                         Text("Take Quiz", fontFamily = PixelFont, color = Color.White)
@@ -216,7 +205,7 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                                     Button(
                                         onClick = { navController.navigate("chatbot") },
                                         modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF40C4FF)),
+                                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
                                         Text("CodeBot", fontFamily = PixelFont, color = Color.White)
@@ -226,20 +215,33 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                         }
                     }
 
+                    // ✅ Module Position + Locking
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset(y = verticalOffset)
+                            .offset(y = when (index) {
+                                0 -> 25.dp
+                                1 -> 125.dp
+                                2 -> 215.dp
+                                3 -> 308.dp
+                                4 -> 400.dp
+                                5 -> 515.dp
+                                6 -> 645.dp
+                                7 -> 737.dp
+                                8 -> 830.dp
+                                9 -> 920.dp
+                                else -> 1000.dp
+                            })
                             .padding(horizontal = 24.dp)
                             .clickable(enabled = isUnlocked) {
-                                showDialog = true
+                                if (isUnlocked) showDialog = true
                             }
                     ) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = backgroundColor,
                             modifier = Modifier
-                                .align(if (isLeft) Alignment.CenterStart else Alignment.CenterEnd)
+                                .align(if (index % 2 == 0) Alignment.CenterStart else Alignment.CenterEnd)
                                 .width(180.dp)
                                 .height(48.dp)
                         ) {
@@ -255,7 +257,6 @@ fun LearningScreen(roadmapId: String, navController: NavController) {
                         }
                     }
                 }
-
 
                 // 🎓 Final certificate button
                 Box(

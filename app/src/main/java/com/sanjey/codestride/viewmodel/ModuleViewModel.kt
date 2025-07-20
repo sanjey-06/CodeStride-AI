@@ -1,6 +1,5 @@
 package com.sanjey.codestride.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
@@ -25,22 +24,18 @@ class ModuleViewModel @Inject constructor(
     private val _selectedModuleContent = MutableStateFlow<Pair<String, String>?>(null)
     val selectedModuleContent: StateFlow<Pair<String, String>?> = _selectedModuleContent
 
-    // ✅ NEW: StateFlow for HTML content with UiState
     private val _moduleHtmlState = MutableStateFlow<UiState<String>>(UiState.Loading)
     val moduleHtmlState: StateFlow<UiState<String>> = _moduleHtmlState
 
+    // ✅ Load all modules for a roadmap
     fun loadModules(roadmapId: String) {
         viewModelScope.launch {
             val fetchedModules = repository.getModulesForRoadmap(roadmapId)
-            Log.d("ModuleDebug", "Loaded modules: ${fetchedModules.size}")
-            fetchedModules.forEach {
-                Log.d("ModuleDebug", "Module: ${it.id}, ${it.title}, ${it.order}")
-            }
             _modules.value = fetchedModules
         }
     }
 
-    // ✅ NEW FUNCTION: Fetch HTML content for a module
+    // ✅ Fetch HTML content for a specific module
     fun fetchModuleContent(roadmapId: String, moduleId: String) {
         viewModelScope.launch {
             _moduleHtmlState.value = UiState.Loading
@@ -53,12 +48,11 @@ class ModuleViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _moduleHtmlState.value = UiState.Error("Failed to load content")
-                Log.e("ModuleViewModel", "Error: ${e.message}")
             }
         }
     }
 
-    // ✅ Keep existing loadModuleContent() intact for title + fallback
+    // ✅ Legacy: Load text-based content for module
     fun loadModuleContent(roadmapId: String, moduleId: String) {
         firestore.collection("roadmaps")
             .document(roadmapId)

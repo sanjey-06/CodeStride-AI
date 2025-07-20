@@ -31,34 +31,32 @@ import com.sanjey.codestride.viewmodel.QuizViewModel
 import coil.compose.AsyncImage
 import com.sanjey.codestride.data.model.Quiz
 import com.sanjey.codestride.viewmodel.QuizResultState
+import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
 fun QuizScreen(
     navController: NavController,
     roadmapId: String,
     moduleId: String,
-    quizId: String
+    quizId: String,
+    roadmapViewModel: RoadmapViewModel
 ) {
-    val viewModel: QuizViewModel = hiltViewModel()
+    val quizViewModel: QuizViewModel = hiltViewModel()
 
-    val questions by viewModel.questions
-    val errorMessage by viewModel.errorMessage
-    val quizState by viewModel.quizResultState.collectAsState()
+    val questions by quizViewModel.questions
+    val errorMessage by quizViewModel.errorMessage
+    val quizState by quizViewModel.quizResultState.collectAsState()
 
     var currentIndex by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableStateOf<String?>(null) }
     var score by remember { mutableIntStateOf(0) }
 
-    val quizDetails by viewModel.quizDetails.collectAsState()
-
+    val quizDetails by quizViewModel.quizDetails.collectAsState()
 
     LaunchedEffect(roadmapId, moduleId, quizId) {
-        viewModel.loadQuestions(roadmapId, moduleId, quizId)
+        Log.d("QuizScreen", "✅ Quiz Passed! Calling updateProgress for $moduleId in $roadmapId")
+        quizViewModel.loadQuestions(roadmapId, moduleId, quizId)
     }
-    LaunchedEffect(quizDetails) {
-        println("DEBUG Badge URL: ${quizDetails?.badgeImage}")
-    }
-
 
     when {
         errorMessage != null -> {
@@ -87,34 +85,34 @@ fun QuizScreen(
                         selectedOption = selectedOption,
                         onOptionSelect = { selectedOption = it },
                         onSubmit = {
-                            Log.d("QUIZ_DEBUG", "Before submit → Selected: $selectedOption, Correct: ${currentQuestion.correctAnswer}, Score: $score")
-
                             if (selectedOption == currentQuestion.correctAnswer) {
                                 score++
-                                Log.d("QUIZ_DEBUG", "Correct answer → Score incremented to $score")
                             }
-
                             if (currentIndex < questions.size - 1) {
                                 currentIndex++
                                 selectedOption = null
-                                Log.d("QUIZ_DEBUG", "Next question → currentIndex = $currentIndex, Score = $score")
                             } else {
-                                Log.d("QUIZ_DEBUG", "Final submit → Passing score = $score")
-                                viewModel.onQuizCompleted(score, roadmapId, moduleId)
+                                quizViewModel.onQuizCompleted(score, roadmapId, moduleId)
                             }
                         },
-                                submitEnabled = selectedOption != null
+                        submitEnabled = selectedOption != null
                     )
                 }
 
                 QuizResultState.Passed, QuizResultState.Failed -> {
+                    if (quizState == QuizResultState.Passed) {
+                        LaunchedEffect(Unit) {
+                            roadmapViewModel.updateProgress(roadmapId, moduleId) // ✅ UPDATED
+                        }
+                    }
+
                     ResultUI(
                         score = score,
                         totalQuestions = questions.size,
-                        isPassed = (quizState == QuizResultState.Passed), // ✅ FIXED LOGIC
-                        quizDetails = quizDetails, // ✅ Pass full quiz details
+                        isPassed = (quizState == QuizResultState.Passed),
+                        quizDetails = quizDetails,
                         onRetry = {
-                            viewModel.resetQuiz()
+                            quizViewModel.resetQuiz()
                             score = 0
                             currentIndex = 0
                             selectedOption = null
@@ -126,6 +124,7 @@ fun QuizScreen(
         }
     }
 }
+
 
 @Composable
 fun QuizContentUI(
