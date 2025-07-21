@@ -1,6 +1,7 @@
 package com.sanjey.codestride.ui.screens.home
 
 import androidx.compose.foundation.Image
+import com.sanjey.codestride.common.FireProgressBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -39,6 +40,12 @@ import com.sanjey.codestride.viewmodel.HomeViewModel
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
     val firstName by viewModel.firstName.observeAsState()
     val quote by viewModel.quoteOfTheDay.observeAsState()
+
+    val userStats by viewModel.userStats.observeAsState()
+    val currentRoadmap by viewModel.currentRoadmap.observeAsState()
+    val badges by viewModel.badges.observeAsState()
+    val exploreRoadmaps by viewModel.exploreRoadmaps.observeAsState()
+
     val scrollState = rememberScrollState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val imageHeight = screenHeight * 0.75f
@@ -128,7 +135,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "3 Days",
+                text = "${userStats?.streak ?: 0} Days",
                 fontFamily = PixelFont,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
@@ -137,20 +144,16 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LinearProgressIndicator(
-                progress = { 0.6f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                color = Color.Black,
-                trackColor = Color.LightGray
+            FireProgressBar(
+                progress = userStats?.progressPercent ?: 0f,
+                isOnFire = true
             )
+
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "You're 1 day away from earning the Silver badge!",
+                text = userStats?.nextBadgeMsg ?: "",
                 fontFamily = SoraFont,
                 fontSize = 12.sp,
                 color = Color.Gray
@@ -178,16 +181,19 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            RoadmapCard(
-                iconResId = R.drawable.ic_python,
-                title = "Python Programming",
-                progressPercent = 50
-            )
+            currentRoadmap?.let {
+                RoadmapCard(
+                    iconResId = it.iconResId,
+                    title = it.title,
+                    progressPercent = it.progressPercent
+                )
+            }
+
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            BadgePreviewSection()
-            ExploreOtherRoadmapsSection(navController)
+            BadgePreviewSection(badges)
+            ExploreOtherRoadmapsSection(navController, exploreRoadmaps)
         }
     }
 }
@@ -282,13 +288,7 @@ fun RoadmapCard(
 }
 
 @Composable
-fun BadgePreviewSection() {
-    val badges = listOf(
-        Triple("Kotlin Novice", R.drawable.kotlin_novice_badge, true),
-        Triple("Security Specialist", R.drawable.security_specialist_badge, false),
-        Triple("Jetpack Explorer", R.drawable.jetpack_explorer_badge, false)
-    )
-
+fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>?) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -306,7 +306,7 @@ fun BadgePreviewSection() {
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            badges.forEach { (_, imageRes, unlocked) ->
+            badges?.forEach { (_, imageRes, unlocked) ->
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.width(100.dp)
@@ -345,16 +345,14 @@ fun BadgePreviewSection() {
     }
 }
 @Composable
-fun ExploreOtherRoadmapsSection(navController: NavController) {
+fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pair<Int, String>>?) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        // 🠊 Title Row with Arrow
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -372,27 +370,16 @@ fun ExploreOtherRoadmapsSection(navController: NavController) {
                 contentDescription = "Go to Explore Roadmaps",
                 modifier = Modifier
                     .size(20.dp)
-                    .clickable {
-                        navController.navigate("explore_roadmaps")
-                    }
+                    .clickable { navController.navigate("explore_roadmaps") }
             )
         }
 
-        // 🠊 Static 3 Roadmaps Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
         ) {
-            val roadmaps = listOf(
-                R.drawable.ic_cpp to "C++",
-                R.drawable.ic_java to "Java",
-                R.drawable.ic_kotlin to "Kotlin"
-            )
-
-            roadmaps.forEach { (icon, label) ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+            roadmaps?.forEach { (icon, label) ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Surface(
                         modifier = Modifier.size(84.dp),
                         shape = RoundedCornerShape(16.dp),

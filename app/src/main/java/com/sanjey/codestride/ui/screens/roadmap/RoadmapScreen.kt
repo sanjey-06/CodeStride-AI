@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,15 +25,19 @@ import com.sanjey.codestride.ui.screens.home.ExploreOtherRoadmapsSection
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
-fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapViewModel) {
+fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapViewModel, homeViewModel: HomeViewModel) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
 
     val currentRoadmapId by roadmapViewModel.currentRoadmapId.collectAsState()
     val currentModule by roadmapViewModel.currentModule.collectAsState()
+
+    val exploreRoadmaps by homeViewModel.exploreRoadmaps.observeAsState()
+
 
     // ✅ Call this once to start observing roadmap & progress
     LaunchedEffect(Unit) {
@@ -207,7 +212,8 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                ExploreOtherRoadmapsSection(navController = appNavController)
+                ExploreOtherRoadmapsSection(navController = appNavController,
+                    roadmaps = exploreRoadmaps)
 
                 Spacer(modifier = Modifier.height(16.dp))
             }

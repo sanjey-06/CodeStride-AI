@@ -28,15 +28,19 @@ import com.sanjey.codestride.ui.screens.home.BadgePreviewSection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.sanjey.codestride.viewmodel.HomeViewModel
 
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
+    val badges by viewModel.badges.observeAsState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     var showEditDialog by remember { mutableStateOf(false) }
@@ -213,7 +217,7 @@ fun ProfileScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                BadgePreviewSection()
+                BadgePreviewSection(badges)
 
                 Spacer(modifier = Modifier.height(24.dp))
 

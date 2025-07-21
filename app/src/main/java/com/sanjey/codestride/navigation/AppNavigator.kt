@@ -39,7 +39,7 @@ fun AppNavigator() {
 
         composable("roadmap") {
             MainScreen(navController = navController, currentRoute = "roadmap") {
-                RoadmapScreen(appNavController = navController, roadmapViewModel = roadmapViewModel)
+                RoadmapScreen(appNavController = navController, roadmapViewModel = roadmapViewModel, homeViewModel = hiltViewModel())
             }
         }
 
