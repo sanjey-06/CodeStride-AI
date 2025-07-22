@@ -1,6 +1,5 @@
 package com.sanjey.codestride.common
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,15 +19,15 @@ fun FireProgressBar(progress: Float, isOnFire: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(16.dp) // ✅ The visible bar stays small
+            .height(16.dp) // ✅ Visible progress bar height
             .clip(RoundedCornerShape(8.dp))
             .background(Color.LightGray)
             .graphicsLayer {
-                clip = false // ✅ Allow flames to draw outside
+                clip = false // ✅ Let flames overflow outside
             },
         contentAlignment = Alignment.BottomStart
     ) {
-        // Base progress bar
+        // ✅ Base progress bar
         Box(
             modifier = Modifier
                 .fillMaxWidth(progress.coerceIn(0f, 1f))
@@ -36,7 +35,7 @@ fun FireProgressBar(progress: Float, isOnFire: Boolean) {
                 .background(Color.Red)
         )
 
-        // Flames (overflow allowed)
+        // ✅ Flames
         if (isOnFire) {
             val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.fire))
             val progressAnim by animateLottieCompositionAsState(
@@ -49,17 +48,21 @@ fun FireProgressBar(progress: Float, isOnFire: Boolean) {
                 progress = { progressAnim },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp) // ✅ Flames get tall, even though bar is 16.dp
-
+                    .height(80.dp) // ✅ Tall enough for flames
+                    .graphicsLayer {
+                        scaleX = 1f  // No crazy stretching horizontally
+                        scaleY = 1f // 🔥 Reduce height since JSON is 400px tall
+                    }
             )
         }
     }
 }
+
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 fun FireProgressBarPreview() {
     FireProgressBar(
-        progress = 0.8f,  // Preview at 80% progress
-        isOnFire = true   // Force flames ON for preview
+        progress = 0.8f,
+        isOnFire = true
     )
 }
