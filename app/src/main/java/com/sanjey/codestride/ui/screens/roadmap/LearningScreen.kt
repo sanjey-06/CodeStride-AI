@@ -31,16 +31,18 @@ import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.viewmodel.ModuleViewModel
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
-fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewModel: RoadmapViewModel) {
+fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewModel: RoadmapViewModel, homeViewModel: HomeViewModel = hiltViewModel()) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()
 
     val moduleViewModel: ModuleViewModel = hiltViewModel()
+
 
     val moduleList by moduleViewModel.modules.collectAsState()
     val progressState by roadmapViewModel.progressState.collectAsState()
@@ -162,6 +164,8 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                     Button(
                                         onClick = {
+                                            homeViewModel.updateStreakOnLearning()
+                                            Log.d("STREAK_DEBUG", "Custom Content clicked for ${module.id}")
                                             navController.navigate("learning_content/$roadmapId/${module.id}")
                                         },
                                         modifier = Modifier.fillMaxWidth(),
@@ -176,6 +180,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                     if (module.ytUrl.isNotBlank()) {
                                         Button(
                                             onClick = {
+                                                homeViewModel.updateStreakOnLearning()
                                                 val intent = Intent(Intent.ACTION_VIEW, module.ytUrl.toUri())
                                                 context.startActivity(intent)
                                             },
@@ -191,6 +196,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                     Button(
                                         onClick = {
+                                            homeViewModel.updateStreakOnLearning()
                                             navController.navigate("quiz_screen/$roadmapId/${module.id}/${module.quizId}")
                                         },
                                         modifier = Modifier.fillMaxWidth(),
@@ -234,7 +240,11 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                             })
                             .padding(horizontal = 24.dp)
                             .clickable(enabled = isUnlocked) {
-                                if (isUnlocked) showDialog = true
+                                if (isUnlocked) {
+                                    Log.d("STREAK_DEBUG", "Dialog opened for ${module.id}")
+
+                                    showDialog = true
+                                }
                             }
                     ) {
                         Surface(
