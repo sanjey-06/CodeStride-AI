@@ -21,19 +21,22 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.livedata.observeAsState
+
 
 @Composable
 fun ForgotPasswordScreen(navController: NavController) {
     val viewModel: AuthViewModel = hiltViewModel()
     var email by remember { mutableStateOf("") }
     val context = LocalContext.current
-    val resetSuccess by viewModel.resetSuccess
-    val resetError by viewModel.resetError
+    val resetState by viewModel.resetPasswordState.observeAsState()
+
     var titleText by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -44,13 +47,19 @@ fun ForgotPasswordScreen(navController: NavController) {
         }
     }
 
-    // Result observer
-    LaunchedEffect(resetSuccess) {
-        if (resetSuccess == true) {
-            Toast.makeText(context, "Reset email sent!", Toast.LENGTH_SHORT).show()
-            navController.popBackStack()
-        } else if (resetSuccess == false) {
-            Toast.makeText(context, resetError ?: "Failed to send email", Toast.LENGTH_SHORT).show()
+    // ✅ Handle state changes
+    LaunchedEffect(resetState) {
+        when (resetState) {
+            is UiState.Success -> {
+                Toast.makeText(context, "Reset email sent!", Toast.LENGTH_SHORT).show()
+                navController.popBackStack()
+                viewModel.clearResetState()
+            }
+            is UiState.Error -> {
+                Toast.makeText(context, (resetState as UiState.Error).message, Toast.LENGTH_SHORT).show()
+                viewModel.clearResetState()
+            }
+            else -> {}
         }
     }
 
@@ -129,4 +138,12 @@ fun ForgotPasswordScreen(navController: NavController) {
             )
         }
     }
+
+    // ✅ Show Loader if UiState.Loading
+    if (resetState is UiState.Loading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color.White)
+        }
+    }
 }
+

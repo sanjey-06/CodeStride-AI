@@ -35,12 +35,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.data.model.HomeScreenData
 import com.sanjey.codestride.viewmodel.HomeViewModel
 
 
 @Composable
 fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
-    val badges by viewModel.badges.observeAsState()
+    val homeState by viewModel.homeUiState.observeAsState(UiState.Loading)
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     var showEditDialog by remember { mutableStateOf(false) }
@@ -217,8 +219,21 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                BadgePreviewSection(badges)
-
+                when (homeState) {
+                    is UiState.Success -> {
+                        val data = (homeState as UiState.Success<HomeScreenData>).data
+                        BadgePreviewSection(data.badges)
+                    }
+                    else -> {
+                        Text(
+                            text = "Loading badges...",
+                            fontFamily = PixelFont,
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // 🤖 Ask CodeBot

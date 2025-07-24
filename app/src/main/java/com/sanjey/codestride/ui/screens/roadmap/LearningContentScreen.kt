@@ -30,21 +30,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun LearningContentScreen(navController: NavController, roadmapId: String, moduleId: String) {
     val viewModel: ModuleViewModel = hiltViewModel()
+    val title by viewModel.moduleTitle.collectAsState()
+
 
     // ✅ Collect state for HTML content
     val moduleHtmlState by viewModel.moduleHtmlState.collectAsState()
 
     // ✅ Fetch content on launch
     LaunchedEffect(moduleId) {
-        viewModel.loadModuleContent(roadmapId, moduleId)
         viewModel.fetchModuleContent(roadmapId, moduleId)
+        viewModel.fetchModuleDetails(roadmapId, moduleId)
+
     }
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
 
-    val moduleData by viewModel.selectedModuleContent.collectAsState()
-    val title = moduleData?.first ?: "Module Content"
+
+
 
     Column(
         modifier = Modifier
@@ -179,7 +182,13 @@ fun LearningContentScreen(navController: NavController, roadmapId: String, modul
                         )
                     }
                 }
+                UiState.Idle, UiState.Empty -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No content available", color = Color.Gray)
+                    }
+                }
             }
+
         }
     }
 }

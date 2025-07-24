@@ -10,9 +10,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,197 +25,198 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.HomeViewModel
+import com.sanjey.codestride.data.model.HomeScreenData
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
-    val firstName by viewModel.firstName.observeAsState()
-    val userStats by viewModel.userStats.observeAsState()
-    val currentRoadmap by viewModel.currentRoadmap.observeAsState()
-    val badges by viewModel.badges.observeAsState()
-    val exploreRoadmaps by viewModel.exploreRoadmaps.observeAsState()
-
+    val homeState by viewModel.homeUiState.observeAsState(UiState.Loading)
     val scrollState = rememberScrollState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val imageHeight = screenHeight * 0.75f
 
-    val quoteOfTheDay by viewModel.quoteOfTheDay.observeAsState()
+    when (homeState) {
+        is UiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = CustomBlue)
+            }
+        }
 
+        is UiState.Success -> {
+            val data = (homeState as UiState.Success<HomeScreenData>).data
 
-    LaunchedEffect(Unit) {
-        viewModel.refreshUserStats()
-        viewModel.loadQuoteOfTheDay(FirebaseAuth.getInstance().currentUser?.uid)
-
-    }
-
-
-    Column(
-        modifier = Modifier
-            .verticalScroll(scrollState)
-            .background(Color.Black)
-            .wrapContentHeight()
-    ) {
-        // Top 75% black background
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(imageHeight)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.homescreen_background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.8f))
-            )
-
-            if (firstName != null && quoteOfTheDay != null) {
-                Column(
+                    .verticalScroll(scrollState)
+                    .background(Color.Black)
+                    .wrapContentHeight()
+            ) {
+                // ✅ Top section
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .height(imageHeight)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.homescreen_background),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.8f))
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Hello ${data.firstName} 👋",
+                            fontFamily = PixelFont,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "“${data.quote.text}”",
+                            fontFamily = SoraFont,
+                            fontSize = 14.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier
+                                .padding(horizontal = 32.dp)
+                                .fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "- ${data.quote.author}",
+                            fontFamily = SoraFont,
+                            fontSize = 16.sp,
+                            color = Color.White.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                // ✅ Bottom white section
+                Column(
+                    modifier = Modifier
+                        .wrapContentHeight()
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
+                        .background(Color.White)
+                        .padding(horizontal = 20.dp, vertical = 24.dp)
                 ) {
                     Text(
-                        text = "Hello $firstName 👋",
+                        text = "🔥 Current Streak",
                         fontFamily = PixelFont,
-                        fontSize = 24.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        color = Color.Black
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "${data.userStats.streak} Days",
+                        fontFamily = PixelFont,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
 
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    FireProgressBar(
+                        progress = data.userStats.progressPercent,
+                        isOnFire = true
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     Text(
-                        text = "“${quoteOfTheDay!!.text}”",
+                        text = data.userStats.nextBadgeMsg,
                         fontFamily = SoraFont,
-                        fontSize = 14.sp,
-                        color = Color.White,
-                        textAlign = TextAlign.Start,
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Button(
+                        onClick = { navController.navigate("roadmap") },
                         modifier = Modifier
-                            .padding(horizontal = 32.dp)
                             .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
+                    ) {
+                        Text(
+                            text = "Go to your Roadmap",
+                            fontFamily = PixelFont,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    RoadmapCard(
+                        iconResId = data.currentRoadmap.iconResId,
+                        title = data.currentRoadmap.title,
+                        progressPercent = data.currentRoadmap.progressPercent
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "- ${quoteOfTheDay!!.author}",
-                        fontFamily = SoraFont,
-                        fontSize = 16.sp,
-                        color = Color.White.copy(alpha = 0.8f),
-                        textAlign = TextAlign.Center
-                    )
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    BadgePreviewSection(data.badges)
+                    ExploreOtherRoadmapsSection(navController, data.exploreRoadmaps)
                 }
             }
         }
 
-        // ✅ Fixed white section with no extra scroll
-        Column(
-            modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                .background(Color.White)
-                .padding(horizontal = 20.dp, vertical = 24.dp)
-        ) {
-            Text(
-                text = "🔥 Current Streak",
-                fontFamily = PixelFont,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "${userStats?.streak ?: 0} Days",
-                fontFamily = PixelFont,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            FireProgressBar(
-                progress = userStats?.progressPercent ?: 0f,
-                isOnFire = true
-            )
-
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = userStats?.nextBadgeMsg ?: "",
-                fontFamily = SoraFont,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = {  navController.navigate("roadmap") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .height(48.dp),
-                shape = RoundedCornerShape(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
-            ) {
-                Text(
-                    text = "Go to your Roadmap",
-                    fontFamily = PixelFont,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+        is UiState.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Something went wrong", color = Color.Red, fontFamily = PixelFont)
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            currentRoadmap?.let {
-                RoadmapCard(
-                    iconResId = it.iconResId,
-                    title = it.title,
-                    progressPercent = it.progressPercent
-                )
+        }
+        UiState.Idle -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Welcome!", color = Color.Gray, fontFamily = PixelFont)
             }
+        }
 
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            BadgePreviewSection(badges)
-            ExploreOtherRoadmapsSection(navController, exploreRoadmaps)
+        UiState.Empty -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No data available", color = Color.Gray, fontFamily = PixelFont)
+            }
         }
     }
 }
 
 @Composable
-fun RoadmapCard(
-    iconResId: Int,
-    title: String,
-    progressPercent: Int,
-    modifier: Modifier = Modifier
-) {
+fun RoadmapCard(iconResId: Int, title: String, progressPercent: Int, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -299,7 +300,7 @@ fun RoadmapCard(
 }
 
 @Composable
-fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>?) {
+fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -317,7 +318,7 @@ fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>?) {
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            badges?.forEach { (_, imageRes, unlocked) ->
+            badges.forEach { (_, imageRes, unlocked) ->
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.width(100.dp)
@@ -346,7 +347,9 @@ fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>?) {
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = null,
                                 tint = Color.Gray,
-                                modifier = Modifier.size(14.dp).padding(start = 4.dp)
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .padding(start = 4.dp)
                             )
                         }
                     }
@@ -355,8 +358,9 @@ fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>?) {
         }
     }
 }
+
 @Composable
-fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pair<Int, String>>?) {
+fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pair<Int, String>>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -389,7 +393,7 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pai
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
         ) {
-            roadmaps?.forEach { (icon, label) ->
+            roadmaps.forEach { (icon, label) ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Surface(
                         modifier = Modifier.size(84.dp),
@@ -416,4 +420,3 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pai
         }
     }
 }
-

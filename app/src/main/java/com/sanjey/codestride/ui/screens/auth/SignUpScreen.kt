@@ -31,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.ui.theme.CustomBlue
@@ -39,7 +40,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun SignupScreen(navController: NavController) {
     val viewModel: SignupViewModel = hiltViewModel()
-    val signupResult by viewModel.signupResult.observeAsState()
+    val signupState by viewModel.signupState.observeAsState(UiState.Idle)
     val context = LocalContext.current
 
     var firstName by remember { mutableStateOf("") }
@@ -71,18 +72,23 @@ fun SignupScreen(navController: NavController) {
         }
     }
 
-    signupResult?.let { result ->
-        result.onSuccess {
-            navController.navigate("home") {
-                popUpTo("signup") { inclusive = true }
-                launchSingleTop = true
+    LaunchedEffect(signupState) {
+        when (signupState) {
+            is UiState.Success -> {
+                navController.navigate("home") {
+                    popUpTo("signup") { inclusive = true }
+                    launchSingleTop = true
+                }
+                viewModel.clearSignupState()
             }
-            viewModel.clearResult()
-        }.onFailure { error ->
-            Toast.makeText(context, error.message ?: "Signup failed", Toast.LENGTH_LONG).show()
-            viewModel.clearResult()
+            is UiState.Error -> {
+                Toast.makeText(context, (signupState as UiState.Error).message, Toast.LENGTH_LONG).show()
+                viewModel.clearSignupState()
+            }
+            else -> {}
         }
     }
+
 
     BackHandler {
         navController.navigate("login") {

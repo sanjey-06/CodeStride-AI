@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.sanjey.codestride.data.prefs.OnboardingPreferences
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.viewmodel.UserViewModel
 import kotlinx.coroutines.delay
@@ -24,15 +23,13 @@ fun SplashScreen(
     navController: NavController,
     userViewModel: UserViewModel = hiltViewModel()
 ) {
+
     val context = LocalContext.current
-    val hasSeenOnboarding by OnboardingPreferences.readOnboardingSeen(context)
-        .collectAsState(initial = false)
+    val splashTarget by userViewModel.splashNavigationState.observeAsState()
 
     var visibleText by remember { mutableStateOf("") }
     val fullText = "CodeStride"
 
-    // Observe login state from ViewModel
-    val isUserLoggedIn by userViewModel.isUserLoggedIn.observeAsState()
 
     LaunchedEffect(Unit) {
         // Start text animation
@@ -42,32 +39,14 @@ fun SplashScreen(
         }
 
         // Check login state after splash animation
-        userViewModel.checkUserLogin()
+        userViewModel.handleSplashNavigation(context)
     }
 
     // React to login state changes
-    LaunchedEffect(isUserLoggedIn) {
-        if (isUserLoggedIn != null) {
-            delay(800) // Short delay after text animation
-            when {
-                isUserLoggedIn == true -> {
-                    // ✅ Already logged in → Go to Main/Home
-                    navController.navigate("home") {
-                        popUpTo("splash") { inclusive = true }
-                    }
-                }
-                else -> {
-                    // ✅ Not logged in → Check onboarding
-                    if (hasSeenOnboarding) {
-                        navController.navigate("login") {
-                            popUpTo("splash") { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate("onboarding") {
-                            popUpTo("splash") { inclusive = true }
-                        }
-                    }
-                }
+    LaunchedEffect(splashTarget) {
+        splashTarget?.let { target ->
+            navController.navigate(target) {
+                popUpTo("splash") { inclusive = true }
             }
         }
     }

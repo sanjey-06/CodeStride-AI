@@ -1,151 +1,126 @@
 package com.sanjey.codestride.viewmodel
 
-import android.util.Log
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
+import com.sanjey.codestride.R
+import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.data.model.ProgressState
+import com.sanjey.codestride.data.model.Roadmap
 import com.sanjey.codestride.data.repository.RoadmapRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-
-data class ProgressState(
-    val completedModules: List<String> = emptyList(),
-    val currentModule: String = "Start from Module 1"
-)
 
 @HiltViewModel
 class RoadmapViewModel @Inject constructor(
-    private val repository: RoadmapRepository,
-    private val firestore: FirebaseFirestore,
-
+    private val repository: RoadmapRepository
 ) : ViewModel() {
+
+    private val _roadmapsState = MutableStateFlow<UiState<List<Roadmap>>>(UiState.Idle)
+    val roadmapsState: StateFlow<UiState<List<Roadmap>>> = _roadmapsState
 
     private val _currentRoadmapId = MutableStateFlow<String?>(null)
     val currentRoadmapId: StateFlow<String?> = _currentRoadmapId
 
-    private val _currentModule = MutableStateFlow("Start from Module 1")
-    val currentModule: StateFlow<String> = _currentModule
+    private val _progressState = MutableStateFlow(UiState.Idle as UiState<ProgressState>)
+    val progressState: StateFlow<UiState<ProgressState>> = _progressState
 
-    private val _progressState = MutableStateFlow(ProgressState())
-    val progressState: StateFlow<ProgressState> = _progressState
+    private val _currentRoadmapTitle = mutableStateOf("Learning")
+    val currentRoadmapTitle: State<String> = _currentRoadmapTitle
 
-    private val _roadmaps = MutableStateFlow<List<Map<String, Any>>>(emptyList())
-    val roadmaps: StateFlow<List<Map<String, Any>>> = _roadmaps
 
+    // ✅ Load all roadmaps
     fun loadRoadmaps() {
         viewModelScope.launch {
+            _roadmapsState.value = UiState.Loading
             try {
-                _roadmaps.value = repository.getAllRoadmaps()
+                val roadmaps = repository.getAllRoadmaps()
+                if (roadmaps.isNotEmpty()) {
+                    _roadmapsState.value = UiState.Success(roadmaps)
+                } else {
+                    _roadmapsState.value = UiState.Empty
+                }
             } catch (e: Exception) {
-                Log.e("RoadmapViewModel", "Error loading roadmaps: ${e.message}")
+                _roadmapsState.value = UiState.Error(e.message ?: "Failed to load roadmaps")
             }
         }
     }
 
-    fun startRoadmap(roadmapId: String) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    // ✅ Start a roadmap
+    fun startRoadmap(userId: String, roadmapId: String) {
         viewModelScope.launch {
             try {
                 repository.startRoadmap(userId, roadmapId)
             } catch (e: Exception) {
-                Log.e("RoadmapViewModel", "Error starting roadmap: ${e.message}")
+                // Handle error UI in future if needed
             }
         }
     }
 
-    fun observeCurrentRoadmap() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        repository.observeCurrentRoadmap(userId) { roadmapId ->
-            _currentRoadmapId.value = roadmapId
-            if (roadmapId != null) observeProgress(roadmapId)
-        }
-    }
-
-    private fun observeProgress(roadmapId: String) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        firestore.collection("users")
-            .document(userId)
-            .collection("progress")
-            .document(roadmapId)
-            .addSnapshotListener { snapshot, _ ->
-                Log.d("RoadmapViewModel", "Listening to progress for $roadmapId")
-
-                if (snapshot != null && snapshot.exists()) {
-                    Log.d("RoadmapViewModel", "Progress snapshot updated: ${snapshot.data}")
-
-                    val completed = (snapshot.get("completed_modules") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                    val currentModuleId = snapshot.getString("current_module") ?: ""
-
-                    if (currentModuleId.isNotEmpty()) {
-                        // Fetch the title from modules collection
-                        firestore.collection("roadmaps")
-                            .document(roadmapId)
-                            .collection("modules")
-                            .document(currentModuleId)
-                            .get()
-                            .addOnSuccessListener { moduleDoc ->
-                                val moduleTitle = moduleDoc.getString("title") ?: "Start from Module 1"
-                                _progressState.value = ProgressState(completedModules = completed, currentModule = moduleTitle)
-                                _currentModule.value = moduleTitle
-                            }
-                    } else {
-                        _progressState.value = ProgressState(completedModules = completed, currentModule = "Start from Module 1")
-                        _currentModule.value = "Start from Module 1"
-                    }
-                }
-            }
-    }
-
-
-    fun updateProgress(roadmapId: String, moduleId: String) {
+    // ✅ Observe current roadmap as Flow from repository
+    fun observeCurrentRoadmap(userId: String) {
         viewModelScope.launch {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
-            val docRef = firestore.collection("users")
-                .document(userId)
-                .collection("progress")
-                .document(roadmapId)
-
-            try {
-                val snapshot = docRef.get().await()
-                val completed = (snapshot.get("completed_modules") as? List<*>)?.filterIsInstance<String>()?.toMutableList() ?: mutableListOf()
-                if (!completed.contains(moduleId)) {
-                    completed.add(moduleId)
-                }
-
-                // ✅ Fetch all modules in order
-                val modulesSnapshot = firestore.collection("roadmaps")
-                    .document(roadmapId)
-                    .collection("modules")
-                    .orderBy("order")
-                    .get()
-                    .await()
-
-                val allModules = modulesSnapshot.documents.map { it.id }
-                val currentIndex = allModules.indexOf(moduleId)
-                val nextModuleId = if (currentIndex != -1 && currentIndex + 1 < allModules.size) {
-                    allModules[currentIndex + 1]
-                } else {
-                    null
-                }
-
-                docRef.set(
-                    mapOf(
-                        "completed_modules" to completed,
-                        "current_module" to (nextModuleId ?: moduleId)
-                    ),
-                    SetOptions.merge()
-                ).await()
-
-                Log.d("RoadmapViewModel", "✅ Progress updated! Next: ${nextModuleId ?: moduleId}")
-            } catch (e: Exception) {
-                Log.e("RoadmapViewModel", "❌ Error updating progress: ${e.message}")
+            repository.observeCurrentRoadmap(userId).collectLatest { roadmapId ->
+                _currentRoadmapId.value = roadmapId
+                if (roadmapId != null) observeProgress(userId, roadmapId)
             }
         }
     }
+
+    // ✅ Observe progress from repository
+    private fun observeProgress(userId: String, roadmapId: String) {
+        viewModelScope.launch {
+            repository.observeProgress(userId, roadmapId).collectLatest { currentModuleId ->
+                val moduleTitle = if (currentModuleId != null) {
+                    repository.getModuleTitle(roadmapId, currentModuleId)
+                } else {
+                    "Start from Module 1"
+                }
+
+                _progressState.value = UiState.Success(
+                    ProgressState(
+                        completedModules = emptyList(), // Can add completed list later
+                        currentModule = moduleTitle // ✅ Now this is the name, not ID
+                    )
+                )
+            }
+        }
+    }
+
+
+    // ✅ Update progress
+    fun updateProgress(roadmapId: String, moduleId: String) {
+        val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                repository.updateProgress(userId, roadmapId, moduleId)
+            } catch (e: Exception) {
+                // Handle error if needed
+            }
+        }
+    }
+
+    fun loadRoadmapTitle(roadmapId: String) {
+        viewModelScope.launch {
+            val roadmap = repository.getRoadmapById(roadmapId)
+            _currentRoadmapTitle.value = roadmap?.title ?: "Learning"
+        }
+    }
+    fun getRoadmapTitleAndIcon(roadmapId: String?): Pair<String, Int> {
+        return when (roadmapId) {
+            "java" -> "Java Programming" to R.drawable.ic_java
+            "python" -> "Python Programming" to R.drawable.ic_python
+            "cpp" -> "C++ Programming" to R.drawable.ic_cpp
+            "kotlin" -> "Kotlin Programming" to R.drawable.ic_kotlin
+            "js" -> "JavaScript Programming" to R.drawable.ic_javascript
+            else -> "No Roadmap Selected" to R.drawable.ic_none
+        }
+    }
+
+
 }

@@ -1,172 +1,106 @@
 package com.sanjey.codestride.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.sanjey.codestride.R
-import com.sanjey.codestride.common.Constants
-import com.sanjey.codestride.common.getIconResId
+import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.common.getIconResource
+import com.sanjey.codestride.data.model.HomeScreenData
 import com.sanjey.codestride.data.model.Quote
 import com.sanjey.codestride.data.model.RoadmapUI
 import com.sanjey.codestride.data.repository.FirebaseRepository
+import com.sanjey.codestride.data.repository.RoadmapRepository
 import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.math.absoluteValue
 
-data class UserStats(
-    val streak: Int = 0,
-    val progressPercent: Float = 0f,
-    val nextBadgeMsg: String = ""
-)
-
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val firebaseRepository: FirebaseRepository
-
+    private val firebaseRepository: FirebaseRepository,
+    private val roadmapRepository: RoadmapRepository
 ) : ViewModel() {
-
-    private val firestore = FirebaseFirestore.getInstance()
-    private val userId = FirebaseAuth.getInstance().currentUser?.uid
-
-    // ✅ First Name
-    val firstName: LiveData<String> = firebaseRepository.getFirstName()
-
-
-    // ✅ Quote of the Day
-    private val _quoteOfTheDay = MutableLiveData<Quote>()
-    val quoteOfTheDay: LiveData<Quote> get() = _quoteOfTheDay
-
-    fun loadQuoteOfTheDay(userId: String?) {
-        viewModelScope.launch {
-            try {
-                val quotes = firebaseRepository.getQuotes()
-                if (quotes.isNotEmpty()) {
-                    val uidHash = userId?.hashCode()?.absoluteValue ?: 0
-                    val dayIndex = (LocalDate.now().dayOfYear + uidHash) % quotes.size
-                    _quoteOfTheDay.value = quotes[dayIndex]
-                } else {
-                    _quoteOfTheDay.value = Constants.DEFAULT_QUOTES[0]
-                }
-            } catch (e: Exception) {
-                val uidHash = userId?.hashCode()?.absoluteValue ?: 0
-                val dayIndex = (LocalDate.now().dayOfYear + uidHash) % Constants.DEFAULT_QUOTES.size
-                _quoteOfTheDay.value = Constants.DEFAULT_QUOTES[dayIndex]
-            }
-        }
-    }
-
-    //Quotes
-
-
-
-    // ✅ User Stats from Repository
-    private val _userStats = MutableLiveData<UserStats>()
-    val userStats: LiveData<UserStats> = _userStats
-
-    // ✅ Current Roadmap
-    private val _currentRoadmap = MutableLiveData<RoadmapUI>()
-    val currentRoadmap: LiveData<RoadmapUI> = _currentRoadmap
-
-    // ✅ Badges
-    private val _badges = MutableLiveData<List<Triple<String, Int, Boolean>>>()
-    val badges: LiveData<List<Triple<String, Int, Boolean>>> = _badges
-
-    // ✅ Explore Roadmaps
-    private val _exploreRoadmaps = MutableLiveData<List<Pair<Int, String>>>()
-    val exploreRoadmaps: LiveData<List<Pair<Int, String>>> = _exploreRoadmaps
+    private val _homeUiState = MutableLiveData<UiState<HomeScreenData>>(UiState.Loading)
+    val homeUiState: LiveData<UiState<HomeScreenData>> = _homeUiState
 
     init {
-
-        fetchCurrentRoadmap()
-        fetchBadges()
-        fetchExploreRoadmaps()
+        loadHomeData()  // ✅ Automatically triggers when ViewModel is created
     }
 
-    fun updateStreakOnLearning() {
+
+    private fun loadHomeData() {
         viewModelScope.launch {
-            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
-            Log.d("STREAK_DEBUG", "updateStreakOnLearning() triggered for user: $uid")
+            _homeUiState.value = UiState.Loading
+            try {
+                val userId = FirebaseAuth.getInstance().currentUser?.uid
+                    ?: throw Exception("User not logged in")
 
-            val stats = userRepository.updateStreakOnLearning(uid)
-            Log.d("STREAK_DEBUG", "Updated streak result → ${stats.streak} days, progress: ${stats.progressPercent}")
+                // ✅ Fetch First Name directly using repository method
+                val firstName = firebaseRepository.getFirstName()
 
-            _userStats.postValue(stats)
-        }
-    }
+                // ✅ Update streak stats
+                val userStats = userRepository.updateStreakOnLearning(userId)
 
-    fun refreshUserStats() {
-        viewModelScope.launch {
-            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
-            val userDoc = FirebaseFirestore.getInstance()
-                .collection("users").document(uid).get().await()
+                // ✅ Fetch all roadmaps
+                val roadmaps = roadmapRepository.getAllRoadmaps()
 
-            val streak = userDoc.getLong("streak")?.toInt() ?: 0
-            val progress = (streak / 10f).coerceAtMost(1f)
-            val nextBadgeMsg = if (streak >= 10) {
-                "🔥 Amazing! You're on fire with $streak days streak!"
-            } else {
-                "You're ${10 - streak} day(s) away from hitting 10 days!"
+                // ✅ Current Roadmap (first roadmap for now)
+                val currentRoadmapMap = roadmaps.firstOrNull()
+                val currentRoadmap = if (roadmaps.isNotEmpty()) {
+                    val roadmap = roadmaps.first()
+                    RoadmapUI(
+                        title = roadmap.title,
+                        iconResId = getIconResource(roadmap.icon),
+                        progressPercent = 0
+                    )
+                } else {
+                    RoadmapUI("No Roadmap", 0, 0)
+                }
+
+
+                // ✅ Badges (static for now)
+                val badges = listOf(
+                    Triple("Kotlin Novice", com.sanjey.codestride.R.drawable.kotlin_novice_badge, true),
+                    Triple("Security Specialist", com.sanjey.codestride.R.drawable.security_specialist_badge, false),
+                    Triple("Jetpack Explorer", com.sanjey.codestride.R.drawable.jetpack_explorer_badge, false)
+                )
+
+                // ✅ Explore roadmaps
+                val exploreRoadmaps = roadmaps.map {
+                    getIconResource(it.icon) to it.title
+                }
+
+
+
+                // ✅ Quote of the day
+                val quotes = firebaseRepository.getQuotes()
+                val quote = if (quotes.isNotEmpty()) {
+                    val uidHash = userId.hashCode().absoluteValue
+                    val dayIndex = (LocalDate.now().dayOfYear + uidHash) % quotes.size
+                    quotes[dayIndex]
+                } else {
+                    Quote("Keep pushing!", "CodeStride")
+                }
+
+                _homeUiState.value = UiState.Success(
+                    HomeScreenData(
+                        firstName = firstName,
+                        userStats = userStats,
+                        currentRoadmap = currentRoadmap,
+                        badges = badges,
+                        exploreRoadmaps = exploreRoadmaps,
+                        quote = quote
+                    )
+                )
+
+            } catch (e: Exception) {
+                _homeUiState.value = UiState.Error(e.message ?: "Failed to load home data")
             }
-
-            Log.d("STREAK_DEBUG", "Refreshed streak → $streak days, progress: $progress")
-            _userStats.postValue(UserStats(streak, progress, nextBadgeMsg))
-        }
-    }
-
-
-
-    private fun fetchCurrentRoadmap() {
-        viewModelScope.launch {
-            userId?.let { uid ->
-                val userDoc = firestore.collection("users").document(uid).get().await()
-                val currentRoadmapId = userDoc.getString("current_roadmap") ?: "java"
-
-                val roadmapDoc = firestore.collection("roadmaps").document(currentRoadmapId).get().await()
-                val title = roadmapDoc.getString("title") ?: "Loading..."
-                val iconName = roadmapDoc.getString("icon") ?: ""
-                val iconRes = getIconResId(iconName)
-
-                val progressDoc = firestore.collection("users").document(uid)
-                    .collection("progress").document(currentRoadmapId).get().await()
-                val completed = (progressDoc.get("completed_modules") as? List<*>)?.size ?: 0
-                val totalModules = firestore.collection("roadmaps").document(currentRoadmapId)
-                    .collection("modules").get().await().size()
-                val progressPercent = if (totalModules > 0) (completed * 100 / totalModules) else 0
-
-                _currentRoadmap.postValue(RoadmapUI(title, iconRes, progressPercent))
-            }
-        }
-    }
-
-    private fun fetchBadges() {
-        _badges.postValue(
-            listOf(
-                Triple("Kotlin Novice", R.drawable.kotlin_novice_badge, true),
-                Triple("Security Specialist", R.drawable.security_specialist_badge, false),
-                Triple("Jetpack Explorer", R.drawable.jetpack_explorer_badge, false)
-            )
-        )
-    }
-
-    private fun fetchExploreRoadmaps() {
-        viewModelScope.launch {
-            val roadmapList = firestore.collection("roadmaps").get().await()
-            val data = roadmapList.documents.map {
-                val title = it.getString("title") ?: "Unknown"
-                val iconName = it.getString("icon") ?: ""
-                val iconRes = getIconResId(iconName)
-                iconRes to title
-            }
-            _exploreRoadmaps.postValue(data)
         }
     }
 }

@@ -41,6 +41,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.viewmodel.LoginViewModel
 
 
@@ -55,7 +56,7 @@ fun LoginScreen(navController: NavController){
     val shakeOffset = remember { Animatable(0f) }
     var backPressedOnce by remember { mutableStateOf(false) }
     val viewModel: LoginViewModel = hiltViewModel()
-    val loginResult by viewModel.loginResult.observeAsState()
+    val loginState by viewModel.loginState.observeAsState(UiState.Idle)
     val context = LocalContext.current
 
 
@@ -85,18 +86,23 @@ fun LoginScreen(navController: NavController){
             delay(150)
         }
     }
-    loginResult?.let { result ->
-        result.onSuccess {
-            navController.navigate("home") {
-                popUpTo("login") { inclusive = true }
-                launchSingleTop = true
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is UiState.Success -> {
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                    launchSingleTop = true
+                }
+                viewModel.clearLoginState()
             }
-            viewModel.clearResult()
-        }.onFailure { error ->
-            Toast.makeText(context, error.message ?: "Login failed", Toast.LENGTH_LONG).show()
-            viewModel.clearResult()
+            is UiState.Error -> {
+                Toast.makeText(context, (loginState as UiState.Error).message, Toast.LENGTH_LONG).show()
+                viewModel.clearLoginState()
+            }
+            else -> {}
         }
     }
+
 
 
     Box(

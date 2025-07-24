@@ -1,6 +1,5 @@
 package com.sanjey.codestride.ui.screens.quiz
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,13 +23,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.data.model.Quiz
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
-import com.sanjey.codestride.viewmodel.QuizViewModel
-import coil.compose.AsyncImage
-import com.sanjey.codestride.data.model.Quiz
 import com.sanjey.codestride.viewmodel.QuizResultState
+import com.sanjey.codestride.viewmodel.QuizViewModel
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
@@ -39,84 +39,78 @@ fun QuizScreen(
     roadmapId: String,
     moduleId: String,
     quizId: String,
-    roadmapViewModel: RoadmapViewModel
+    roadmapViewModel: RoadmapViewModel,
+    quizViewModel: QuizViewModel = hiltViewModel()
 ) {
-    val quizViewModel: QuizViewModel = hiltViewModel()
+    // ✅ Collect State from ViewModel
+    val questionsState by quizViewModel.questionsState.collectAsState()
+    val quizDetailsState by quizViewModel.quizDetailsState.collectAsState()
+    val quizResultState by quizViewModel.quizResultState.collectAsState()
+    val currentIndex by quizViewModel.currentIndex.collectAsState()
+    val selectedOption by quizViewModel.selectedOption.collectAsState()
+    val score by quizViewModel.score.collectAsState()
+    val currentQuestion by quizViewModel.currentQuestion.collectAsState()
 
-    val questions by quizViewModel.questions
-    val errorMessage by quizViewModel.errorMessage
-    val quizState by quizViewModel.quizResultState.collectAsState()
-
-    var currentIndex by remember { mutableIntStateOf(0) }
-    var selectedOption by remember { mutableStateOf<String?>(null) }
-    var score by remember { mutableIntStateOf(0) }
-
-    val quizDetails by quizViewModel.quizDetails.collectAsState()
-
+    // ✅ Load quiz data
     LaunchedEffect(roadmapId, moduleId, quizId) {
-        Log.d("QuizScreen", "✅ Quiz Passed! Calling updateProgress for $moduleId in $roadmapId")
-        quizViewModel.loadQuestions(roadmapId, moduleId, quizId)
+        quizViewModel.loadQuizData(roadmapId, moduleId, quizId)
     }
 
     when {
-        errorMessage != null -> {
-            Text(
-                text = "Error: $errorMessage",
-                color = Color.Red,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-
-        questions.isEmpty() -> {
+        questionsState is UiState.Loading || quizDetailsState is UiState.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Color.Blue)
             }
         }
 
-        else -> {
-            when (quizState) {
+        questionsState is UiState.Error -> {
+            val error = (questionsState as UiState.Error).message
+            Text(
+                text = "Error: $error",
+                color = Color.Red,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        questionsState is UiState.Empty -> {
+            Text(
+                text = "No questions available",
+                color = Color.Gray,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        questionsState is UiState.Success -> {
+            val questions = (questionsState as UiState.Success).data
+            val quizDetails = (quizDetailsState as? UiState.Success)?.data
+
+            when (quizResultState) {
                 QuizResultState.None -> {
-                    val currentQuestion = questions[currentIndex]
                     QuizContentUI(
                         navController = navController,
-                        questionText = currentQuestion.questionText,
+                        questionText = currentQuestion!!.questionText,
                         questionNumber = "Question ${currentIndex + 1} of ${questions.size}",
-                        options = currentQuestion.options,
+                        options = currentQuestion!!.options,
                         selectedOption = selectedOption,
-                        onOptionSelect = { selectedOption = it },
-                        onSubmit = {
-                            if (selectedOption == currentQuestion.correctAnswer) {
-                                score++
-                            }
-                            if (currentIndex < questions.size - 1) {
-                                currentIndex++
-                                selectedOption = null
-                            } else {
-                                quizViewModel.onQuizCompleted(score, roadmapId, moduleId)
-                            }
-                        },
+                        onOptionSelect = { quizViewModel.selectOption(it) },
+                        onSubmit = { quizViewModel.submitCurrentAnswer() },
                         submitEnabled = selectedOption != null
                     )
                 }
 
                 QuizResultState.Passed, QuizResultState.Failed -> {
-                    if (quizState == QuizResultState.Passed) {
+                    if (quizResultState == QuizResultState.Passed) {
                         LaunchedEffect(Unit) {
-                            roadmapViewModel.updateProgress(roadmapId, moduleId) // ✅ UPDATED
+                            roadmapViewModel.updateProgress(roadmapId, moduleId)
                         }
                     }
 
                     ResultUI(
                         score = score,
                         totalQuestions = questions.size,
-                        isPassed = (quizState == QuizResultState.Passed),
+                        isPassed = (quizResultState == QuizResultState.Passed),
                         quizDetails = quizDetails,
-                        onRetry = {
-                            quizViewModel.resetQuiz()
-                            score = 0
-                            currentIndex = 0
-                            selectedOption = null
-                        },
+                        onRetry = { quizViewModel.resetQuiz() },
                         onNext = { navController.popBackStack() }
                     )
                 }
@@ -124,7 +118,6 @@ fun QuizScreen(
         }
     }
 }
-
 
 @Composable
 fun QuizContentUI(
@@ -271,7 +264,7 @@ fun ResultUI(
     score: Int,
     totalQuestions: Int,
     isPassed: Boolean,
-    quizDetails: Quiz?,  // ✅ NEW
+    quizDetails: Quiz?,
     onRetry: () -> Unit,
     onNext: () -> Unit
 ) {
@@ -353,10 +346,8 @@ fun ResultUI(
                                 fontFamily = SoraFont,
                                 fontSize = 14.sp,
                                 color = Color.White,
-                                modifier = Modifier
-                                    .fillMaxWidth() // ✅ Use full width
+                                modifier = Modifier.fillMaxWidth()
                             )
-
                         } else if (!isPassed) {
                             Image(
                                 painter = painterResource(id = R.drawable.ic_failed),
@@ -388,7 +379,6 @@ fun ResultUI(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // ✅ Score
                         Text(
                             text = "Score: $score / $totalQuestions",
                             fontFamily = PixelFont,
@@ -398,7 +388,6 @@ fun ResultUI(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // ✅ Status
                         Text(
                             text = if (isPassed) "Status: Passed" else "Status: Failed",
                             fontFamily = PixelFont,
@@ -408,7 +397,6 @@ fun ResultUI(
 
                         Spacer(modifier = Modifier.height(28.dp))
 
-                        // ✅ Buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween

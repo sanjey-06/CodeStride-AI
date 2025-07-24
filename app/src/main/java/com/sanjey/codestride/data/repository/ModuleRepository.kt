@@ -1,7 +1,7 @@
 package com.sanjey.codestride.data.repository
 
-import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.Module
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -9,55 +9,53 @@ import javax.inject.Inject
 class ModuleRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
+    // ✅ Fetch modules for a roadmap
     suspend fun getModulesForRoadmap(roadmapId: String): List<Module> {
         return try {
-            Log.d("ModuleDebug", "Querying modules from path: roadmaps/$roadmapId/modules")
-
-            val snapshot = firestore.collection("roadmaps")
+            val snapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
                 .document(roadmapId)
-                .collection("modules")
+                .collection(Constants.FirestorePaths.MODULES)
                 .orderBy("order")
                 .get()
                 .await()
 
-            Log.d("ModuleDebug", "Documents fetched: ${snapshot.size()}")
-
-            val modules = snapshot.documents.mapNotNull { doc ->
-                val module = doc.toObject(Module::class.java)
-                module?.copy(id = doc.id) // ✅ Use Firestore doc ID
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Module::class.java)?.copy(id = doc.id)
             }
-
-            modules.forEach {
-                Log.d("ModuleDebug", "Mapped Module -> id: ${it.id}, title: ${it.title}")
-            }
-
-            modules
         } catch (e: Exception) {
-            Log.e("ModuleDebug", "Error fetching modules: ${e.message}")
-            emptyList()
+            emptyList() // Handle in ViewModel with UiState
         }
     }
-    // ✅ NEW FUNCTION: Fetch custom_content for a specific module
-    suspend fun getModuleContent(roadmapId: String, moduleId: String): String? {
+
+    suspend fun getModuleById(roadmapId: String, moduleId: String): Module? {
         return try {
-            val docSnapshot = firestore.collection("roadmaps")
+            val snapshot = firestore.collection("roadmaps")
                 .document(roadmapId)
                 .collection("modules")
                 .document(moduleId)
                 .get()
                 .await()
 
-            if (docSnapshot.exists()) {
-                docSnapshot.getString("custom_content")
-            } else {
-                Log.e("ModuleRepository", "Module document not found")
-                null
-            }
+            snapshot.toObject(Module::class.java)?.copy(id = moduleId)
         } catch (e: Exception) {
-            Log.e("ModuleRepository", "Error fetching module content: ${e.message}")
+            null
+        }
+    }
+
+
+    // ✅ Fetch module content
+    suspend fun getModuleContent(roadmapId: String, moduleId: String): String? {
+        return try {
+            val docSnapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
+                .document(roadmapId)
+                .collection(Constants.FirestorePaths.MODULES)
+                .document(moduleId)
+                .get()
+                .await()
+
+            docSnapshot.getString("custom_content")
+        } catch (e: Exception) {
             null
         }
     }
 }
-
-

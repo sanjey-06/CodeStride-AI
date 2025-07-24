@@ -1,11 +1,39 @@
 package com.sanjey.codestride.common
 
-import com.sanjey.codestride.data.model.Quote
-
 object Constants {
-    val DEFAULT_QUOTES = listOf(
-        Quote("One step closer to mastery every day", "CodeStride"),
-        Quote("Consistency beats motivation", "CodeStride"),
-        Quote("Keep pushing, even if it's 1% improvement", "CodeStride")
-    )
+
+
+    // ✅ Navigation Routes
+    object Routes {
+        const val SPLASH = "splash"
+        const val ONBOARDING = "onboarding"
+        const val LOGIN = "login"
+        const val SIGNUP = "signup"
+        const val FORGOT_PASSWORD = "forgot_password"
+        const val HOME = "home"
+        const val ROADMAP = "roadmap"
+        const val PROFILE = "profile"
+        const val SETTINGS = "settings"
+        const val CHATBOT = "chatbot"
+        const val QUIZ_SCREEN = "quiz_screen"
+        const val LEARNING = "learning"
+        const val LEARNING_CONTENT = "learning_content"
+        const val EXPLORE_ROADMAPS = "explore_roadmaps"
+        const val EXPLORE_CAREER = "explore_career"
+    }
+
+    // ✅ Firestore Paths
+    object FirestorePaths {
+        const val USERS = "users"
+        const val ROADMAPS = "roadmaps"
+        const val MODULES = "modules"
+        const val QUIZZES = "quizzes"
+        const val QUESTIONS = "questions"
+        const val PROGRESS = "progress"
+        const val QUOTES = "quotes"
+    }
+
+
+
+
 }

@@ -2,10 +2,11 @@ package com.sanjey.codestride.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Module
 import com.sanjey.codestride.data.repository.ModuleRepository
+import com.sanjey.codestride.data.repository.RoadmapRepository
+import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,23 +16,46 @@ import javax.inject.Inject
 @HiltViewModel
 class ModuleViewModel @Inject constructor(
     private val repository: ModuleRepository,
-    private val firestore: FirebaseFirestore
+    private val userRepository: UserRepository,
+    private val roadmapRepository: RoadmapRepository
 ) : ViewModel() {
 
-    private val _modules = MutableStateFlow<List<Module>>(emptyList())
-    val modules: StateFlow<List<Module>> = _modules
+    private val _modulesState = MutableStateFlow<UiState<List<Module>>>(UiState.Loading)
+    val modulesState: StateFlow<UiState<List<Module>>> = _modulesState
 
-    private val _selectedModuleContent = MutableStateFlow<Pair<String, String>?>(null)
-    val selectedModuleContent: StateFlow<Pair<String, String>?> = _selectedModuleContent
-
-    private val _moduleHtmlState = MutableStateFlow<UiState<String>>(UiState.Loading)
+    private val _moduleHtmlState = MutableStateFlow<UiState<String>>(UiState.Idle)
     val moduleHtmlState: StateFlow<UiState<String>> = _moduleHtmlState
+
+
+    private val _moduleTitle = MutableStateFlow("")
+    val moduleTitle: StateFlow<String> = _moduleTitle
+
+    fun fetchModuleDetails(roadmapId: String, moduleId: String) {
+        viewModelScope.launch {
+            try {
+                val module = repository.getModuleById(roadmapId, moduleId)
+                _moduleTitle.value = module?.title ?: "Module"
+            } catch (e: Exception) {
+                _moduleTitle.value = "Module"
+            }
+        }
+    }
+
 
     // ✅ Load all modules for a roadmap
     fun loadModules(roadmapId: String) {
         viewModelScope.launch {
-            val fetchedModules = repository.getModulesForRoadmap(roadmapId)
-            _modules.value = fetchedModules
+            _modulesState.value = UiState.Loading
+            try {
+                val fetchedModules = repository.getModulesForRoadmap(roadmapId)
+                if (fetchedModules.isNotEmpty()) {
+                    _modulesState.value = UiState.Success(fetchedModules)
+                } else {
+                    _modulesState.value = UiState.Empty
+                }
+            } catch (e: Exception) {
+                _modulesState.value = UiState.Error("Failed to load modules")
+            }
         }
     }
 
@@ -51,21 +75,17 @@ class ModuleViewModel @Inject constructor(
             }
         }
     }
-
-    // ✅ Legacy: Load text-based content for module
-    fun loadModuleContent(roadmapId: String, moduleId: String) {
-        firestore.collection("roadmaps")
-            .document(roadmapId)
-            .collection("modules")
-            .document(moduleId)
-            .get()
-            .addOnSuccessListener { doc ->
-                val title = doc.getString("title") ?: "No Title"
-                val content = doc.getString("custom_content") ?: "No content available."
-                _selectedModuleContent.value = title to content
+    fun updateLearningProgress(roadmapId: String, moduleId: String) {
+        viewModelScope.launch {
+            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+            try {
+                userRepository.updateStreakOnLearning(userId)
+                roadmapRepository.updateProgress(userId, roadmapId, moduleId)
+            } catch (e: Exception) {
+                // Handle error
             }
-            .addOnFailureListener {
-                _selectedModuleContent.value = "Error" to "Failed to load content."
-            }
+        }
     }
+
+
 }

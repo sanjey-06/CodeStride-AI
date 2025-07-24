@@ -3,31 +3,33 @@ package com.sanjey.codestride.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.viewModelScope
+import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.data.repository.FirebaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val auth: FirebaseAuth
+    private val firebaseRepository: FirebaseRepository
 ) : ViewModel() {
 
-    private val _loginResult = MutableLiveData<Result<Boolean>?>()
-    val loginResult: LiveData<Result<Boolean>?> = _loginResult
+    private val _loginState = MutableLiveData<UiState<Unit>>()
+    val loginState: LiveData<UiState<Unit>> = _loginState
+
+    fun clearLoginState() { _loginState.value = UiState.Idle }
+
 
     fun loginUser(email: String, password: String) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    _loginResult.value = Result.success(true)
-                } else {
-                    _loginResult.value = Result.failure(task.exception ?: Exception("Login failed"))
-                }
+        viewModelScope.launch {
+            _loginState.value = UiState.Loading
+            try {
+                firebaseRepository.loginUser(email, password) // ✅ Move logic to repo
+                _loginState.value = UiState.Success(Unit) // Success, no extra data
+            } catch (e: Exception) {
+                _loginState.value = UiState.Error(e.message ?: "Login failed")
             }
-    }
-
-    fun clearResult() {
-        _loginResult.value = null
+        }
     }
 }

@@ -28,15 +28,17 @@ import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.data.model.Module
+import com.sanjey.codestride.data.model.ProgressState
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
-import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.viewmodel.ModuleViewModel
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
-fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewModel: RoadmapViewModel, homeViewModel: HomeViewModel = hiltViewModel()) {
+fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewModel: RoadmapViewModel) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()
@@ -44,21 +46,14 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
     val moduleViewModel: ModuleViewModel = hiltViewModel()
 
 
-    val moduleList by moduleViewModel.modules.collectAsState()
+    val modulesState by moduleViewModel.modulesState.collectAsState()
     val progressState by roadmapViewModel.progressState.collectAsState()
-
-    var roadmapTitle by remember { mutableStateOf("Loading...") }
+    val roadmapTitle by roadmapViewModel.currentRoadmapTitle
 
     LaunchedEffect(roadmapId) {
         moduleViewModel.loadModules(roadmapId)
-        roadmapTitle = when (roadmapId) {
-            "java" -> "Java Programming"
-            "python" -> "Python Programming"
-            "cpp" -> "C++ Programming"
-            "kotlin" -> "Kotlin Programming"
-            "js" -> "JavaScript Programming"
-            else -> roadmapId.replaceFirstChar { it.uppercase() }
-        }
+        roadmapViewModel.loadRoadmapTitle(roadmapId)
+
     }
 
     Column(
@@ -113,185 +108,240 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                 .background(Color.White)
                 .verticalScroll(scrollState)
         ) {
-            Box {
-                Image(
-                    painter = painterResource(id = R.drawable.roadmap_bg),
-                    contentDescription = "Roadmap Background",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1080f / 3500f),
-                    contentScale = ContentScale.Fit
-                )
+            when (modulesState) {
+                is UiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = CustomBlue)
+                    }
+                }
 
-                moduleList.forEachIndexed { index, module ->
-                    val isFirstModule = index == 0
+                is UiState.Success -> {
+                    val moduleList = (modulesState as UiState.Success<List<Module>>).data
 
-                    val isUnlocked = isFirstModule || progressState.completedModules.contains(moduleList[index - 1].id)
-                    Log.d("LearningScreen", "Index=$index, ModuleId=${module.id}, IsUnlocked=$isUnlocked, Completed=${progressState.completedModules}")
-                    val backgroundColor = if (isUnlocked) Color(0xFF4CAF50) else Color(0xFFBDBDBD)
+                    Box {
+                        Image(
+                            painter = painterResource(id = R.drawable.roadmap_bg),
+                            contentDescription = "Roadmap Background",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1080f / 3500f),
+                            contentScale = ContentScale.Fit
+                        )
 
-                    var showDialog by remember { mutableStateOf(false) }
+                        moduleList.forEachIndexed { index, module ->
+                            val completedModules =
+                                if (progressState is UiState.Success) {
+                                    (progressState as UiState.Success<ProgressState>).data.completedModules
+                                } else emptyList()
 
-                    if (showDialog) {
-                        Dialog(onDismissRequest = { showDialog = false }) {
-                            Surface(
-                                shape = RoundedCornerShape(32.dp),
-                                color = Color.Black,
-                                modifier = Modifier
-                                    .fillMaxWidth(0.95f)
-                                    .wrapContentHeight()
-                            ) {
-                                val context = LocalContext.current
+                            val isFirstModule = index == 0
+                            val isUnlocked =
+                                isFirstModule || completedModules.contains(moduleList[index - 1].id)
 
-                                Column(
-                                    modifier = Modifier.padding(24.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = module.title,
-                                        fontFamily = PixelFont,
-                                        fontSize = 18.sp,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = module.description,
-                                        fontFamily = SoraFont,
-                                        fontSize = 14.sp,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.height(20.dp))
+                            var showDialog by remember { mutableStateOf(false) }
 
-                                    Button(
-                                        onClick = {
-                                            homeViewModel.updateStreakOnLearning()
-                                            Log.d("STREAK_DEBUG", "Custom Content clicked for ${module.id}")
-                                            navController.navigate("learning_content/$roadmapId/${module.id}")
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
-                                        shape = RoundedCornerShape(12.dp)
+                            if (showDialog) {
+                                Dialog(onDismissRequest = { showDialog = false }) {
+                                    Surface(
+                                        shape = RoundedCornerShape(32.dp),
+                                        color = Color.Black,
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.95f)
+                                            .wrapContentHeight()
                                     ) {
-                                        Text("Start Learn ➤", fontFamily = PixelFont, color = Color.White)
-                                    }
-
-                                    Spacer(modifier = Modifier.height(10.dp))
-
-                                    if (module.ytUrl.isNotBlank()) {
-                                        Button(
-                                            onClick = {
-                                                homeViewModel.updateStreakOnLearning()
-                                                val intent = Intent(Intent.ACTION_VIEW, module.ytUrl.toUri())
-                                                context.startActivity(intent)
-                                            },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                                            shape = RoundedCornerShape(12.dp)
+                                        Column(
+                                            modifier = Modifier.padding(24.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            Text("Watch on YouTube", fontFamily = PixelFont, fontSize = 12.sp, color = Color.White)
+                                            Text(
+                                                text = module.title,
+                                                fontFamily = PixelFont,
+                                                color = Color.White
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = module.description,
+                                                fontFamily = SoraFont,
+                                                color = Color.White
+                                            )
+                                            Spacer(modifier = Modifier.height(20.dp))
+
+                                            Button(
+                                                onClick = {
+                                                    moduleViewModel.updateLearningProgress(
+                                                        roadmapId = roadmapId,
+                                                        moduleId = module.id
+                                                    )
+                                                    navController.navigate("learning_content/$roadmapId/${module.id}")
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    "Start Learn ➤",
+                                                    fontFamily = PixelFont,
+                                                    color = Color.White
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(10.dp))
+                                            val context = LocalContext.current
+
+
+                                            if (module.ytUrl.isNotBlank()) {
+                                                Button(
+                                                    onClick = {
+                                                        moduleViewModel.updateLearningProgress(roadmapId, module.id)
+                                                        val intent = Intent(
+                                                            Intent.ACTION_VIEW,
+                                                            module.ytUrl.toUri()
+                                                        )
+                                                        context.startActivity(intent)
+                                                    },
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = Color.Red
+                                                    ),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                ) {
+                                                    Text(
+                                                        "Watch on YouTube",
+                                                        fontFamily = PixelFont,
+                                                        fontSize = 12.sp,
+                                                        color = Color.White
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(10.dp))
+
+                                            Button(
+                                                onClick = {
+                                                    moduleViewModel.updateLearningProgress(roadmapId, module.id)
+                                                    navController.navigate("quiz_screen/$roadmapId/${module.id}/${module.quizId}")
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    "Take Quiz",
+                                                    fontFamily = PixelFont,
+                                                    color = Color.White
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(10.dp))
+
+                                            Button(
+                                                onClick = { navController.navigate("chatbot") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    "CodeBot",
+                                                    fontFamily = PixelFont,
+                                                    color = Color.White
+                                                )
+                                            }
                                         }
                                     }
-
-                                    Spacer(modifier = Modifier.height(10.dp))
-
-                                    Button(
-                                        onClick = {
-                                            homeViewModel.updateStreakOnLearning()
-                                            navController.navigate("quiz_screen/$roadmapId/${module.id}/${module.quizId}")
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text("Take Quiz", fontFamily = PixelFont, color = Color.White)
-                                    }
-
-                                    Spacer(modifier = Modifier.height(10.dp))
-
-                                    Button(
-                                        onClick = { navController.navigate("chatbot") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text("CodeBot", fontFamily = PixelFont, color = Color.White)
-                                    }
                                 }
                             }
-                        }
-                    }
 
-                    // ✅ Module Position + Locking
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .offset(y = when (index) {
-                                0 -> 25.dp
-                                1 -> 125.dp
-                                2 -> 215.dp
-                                3 -> 308.dp
-                                4 -> 400.dp
-                                5 -> 515.dp
-                                6 -> 645.dp
-                                7 -> 737.dp
-                                8 -> 830.dp
-                                9 -> 920.dp
-                                else -> 1000.dp
-                            })
-                            .padding(horizontal = 24.dp)
-                            .clickable(enabled = isUnlocked) {
-                                if (isUnlocked) {
-                                    Log.d("STREAK_DEBUG", "Dialog opened for ${module.id}")
-
-                                    showDialog = true
-                                }
-                            }
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = backgroundColor,
-                            modifier = Modifier
-                                .align(if (index % 2 == 0) Alignment.CenterStart else Alignment.CenterEnd)
-                                .width(180.dp)
-                                .height(48.dp)
-                        ) {
-                            Text(
-                                text = "${module.order}. ${module.title}",
-                                color = Color.White,
-                                fontFamily = SoraFont,
-                                fontSize = 14.sp,
+                            // ✅ Module Position + Locking
+                            Box(
                                 modifier = Modifier
-                                    .padding(12.dp)
-                                    .wrapContentHeight(Alignment.CenterVertically)
-                            )
+                                    .fillMaxWidth()
+                                    .offset(
+                                        y = when (index) {
+                                            0 -> 25.dp
+                                            1 -> 125.dp
+                                            2 -> 215.dp
+                                            3 -> 308.dp
+                                            4 -> 400.dp
+                                            5 -> 515.dp
+                                            6 -> 645.dp
+                                            7 -> 737.dp
+                                            8 -> 830.dp
+                                            9 -> 920.dp
+                                            else -> 1000.dp
+                                        }
+                                    )
+                                    .padding(horizontal = 24.dp)
+                                    .clickable(enabled = isUnlocked) {
+                                        if (isUnlocked) {
+                                            Log.d("STREAK_DEBUG", "Dialog opened for ${module.id}")
+
+                                            showDialog = true
+                                        }
+                                    }
+                            ) {
+                                val backgroundColor = if (isUnlocked) Color(0xFF4CAF50) else Color(0xFFBDBDBD)
+
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = backgroundColor,
+                                    modifier = Modifier
+                                        .align(if (index % 2 == 0) Alignment.CenterStart else Alignment.CenterEnd)
+                                        .width(180.dp)
+                                        .height(48.dp)
+                                ) {
+                                    Text(
+                                        text = "${module.order}. ${module.title}",
+                                        color = Color.White,
+                                        fontFamily = SoraFont,
+                                        fontSize = 14.sp,
+                                        modifier = Modifier
+                                            .padding(12.dp)
+                                            .wrapContentHeight(Alignment.CenterVertically)
+                                    )
+                                }
+                            }
+                        }
+
+                        // 🎓 Final certificate button
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(y = 1150.dp)
+                                .padding(horizontal = 32.dp)
+                        ) {
+                            Button(
+                                onClick = { /* TODO */ },
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .fillMaxWidth(0.85f)
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(
+                                        0xFFBDBDBD
+                                    )
+                                )
+                            ) {
+                                Text(
+                                    text = "Get Certificate",
+                                    fontSize = 14.sp,
+                                    fontFamily = PixelFont,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 }
 
-                // 🎓 Final certificate button
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset(y = 1150.dp)
-                        .padding(horizontal = 32.dp)
-                ) {
-                    Button(
-                        onClick = { /* TODO */ },
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .fillMaxWidth(0.85f)
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBDBDBD))
-                    ) {
-                        Text(
-                            text = "Get Certificate",
-                            fontSize = 14.sp,
-                            fontFamily = PixelFont,
-                            color = Color.White
-                        )
-                    }
+                is UiState.Error -> {
+                    Text(
+                        "Failed to load modules",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
+
+                else -> {}
             }
         }
     }

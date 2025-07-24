@@ -22,33 +22,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.data.model.Roadmap
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
-// ✅ Temporary static list for Explore
-data class StaticRoadmap(
-    val id: String,
-    val title: String,
-    val icon: Int,
-    val description: String
-)
 
-val staticRoadmaps = listOf(
-    StaticRoadmap("java", "Java", R.drawable.ic_java, "Java is a powerful, object-oriented language used for backend systems, Android apps, and enterprise solutions."),
-    StaticRoadmap("python", "Python", R.drawable.ic_python, "Python is an easy-to-learn language used for automation, data science, and web development."),
-    StaticRoadmap("cpp", "C++", R.drawable.ic_cpp, "C++ is a high-performance language used in games, embedded systems, and competitive programming."),
-    StaticRoadmap("kotlin", "Kotlin", R.drawable.ic_kotlin, "Kotlin is a modern, expressive language used for Android development and server-side applications."),
-    StaticRoadmap("js", "JavaScript", R.drawable.ic_javascript, "JavaScript powers interactive web pages and is the backbone of frontend frameworks and web apps.")
-)
 
 @Composable
 fun ExploreRoadmapsScreen(navController: NavController) {
     val roadmapViewModel: RoadmapViewModel = hiltViewModel()
+    LaunchedEffect(Unit) {
+        roadmapViewModel.loadRoadmaps()
+    }
 
-    var selectedRoadmap by remember { mutableStateOf<StaticRoadmap?>(null) }
+    var selectedRoadmap by remember { mutableStateOf<Roadmap?>(null) }
+    val roadmapsState by roadmapViewModel.roadmapsState.collectAsState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     var showDialog by remember { mutableStateOf(false) }
@@ -108,46 +101,32 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                 .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)),
             color = Color.White
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(20.dp),
-                verticalArrangement = Arrangement.spacedBy(28.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                itemsIndexed(staticRoadmaps) { _, roadmap ->
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        RoadmapIconCard(roadmap) { selectedRoadmap = roadmap }
+            when (roadmapsState) {
+                is UiState.Idle -> { /* Optional: show nothing */ }
+                is UiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = CustomBlue)
                     }
                 }
 
-                // ✅ AI Generator & Career Section
-                item(span = { GridItemSpan(2) }) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp, bottom = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                is UiState.Error -> {
+                    Text(
+                        "Failed to load roadmaps",
+                        color = Color.Red, modifier = Modifier.padding(16.dp))
+                }
+                is UiState.Empty -> {
+                    Text("No roadmaps available", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                }
+                is UiState.Success -> {
+                    val roadmaps = (roadmapsState as UiState.Success).data
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(28.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text(
-                            text = "Want to generate your own roadmap?",
-                            fontFamily = SoraFont,
-                            fontSize = 14.sp,
-                            color = Color.Black
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { showDialog = true },
-                            shape = RoundedCornerShape(50.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
-                        ) {
-                            Text(
-                                text = "Generate with AI",
-                                fontFamily = PixelFont,
-                                fontSize = 14.sp,
-                                color = Color.White
-                            )
+                        items(roadmaps) { roadmap ->
+                            RoadmapIconCard(roadmap.title, roadmap.icon) { selectedRoadmap = roadmap }
                         }
                     }
                 }
@@ -162,7 +141,8 @@ fun ExploreRoadmapsScreen(navController: NavController) {
             confirmButton = {
                 Button(
                     onClick = {
-                        roadmapViewModel.startRoadmap(selectedRoadmap!!.id)
+                        val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return@Button
+                        roadmapViewModel.startRoadmap(userId, selectedRoadmap!!.id)
                         navController.navigate("learning/${selectedRoadmap!!.id}")
                         selectedRoadmap = null
                     },
@@ -202,7 +182,7 @@ fun ExploreRoadmapsScreen(navController: NavController) {
 }
 
 @Composable
-fun RoadmapIconCard(roadmap: StaticRoadmap, onClick: () -> Unit) {
+fun RoadmapIconCard(title: String, icon: String, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -215,16 +195,16 @@ fun RoadmapIconCard(roadmap: StaticRoadmap, onClick: () -> Unit) {
             color = Color.Black
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(id = roadmap.icon),
-                    contentDescription = roadmap.title,
+                AsyncImage(
+                    model = icon,
+                    contentDescription = title,
                     modifier = Modifier.size(100.dp)
                 )
             }
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = roadmap.title,
+            text = title,
             fontFamily = PixelFont,
             fontSize = 14.sp,
             color = Color.Black

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.ui.screens.home.ExploreOtherRoadmapsSection
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
@@ -34,25 +35,32 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
     val bannerHeight = screenHeight * 0.15f
 
     val currentRoadmapId by roadmapViewModel.currentRoadmapId.collectAsState()
-    val currentModule by roadmapViewModel.currentModule.collectAsState()
+    val progressState by roadmapViewModel.progressState.collectAsState()
+    val homeState by homeViewModel.homeUiState.observeAsState()
+    val currentModule = if (progressState is UiState.Success) {
+        (progressState as UiState.Success).data.currentModule
+    } else {
+        "Loading..."
+    }
 
-    val exploreRoadmaps by homeViewModel.exploreRoadmaps.observeAsState()
+    val exploreRoadmaps = if (homeState is UiState.Success) {
+        (homeState as UiState.Success).data.exploreRoadmaps
+    } else {
+        emptyList()
+    }
+
+
 
 
     // ✅ Call this once to start observing roadmap & progress
     LaunchedEffect(Unit) {
-        roadmapViewModel.observeCurrentRoadmap()
+        val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return@LaunchedEffect
+        roadmapViewModel.observeCurrentRoadmap(userId)
     }
 
     // ✅ Derive UI title & icon based on roadmapId
-    val (currentTitle, currentIcon) = when (currentRoadmapId) {
-        "java" -> "Java Programming" to R.drawable.ic_java
-        "python" -> "Python Programming" to R.drawable.ic_python
-        "cpp" -> "C++ Programming" to R.drawable.ic_cpp
-        "kotlin" -> "Kotlin Programming" to R.drawable.ic_kotlin
-        "js" -> "JavaScript Programming" to R.drawable.ic_javascript
-        else -> "No Roadmap Selected" to R.drawable.ic_none
-    }
+    val (currentTitle, currentIcon) = roadmapViewModel.getRoadmapTitleAndIcon(currentRoadmapId)
+
 
     Column(
         modifier = Modifier
@@ -155,13 +163,16 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 Button(
                     onClick = {
-                        currentRoadmapId?.let {
-                            appNavController.navigate("learning/$it")
+                        val roadmapId = currentRoadmapId
+                        val moduleId = if (currentModule != "Loading...") currentModule else null
+
+                        if (roadmapId != null && moduleId != null) {
+                            appNavController.navigate("learning/$roadmapId")
                         }
                     },
-                    enabled = currentRoadmapId != null,
+                    enabled = currentRoadmapId != null && progressState is UiState.Success,
                     shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                    colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
                 ) {
                     Text(
                         text = "Continue Learning",

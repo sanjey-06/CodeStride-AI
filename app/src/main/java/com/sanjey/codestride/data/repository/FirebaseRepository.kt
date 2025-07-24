@@ -1,11 +1,9 @@
 package com.sanjey.codestride.data.repository
 
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.Question
 import com.sanjey.codestride.data.model.Quiz
 import com.sanjey.codestride.data.model.Quote
@@ -17,114 +15,101 @@ class FirebaseRepository @Inject constructor(
     private val auth: FirebaseAuth
 ) {
 
-
-    fun getCurrentUser(): FirebaseUser? {
-        return auth.currentUser
-    }
-
+    fun getCurrentUser(): FirebaseUser? = auth.currentUser
 
     // ✅ Fetch user first name
-    fun getFirstName(): LiveData<String> {
-        val firstNameLiveData = MutableLiveData<String>()
-        val uid = auth.currentUser?.uid ?: return firstNameLiveData
-
-        firestore.collection("users").document(uid)
+    suspend fun getFirstName(): String {
+        val uid = auth.currentUser?.uid ?: return "Learner"
+        val snapshot = firestore.collection(Constants.FirestorePaths.USERS)
+            .document(uid)
             .get()
-            .addOnSuccessListener { document ->
-                val name = document.getString("firstName") ?: "Learner"
-                firstNameLiveData.value = name
-            }
-
-        return firstNameLiveData
+            .await()
+        return snapshot.getString("firstName") ?: "Learner"
     }
 
-    // ✅ Fetch questions for the quiz
-    fun getQuestionsByQuiz(
-        roadmapId: String,
-        moduleId: String,
-        quizId: String,
-        onSuccess: (List<Question>) -> Unit,
-        onFailure: (Exception) -> Unit
+
+    suspend fun sendPasswordReset(email: String) {
+        auth.sendPasswordResetEmail(email).await()
+    }
+
+
+    suspend fun loginUser(email: String, password: String) {
+        auth.signInWithEmailAndPassword(email, password).await()
+    }
+
+    suspend fun signupUser(
+        email: String,
+        password: String,
+        firstName: String,
+        lastName: String,
+        mobile: String
     ) {
-        Log.d("QuizDebug", "Fetching questions for $roadmapId -> $moduleId -> $quizId")
+        val result = auth.createUserWithEmailAndPassword(email, password).await()
+        val uid = result.user?.uid ?: throw Exception("User ID is null")
 
-        firestore.collection("roadmaps")
-            .document(roadmapId)
-            .collection("modules")
-            .document(moduleId)
-            .collection("quizzes")
-            .document(quizId)
-            .collection("questions")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                Log.d("QuizDebug", "Documents fetched: ${snapshot.size()}")
-                snapshot.documents.forEach {
-                    Log.d("QuizDebug", "Question Doc: ${it.id}, Data: ${it.data}")
-                }
+        val userMap = hashMapOf(
+            "firstName" to firstName,
+            "lastName" to lastName,
+            "mobile" to mobile,
+            "email" to email
+        )
 
-                val questions = snapshot.map { it.toObject(Question::class.java) }
-                Log.d("QuizDebug", "Mapped questions: ${questions.size}")
-                onSuccess(questions)
-            }
-            .addOnFailureListener {
-                Log.e("QuizDebug", "Failed to fetch: ${it.message}")
-                onFailure(it)
-            }
+        firestore.collection(Constants.FirestorePaths.USERS)
+            .document(uid)
+            .set(userMap)
+            .await()
+    }
+    fun logout() {
+        auth.signOut()
     }
 
-    // Quotes
+
+    // ✅ Fetch questions (Suspend)
+    suspend fun getQuestionsByQuiz(roadmapId: String, moduleId: String, quizId: String): List<Question> {
+        val snapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
+            .document(roadmapId)
+            .collection(Constants.FirestorePaths.MODULES)
+            .document(moduleId)
+            .collection(Constants.FirestorePaths.QUIZZES)
+            .document(quizId)
+            .collection(Constants.FirestorePaths.QUESTIONS)
+            .get()
+            .await()
+        return snapshot.toObjects(Question::class.java)
+    }
+
+    // ✅ Fetch quotes
     suspend fun getQuotes(): List<Quote> {
         return try {
-            firestore.collection("quotes")
+            firestore.collection(Constants.FirestorePaths.QUOTES)
                 .get()
-                .await() // requires 'kotlinx-coroutines-play-services'
-                .documents
-                .mapNotNull { it.toObject(Quote::class.java) }
+                .await()
+                .toObjects(Quote::class.java)
         } catch (e: Exception) {
-            emptyList() // return empty list on failure
+            emptyList()
         }
     }
 
-
-    // ✅ Fetch full quiz details (with badge info)
-    fun getQuizDetails(
-        roadmapId: String,
-        moduleId: String,
-        quizId: String,
-        onSuccess: (Quiz) -> Unit,
-        onFailure: (Exception) -> Unit
-    ) {
-        firestore.collection("roadmaps")
+    // ✅ Fetch quiz details
+    suspend fun getQuizDetails(roadmapId: String, moduleId: String, quizId: String): Quiz? {
+        val doc = firestore.collection(Constants.FirestorePaths.ROADMAPS)
             .document(roadmapId)
-            .collection("modules")
+            .collection(Constants.FirestorePaths.MODULES)
             .document(moduleId)
-            .collection("quizzes")
+            .collection(Constants.FirestorePaths.QUIZZES)
             .document(quizId)
             .get()
-            .addOnSuccessListener { doc ->
-                val quiz = doc.toObject(Quiz::class.java)
-                if (quiz != null) {
-                    onSuccess(quiz)
-                } else {
-                    onFailure(Exception("Quiz not found"))
-                }
-            }
-            .addOnFailureListener { onFailure(it) }
+            .await()
+        return doc.toObject(Quiz::class.java)
     }
 
     // ✅ Mark module as completed
-    fun markModuleCompleted(
-        roadmapId: String,
-        moduleId: String,
-        onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
-    ) {
-        firestore.collection("roadmaps")
+    suspend fun markModuleCompleted(roadmapId: String, moduleId: String) {
+        firestore.collection(Constants.FirestorePaths.ROADMAPS)
             .document(roadmapId)
-            .collection("modules")
+            .collection(Constants.FirestorePaths.MODULES)
             .document(moduleId)
             .update("completed", true)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onFailure(it) }
+            .await()
     }
 }
