@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.data.model.Question
 import com.sanjey.codestride.data.model.Quiz
@@ -15,6 +16,12 @@ class FirebaseRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) {
+
+
+    fun getCurrentUser(): FirebaseUser? {
+        return auth.currentUser
+    }
+
 
     // ✅ Fetch user first name
     fun getFirstName(): LiveData<String> {
