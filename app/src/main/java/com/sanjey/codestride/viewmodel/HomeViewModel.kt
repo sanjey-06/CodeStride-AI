@@ -8,8 +8,11 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.common.getIconResId
+import com.sanjey.codestride.data.model.Quote
 import com.sanjey.codestride.data.model.RoadmapUI
+import com.sanjey.codestride.data.repository.FirebaseRepository
 import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -26,35 +29,44 @@ data class UserStats(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val firebaseRepository: FirebaseRepository
+
 ) : ViewModel() {
 
     private val firestore = FirebaseFirestore.getInstance()
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
 
     // ✅ First Name
-    val firstName: LiveData<String> = MutableLiveData<String>().apply {
-        userId?.let { uid ->
-            firestore.collection("users").document(uid)
-                .addSnapshotListener { snapshot, _ ->
-                    value = snapshot?.getString("firstName") ?: ""
+    val firstName: LiveData<String> = firebaseRepository.getFirstName()
+
+
+    // ✅ Quote of the Day
+    private val _quoteOfTheDay = MutableLiveData<Quote>()
+    val quoteOfTheDay: LiveData<Quote> get() = _quoteOfTheDay
+
+    fun loadQuoteOfTheDay(userId: String?) {
+        viewModelScope.launch {
+            try {
+                val quotes = firebaseRepository.getQuotes()
+                if (quotes.isNotEmpty()) {
+                    val uidHash = userId?.hashCode()?.absoluteValue ?: 0
+                    val dayIndex = (LocalDate.now().dayOfYear + uidHash) % quotes.size
+                    _quoteOfTheDay.value = quotes[dayIndex]
+                } else {
+                    _quoteOfTheDay.value = Constants.DEFAULT_QUOTES[0]
                 }
+            } catch (e: Exception) {
+                val uidHash = userId?.hashCode()?.absoluteValue ?: 0
+                val dayIndex = (LocalDate.now().dayOfYear + uidHash) % Constants.DEFAULT_QUOTES.size
+                _quoteOfTheDay.value = Constants.DEFAULT_QUOTES[dayIndex]
+            }
         }
     }
 
-    // ✅ Quote of the Day
-    val quoteOfTheDay: LiveData<String> = MutableLiveData<String>().apply {
-        val quotes = listOf(
-            "One step closer to mastery every day",
-            "Keep pushing, even if it's 1% improvement",
-            "Consistency beats motivation",
-            "You’re not late, you’re early for tomorrow",
-            "Learn a little, but learn every day"
-        )
-        val uidHash = userId?.hashCode()?.absoluteValue ?: 0
-        val dayIndex = (LocalDate.now().dayOfYear + uidHash) % quotes.size
-        value = quotes[dayIndex]
-    }
+    //Quotes
+
+
 
     // ✅ User Stats from Repository
     private val _userStats = MutableLiveData<UserStats>()

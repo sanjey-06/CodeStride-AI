@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 import com.sanjey.codestride.R
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
@@ -40,8 +41,6 @@ import com.sanjey.codestride.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
     val firstName by viewModel.firstName.observeAsState()
-    val quote by viewModel.quoteOfTheDay.observeAsState()
-
     val userStats by viewModel.userStats.observeAsState()
     val currentRoadmap by viewModel.currentRoadmap.observeAsState()
     val badges by viewModel.badges.observeAsState()
@@ -51,8 +50,13 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val imageHeight = screenHeight * 0.75f
 
+    val quoteOfTheDay by viewModel.quoteOfTheDay.observeAsState()
+
+
     LaunchedEffect(Unit) {
         viewModel.refreshUserStats()
+        viewModel.loadQuoteOfTheDay(FirebaseAuth.getInstance().currentUser?.uid)
+
     }
 
 
@@ -78,10 +82,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.6f))
+                    .background(Color.Black.copy(alpha = 0.8f))
             )
 
-            if (firstName != null && quote != null) {
+            if (firstName != null && quoteOfTheDay != null) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -98,24 +102,25 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "What will you learn today?",
-                        fontFamily = PixelFont,
-                        fontSize = 20.sp,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "“$quote”",
-                        fontFamily = PixelFont,
+                        text = "“${quoteOfTheDay!!.text}”",
+                        fontFamily = SoraFont,
                         fontSize = 14.sp,
                         color = Color.White,
-                        textAlign = TextAlign.Center,
+                        textAlign = TextAlign.Start,
                         modifier = Modifier
                             .padding(horizontal = 32.dp)
                             .fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "- ${quoteOfTheDay!!.author}",
+                        fontFamily = SoraFont,
+                        fontSize = 16.sp,
+                        color = Color.White.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

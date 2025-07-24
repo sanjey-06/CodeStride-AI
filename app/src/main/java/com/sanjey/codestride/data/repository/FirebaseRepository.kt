@@ -7,6 +7,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.data.model.Question
 import com.sanjey.codestride.data.model.Quiz
+import com.sanjey.codestride.data.model.Quote
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class FirebaseRepository @Inject constructor(
@@ -62,6 +64,20 @@ class FirebaseRepository @Inject constructor(
                 onFailure(it)
             }
     }
+
+    // Quotes
+    suspend fun getQuotes(): List<Quote> {
+        return try {
+            firestore.collection("quotes")
+                .get()
+                .await() // requires 'kotlinx-coroutines-play-services'
+                .documents
+                .mapNotNull { it.toObject(Quote::class.java) }
+        } catch (e: Exception) {
+            emptyList() // return empty list on failure
+        }
+    }
+
 
     // ✅ Fetch full quiz details (with badge info)
     fun getQuizDetails(
