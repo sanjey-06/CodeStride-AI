@@ -43,5 +43,32 @@ class UserRepository @Inject constructor(
 
         return UserStats(newStreak, progress, nextBadgeMsg)
     }
+    suspend fun getCompletedModules(userId: String, roadmapId: String): List<String> {
+        val snapshot = firestore.collection(Constants.FirestorePaths.USERS)
+            .document(userId)
+            .collection(Constants.FirestorePaths.PROGRESS)
+            .document(roadmapId)
+            .get()
+            .await()
+        return (snapshot.get("completed_modules") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+    }
+
+    suspend fun getUserStats(userId: String): UserStats {
+        val snapshot = firestore.collection(Constants.FirestorePaths.USERS)
+            .document(userId)
+            .get()
+            .await()
+
+        val streak = snapshot.getLong("streak")?.toInt() ?: 0
+        val progress = (streak / 10f).coerceAtMost(1f)
+        val nextBadgeMsg = if (streak >= 10) {
+            "🔥 Amazing! You're on fire with $streak days streak!"
+        } else {
+            "You're ${10 - streak} day(s) away from hitting 10 days!"
+        }
+
+        return UserStats(streak, progress, nextBadgeMsg)
+    }
+
 
 }

@@ -4,11 +4,13 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.ProgressState
 import com.sanjey.codestride.data.model.Roadmap
 import com.sanjey.codestride.data.repository.RoadmapRepository
+import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RoadmapViewModel @Inject constructor(
-    private val repository: RoadmapRepository
+    private val repository: RoadmapRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _roadmapsState = MutableStateFlow<UiState<List<Roadmap>>>(UiState.Idle)
@@ -96,13 +99,23 @@ class RoadmapViewModel @Inject constructor(
             }
         }
     }
+    fun updateStreak() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                userRepository.updateStreakOnLearning(userId)
+            } catch (e: Exception) {
+                android.util.Log.e("STREAK_DEBUG", "Failed to update streak: ${e.message}")
+            }
+        }
+    }
 
 
 
 
     // ✅ Update progress
     fun updateProgress(roadmapId: String, moduleId: String) {
-        val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
             try {
                 repository.updateProgress(userId, roadmapId, moduleId)

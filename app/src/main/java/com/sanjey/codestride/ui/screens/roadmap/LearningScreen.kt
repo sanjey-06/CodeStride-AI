@@ -168,6 +168,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                             Button(
                                                 onClick = {
+                                                    roadmapViewModel.updateStreak()
                                                     moduleViewModel.updateLearningProgress(
                                                         roadmapId = roadmapId,
                                                         moduleId = module.id
@@ -192,6 +193,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                             if (module.ytUrl.isNotBlank()) {
                                                 Button(
                                                     onClick = {
+                                                        roadmapViewModel.updateStreak()
                                                         moduleViewModel.updateLearningProgress(roadmapId, module.id)
                                                         val intent = Intent(
                                                             Intent.ACTION_VIEW,
@@ -218,6 +220,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                             Button(
                                                 onClick = {
+                                                    roadmapViewModel.updateStreak()
                                                     moduleViewModel.updateLearningProgress(roadmapId, module.id)
                                                     navController.navigate("quiz_screen/$roadmapId/${module.id}/${module.quizId}")
                                                 },

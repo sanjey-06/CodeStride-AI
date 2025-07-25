@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
+
 class RoadmapRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
@@ -52,6 +53,18 @@ class RoadmapRepository @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+
+    suspend fun getModulesCount(roadmapId: String): Int {
+        val snapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
+            .document(roadmapId)
+            .collection(Constants.FirestorePaths.MODULES)
+            .get()
+            .await()
+        return snapshot.size()
+    }
+
+
+
     suspend fun getRoadmapById(roadmapId: String): Roadmap? {
         return try {
             val doc = firestore.collection("roadmaps")
@@ -88,7 +101,7 @@ class RoadmapRepository @Inject constructor(
             .document(roadmapId)
             .addSnapshotListener { snapshot, _ ->
                 val currentModuleId = snapshot?.getString("current_module")
-                val completedModules = snapshot?.get("completed_modules") as? List<String> ?: emptyList()
+                val completedModules = (snapshot?.get("completed_modules") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                 trySend(currentModuleId to completedModules)
             }
         awaitClose { listener.remove() }
@@ -101,11 +114,15 @@ class RoadmapRepository @Inject constructor(
                     close(error)
                     return@addSnapshotListener
                 }
-                val roadmaps = snapshot?.toObjects(Roadmap::class.java) ?: emptyList()
+                val roadmaps = snapshot?.documents?.mapNotNull { doc ->
+                    val roadmap = doc.toObject(Roadmap::class.java)
+                    roadmap?.copy(id = doc.id)  // ✅ Include document ID
+                } ?: emptyList()
                 trySend(roadmaps)
             }
         awaitClose { listener.remove() }
     }
+
 
 
 
