@@ -38,10 +38,11 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
     val progressState by roadmapViewModel.progressState.collectAsState()
     val homeState by homeViewModel.homeUiState.observeAsState()
     val currentModule = if (progressState is UiState.Success) {
-        (progressState as UiState.Success).data.currentModule
+        (progressState as UiState.Success).data.currentModuleTitle
     } else {
         "Loading..."
     }
+
 
     val exploreRoadmaps = if (homeState is UiState.Success) {
         (homeState as UiState.Success).data.exploreRoadmaps

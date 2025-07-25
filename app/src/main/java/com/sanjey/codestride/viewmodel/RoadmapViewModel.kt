@@ -51,6 +51,9 @@ class RoadmapViewModel @Inject constructor(
         }
     }
 
+
+
+
     // ✅ Start a roadmap
     fun startRoadmap(userId: String, roadmapId: String) {
         viewModelScope.launch {
@@ -61,6 +64,8 @@ class RoadmapViewModel @Inject constructor(
             }
         }
     }
+
+
 
     // ✅ Observe current roadmap as Flow from repository
     fun observeCurrentRoadmap(userId: String) {
@@ -75,7 +80,7 @@ class RoadmapViewModel @Inject constructor(
     // ✅ Observe progress from repository
     private fun observeProgress(userId: String, roadmapId: String) {
         viewModelScope.launch {
-            repository.observeProgress(userId, roadmapId).collectLatest { currentModuleId ->
+            repository.observeProgress(userId, roadmapId).collectLatest { (currentModuleId, completedModules) ->
                 val moduleTitle = if (currentModuleId != null) {
                     repository.getModuleTitle(roadmapId, currentModuleId)
                 } else {
@@ -84,13 +89,15 @@ class RoadmapViewModel @Inject constructor(
 
                 _progressState.value = UiState.Success(
                     ProgressState(
-                        completedModules = emptyList(), // Can add completed list later
-                        currentModule = moduleTitle // ✅ Now this is the name, not ID
+                        completedModules = completedModules,
+                        currentModuleTitle = moduleTitle
                     )
                 )
             }
         }
     }
+
+
 
 
     // ✅ Update progress

@@ -98,9 +98,9 @@ class QuizViewModel @Inject constructor(
     }
 
     fun resetQuiz() {
-        _quizResultState.value = QuizResultState.None
         _currentIndex.value = 0
-        _selectedOption.value = null
         _score.value = 0
+        _selectedOption.value = null
+        _quizResultState.value = QuizResultState.None
     }
 }

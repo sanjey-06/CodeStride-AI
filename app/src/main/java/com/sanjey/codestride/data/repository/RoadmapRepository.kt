@@ -1,5 +1,6 @@
 package com.sanjey.codestride.data.repository
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.Roadmap
@@ -80,16 +81,35 @@ class RoadmapRepository @Inject constructor(
 
 
     // ✅ Observe progress as Flow
-    fun observeProgress(userId: String, roadmapId: String): Flow<String?> = callbackFlow {
+    fun observeProgress(userId: String, roadmapId: String): Flow<Pair<String?, List<String>>> = callbackFlow {
         val listener = firestore.collection(Constants.FirestorePaths.USERS)
             .document(userId)
             .collection(Constants.FirestorePaths.PROGRESS)
             .document(roadmapId)
             .addSnapshotListener { snapshot, _ ->
-                trySend(snapshot?.getString("current_module"))
+                val currentModuleId = snapshot?.getString("current_module")
+                val completedModules = snapshot?.get("completed_modules") as? List<String> ?: emptyList()
+                trySend(currentModuleId to completedModules)
             }
         awaitClose { listener.remove() }
     }
+
+    fun observeRoadmaps(): Flow<List<Roadmap>> = callbackFlow {
+        val listener = firestore.collection(Constants.FirestorePaths.ROADMAPS)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val roadmaps = snapshot?.toObjects(Roadmap::class.java) ?: emptyList()
+                trySend(roadmaps)
+            }
+        awaitClose { listener.remove() }
+    }
+
+
+
+
 
     suspend fun updateProgress(userId: String, roadmapId: String, moduleId: String) {
         val docRef = firestore.collection(Constants.FirestorePaths.USERS)
@@ -102,11 +122,14 @@ class RoadmapRepository @Inject constructor(
             val completed = (snapshot.get("completed_modules") as? List<*>)?.filterIsInstance<String>()?.toMutableList()
                 ?: mutableListOf()
 
+            Log.d("PROGRESS_DEBUG", "Before Update → Completed Modules: $completed, Current Module: ${snapshot.get("current_module")}")
+
             if (!completed.contains(moduleId)) {
                 completed.add(moduleId)
+                Log.d("PROGRESS_DEBUG", "Added $moduleId to completed list")
             }
 
-            // ✅ Fetch all modules to determine next module
+            // ✅ Fetch all modules in order
             val modulesSnapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
                 .document(roadmapId)
                 .collection(Constants.FirestorePaths.MODULES)
@@ -115,25 +138,25 @@ class RoadmapRepository @Inject constructor(
                 .await()
 
             val allModules = modulesSnapshot.documents.map { it.id }
-            val currentIndex = allModules.indexOf(moduleId)
-            val nextModuleId = if (currentIndex != -1 && currentIndex + 1 < allModules.size) {
-                allModules[currentIndex + 1]
-            } else {
-                null
-            }
+            val nextModuleId = allModules.firstOrNull { !completed.contains(it) }
 
-            // ✅ Update progress document
+            Log.d("PROGRESS_DEBUG", "All Modules: $allModules, Next Module: $nextModuleId")
+
             docRef.set(
                 mapOf(
                     "completed_modules" to completed,
-                    "current_module" to (nextModuleId ?: moduleId)
+                    "current_module" to nextModuleId
                 ),
                 com.google.firebase.firestore.SetOptions.merge()
             ).await()
+
+            Log.d("PROGRESS_DEBUG", "Firestore Updated → Completed: $completed, Current: $nextModuleId")
         } catch (e: Exception) {
-            throw e
+            Log.e("PROGRESS_DEBUG", "Error updating progress: ${e.message}", e)
         }
     }
+
+
 
 
 }

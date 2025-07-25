@@ -1,5 +1,6 @@
 package com.sanjey.codestride.ui.screens.quiz
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Quiz
 import com.sanjey.codestride.ui.theme.PixelFont
@@ -101,6 +103,8 @@ fun QuizScreen(
                 QuizResultState.Passed, QuizResultState.Failed -> {
                     if (quizResultState == QuizResultState.Passed) {
                         LaunchedEffect(Unit) {
+                            Log.d("QUIZ_DEBUG", "Quiz Passed → Updating Progress for $moduleId in $roadmapId")
+
                             roadmapViewModel.updateProgress(roadmapId, moduleId)
                         }
                     }
@@ -110,8 +114,16 @@ fun QuizScreen(
                         totalQuestions = questions.size,
                         isPassed = (quizResultState == QuizResultState.Passed),
                         quizDetails = quizDetails,
-                        onRetry = { quizViewModel.resetQuiz() },
-                        onNext = { navController.popBackStack() }
+                        onRetry = { quizViewModel.resetQuiz()
+                            quizViewModel.loadQuizData(roadmapId, moduleId, quizId) // ✅ Force reload
+                            },
+                        onNext = {
+                            navController.navigate("${Constants.Routes.LEARNING}/$roadmapId") {
+                                popUpTo(Constants.Routes.ROADMAP) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+
                     )
                 }
             }
