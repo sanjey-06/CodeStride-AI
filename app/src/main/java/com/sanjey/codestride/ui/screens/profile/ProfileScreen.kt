@@ -27,8 +27,8 @@ import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.ui.screens.home.BadgePreviewSection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,7 +42,7 @@ import com.sanjey.codestride.viewmodel.HomeViewModel
 
 @Composable
 fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
-    val homeState by viewModel.homeUiState.observeAsState(UiState.Loading)
+    val homeState by viewModel.homeUiState.collectAsState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     var showEditDialog by remember { mutableStateOf(false) }

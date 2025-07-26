@@ -1,5 +1,6 @@
 package com.sanjey.codestride.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import com.sanjey.codestride.common.FireProgressBar
 import androidx.compose.foundation.background
@@ -13,7 +14,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,13 +35,22 @@ import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.data.model.HomeScreenData
+import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
-fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
-    val homeState by viewModel.homeUiState.observeAsState(UiState.Loading)
+fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel(), roadmapViewModel: RoadmapViewModel) {
+    val homeState by viewModel.homeUiState.collectAsState()
     val scrollState = rememberScrollState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val imageHeight = screenHeight * 0.75f
+
+    val currentRoadmapId by roadmapViewModel.currentRoadmapId.collectAsState()
+    Log.d("HOME_DEBUG", "HomeScreen currentRoadmapId=$currentRoadmapId")
+
+    LaunchedEffect(homeState) {
+        Log.d("HOME_UI_DEBUG", "HomeScreen recomposed → homeState=$homeState, currentRoadmapId=$currentRoadmapId")
+    }
+
 
     when (homeState) {
         is UiState.Loading -> {
@@ -181,17 +190,17 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
+                    val (title, iconResId) = roadmapViewModel.getRoadmapTitleAndIcon(currentRoadmapId)
 
                     RoadmapCard(
-                        iconResId = data.currentRoadmap.iconResId,
-                        title = data.currentRoadmap.title,
+                        iconResId = iconResId,
+                        title = title,
                         progressPercent = data.currentRoadmap.progressPercent
                     )
-
                     Spacer(modifier = Modifier.height(28.dp))
 
                     BadgePreviewSection(data.badges)
-                    ExploreOtherRoadmapsSection(navController, data.exploreRoadmaps)
+                    ExploreOtherRoadmapsSection(navController, data.exploreRoadmaps,  onRoadmapClick = { } )
                 }
             }
         }
@@ -360,7 +369,7 @@ fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>) {
 }
 
 @Composable
-fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pair<Int, String>>) {
+fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pair<Int, String>>, onRoadmapClick: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -394,7 +403,10 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pai
             horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
         ) {
             roadmaps.forEach { (icon, label) ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.clickable {
+                        onRoadmapClick(label.lowercase()) // ✅ Trigger the callback
+                    }) {
                     Surface(
                         modifier = Modifier.size(84.dp),
                         shape = RoundedCornerShape(16.dp),

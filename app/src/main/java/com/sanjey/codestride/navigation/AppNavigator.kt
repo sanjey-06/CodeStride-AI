@@ -1,6 +1,7 @@
 package com.sanjey.codestride.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,6 +28,10 @@ fun AppNavigator() {
     val navController = rememberNavController()
     val roadmapViewModel: RoadmapViewModel = hiltViewModel()
 
+    LaunchedEffect(Unit) {
+        roadmapViewModel.observeCurrentRoadmap()
+    }
+
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
         composable(Routes.SPLASH) { SplashScreen(navController) }
         composable(Routes.ONBOARDING) { OnboardingScreen(navController) }
@@ -36,9 +41,10 @@ fun AppNavigator() {
 
         composable(Routes.HOME) {
             MainScreen(navController = navController, currentRoute = Routes.HOME) {
-                HomeScreen(navController)
+                HomeScreen(navController = navController, roadmapViewModel = roadmapViewModel)
             }
         }
+
 
         composable(Routes.ROADMAP) {
             MainScreen(navController = navController, currentRoute = Routes.ROADMAP) {
@@ -82,7 +88,7 @@ fun AppNavigator() {
                 roadmapId = roadmapId,
                 moduleId = moduleId,
                 quizId = quizId,
-                roadmapViewModel = roadmapViewModel
+                roadmapViewModel = roadmapViewModel,
             )
         }
 

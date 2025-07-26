@@ -112,4 +112,19 @@ class FirebaseRepository @Inject constructor(
             .update("completed", true)
             .await()
     }
+
+    suspend fun saveBadge(userId: String, title: String, image: String, roadmapId: String, moduleId: String) {
+        val badgeData = mapOf(
+            "title" to title,
+            "image" to image,
+            "roadmapId" to roadmapId,
+            "moduleId" to moduleId,
+            "dateEarned" to System.currentTimeMillis()
+        )
+        firestore.collection("users").document(userId)
+            .collection("badges")
+            .add(badgeData)
+            .await()
+    }
+
 }

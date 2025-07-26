@@ -168,12 +168,13 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                             Button(
                                                 onClick = {
+
                                                     roadmapViewModel.updateStreak()
-                                                    moduleViewModel.updateLearningProgress(
-                                                        roadmapId = roadmapId,
-                                                        moduleId = module.id
-                                                    )
+
+
                                                     navController.navigate("learning_content/$roadmapId/${module.id}")
+                                                    Log.d("QUIZ_DEBUG", "Start Learning clicked → roadmapId=$roadmapId, moduleId=${module.id}")
+
                                                 },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
@@ -194,7 +195,6 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                                 Button(
                                                     onClick = {
                                                         roadmapViewModel.updateStreak()
-                                                        moduleViewModel.updateLearningProgress(roadmapId, module.id)
                                                         val intent = Intent(
                                                             Intent.ACTION_VIEW,
                                                             module.ytUrl.toUri()

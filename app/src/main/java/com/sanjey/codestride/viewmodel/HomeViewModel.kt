@@ -1,7 +1,6 @@
 package com.sanjey.codestride.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -15,8 +14,12 @@ import com.sanjey.codestride.data.repository.FirebaseRepository
 import com.sanjey.codestride.data.repository.RoadmapRepository
 import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -29,102 +32,110 @@ class HomeViewModel @Inject constructor(
     private val roadmapRepository: RoadmapRepository
 ) : ViewModel() {
 
-    private val _homeUiState = MutableLiveData<UiState<HomeScreenData>>(UiState.Loading)
-    val homeUiState: LiveData<UiState<HomeScreenData>> = _homeUiState
+    private val _homeUiState = MutableStateFlow<UiState<HomeScreenData>>(UiState.Loading)
+    val homeUiState: StateFlow<UiState<HomeScreenData>> = _homeUiState
 
     init {
-            observeHomeData() // ✅ Use real-time updates
+        observeHomeData()
     }
 
-
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeHomeData() {
         viewModelScope.launch {
             try {
                 val userId = FirebaseAuth.getInstance().currentUser?.uid
                     ?: throw Exception("User not logged in")
 
-                roadmapRepository.observeRoadmaps().collectLatest { roadmaps ->
-                    android.util.Log.d("HOME_DEBUG", "Roadmaps fetched: ${roadmaps.size}")
+                // ✅ Listen to current roadmap and combine with roadmaps + progress
+                roadmapRepository.observeCurrentRoadmap(userId)
+                    .flatMapLatest { currentRoadmapId ->
+                        combine(
+                            roadmapRepository.observeRoadmaps(),
+                            if (currentRoadmapId != null)
+                                roadmapRepository.observeProgress(userId, currentRoadmapId)
+                            else flowOf(null to emptyList())
+                        ) { roadmaps, progressData ->
+                            Triple(currentRoadmapId, roadmaps, progressData)
+                        }
+                    }
+                    .collect { (currentRoadmapId, roadmaps, progressData) ->
+                        val (currentModuleId, completedModules) = progressData
 
-                    _homeUiState.value = UiState.Loading
+                        // ✅ Fetch additional data
+                        val firstName = firebaseRepository.getFirstName()
+                        val userStats = userRepository.getUserStats(userId)
+                        val quotes = firebaseRepository.getQuotes()
+                        val quote = if (quotes.isNotEmpty()) {
+                            val uidHash = userId.hashCode().absoluteValue
+                            val dayIndex = (LocalDate.now().dayOfYear + uidHash) % quotes.size
+                            quotes[dayIndex]
+                        } else {
+                            Quote("Keep pushing!", "CodeStride")
+                        }
 
-                    // ✅ Run parallel async calls for speed
-                    val firstNameDeferred = async { firebaseRepository.getFirstName() }
-                    val quotesDeferred = async { firebaseRepository.getQuotes() }
+                        // ✅ Find current roadmap
+                        val roadmap = roadmaps.find { it.id == currentRoadmapId }
 
-                    android.util.Log.d("HOME_DEBUG", "Fetching firstName, streak, quotes for user: $userId")
+                        // ✅ Current module title
+                        val currentModuleTitle = if (currentModuleId != null && roadmap != null) {
+                            roadmapRepository.getModuleTitle(roadmap.id, currentModuleId)
+                        } else {
+                            "Start from Module 1"
+                        }
 
-                    val firstName = firstNameDeferred.await()
-                    val quotes = quotesDeferred.await()
-
-                    val userStatsDeferred = async { userRepository.getUserStats(userId) }
-                    val userStats = userStatsDeferred.await()
-
-
-                    val currentRoadmap = if (roadmaps.isNotEmpty()) {
-                        val roadmap = roadmaps.first()
-                        android.util.Log.d("HOME_DEBUG", "Current roadmap: ${roadmap.title}, ID: ${roadmap.id}")
-
-                        // ✅ Log before fetching progress details
-                        android.util.Log.d("HOME_DEBUG", "Calculating progress for roadmapId: ${roadmap.id}")
-
-                        val totalModules = roadmapRepository.getModulesCount(roadmap.id)
-                        android.util.Log.d("HOME_DEBUG", "Total modules: $totalModules")
-
-                        val completedModules = userRepository.getCompletedModules(userId, roadmap.id)
-                        android.util.Log.d("HOME_DEBUG", "Completed modules: $completedModules")
+                        // ✅ Calculate progress
+                        val totalModules = if (roadmap != null) {
+                            roadmapRepository.getModulesCount(roadmap.id)
+                        } else 0
 
                         val progressPercent = if (totalModules > 0) {
                             ((completedModules.size.toFloat() / totalModules.toFloat()) * 100).toInt()
                         } else 0
-                        android.util.Log.d("HOME_DEBUG", "Progress calculated: $progressPercent%")
 
-                        RoadmapUI(
-                            title = roadmap.title,
-                            iconResId = getIconResource(roadmap.icon),
-                            progressPercent = progressPercent
+                        Log.d("HOMIES_DEBUG", """
+--- HOME DATA CALCULATION ---
+Current Roadmap ID: $currentRoadmapId
+Roadmap Title: ${roadmap?.title ?: "N/A"}
+Total Modules: $totalModules
+Completed Modules: ${completedModules.size} → $completedModules
+Calculated Progress: $progressPercent%
+------------------------------
+""".trimIndent())
+
+
+                        // ✅ Emit UI State
+                        _homeUiState.value = UiState.Success(
+                            HomeScreenData(
+                                firstName = firstName,
+                                userStats = userStats,
+                                currentRoadmap = if (roadmap != null) {
+                                    RoadmapUI(
+                                        title = roadmap.title,
+                                        iconResId = getIconResource(roadmap.icon),
+                                        progressPercent = progressPercent,
+                                        currentModuleTitle = currentModuleTitle
+                                    )
+                                } else {
+                                    RoadmapUI(
+                                        title = "No Roadmap Selected",
+                                        iconResId = R.drawable.ic_none,
+                                        progressPercent = 0
+                                    )
+                                },
+                                badges = listOf(
+                                    Triple("Kotlin Novice", R.drawable.kotlin_novice_badge, true),
+                                    Triple("Security Specialist", R.drawable.security_specialist_badge, false),
+                                    Triple("Jetpack Explorer", R.drawable.jetpack_explorer_badge, false)
+                                ),
+                                exploreRoadmaps = roadmaps.map { getIconResource(it.icon) to it.title },
+                                quote = quote
+                            )
                         )
-                    } else {
-                        android.util.Log.d("HOME_DEBUG", "No roadmaps found, showing default UI")
-                        RoadmapUI("No Roadmap", 0, 0)
                     }
-
-                    android.util.Log.d("HOME_DEBUG", "Preparing UI with data: firstName=$firstName, streak=${userStats.streak}")
-
-                    val badges = listOf(
-                        Triple("Kotlin Novice", R.drawable.kotlin_novice_badge, true),
-                        Triple("Security Specialist", R.drawable.security_specialist_badge, false),
-                        Triple("Jetpack Explorer", R.drawable.jetpack_explorer_badge, false)
-                    )
-
-                    val exploreRoadmaps = roadmaps.map { getIconResource(it.icon) to it.title }
-
-                    val quote = if (quotes.isNotEmpty()) {
-                        val uidHash = userId.hashCode().absoluteValue
-                        val dayIndex = (LocalDate.now().dayOfYear + uidHash) % quotes.size
-                        quotes[dayIndex]
-                    } else {
-                        Quote("Keep pushing!", "CodeStride")
-                    }
-
-                    android.util.Log.d("HOME_DEBUG", "Setting UiState.Success for HomeScreen")
-
-                    _homeUiState.value = UiState.Success(
-                        HomeScreenData(
-                            firstName = firstName,
-                            userStats = userStats,
-                            currentRoadmap = currentRoadmap,
-                            badges = badges,
-                            exploreRoadmaps = exploreRoadmaps,
-                            quote = quote
-                        )
-                    )
-                }
             } catch (e: Exception) {
-                android.util.Log.e("HOME_DEBUG", "Error in observeHomeData: ${e.message}", e)
+                Log.e("HOME_DEBUG", "Error in observeHomeData: ${e.message}", e)
                 _homeUiState.value = UiState.Error(e.message ?: "Failed to load home data")
             }
         }
     }
-
 }
