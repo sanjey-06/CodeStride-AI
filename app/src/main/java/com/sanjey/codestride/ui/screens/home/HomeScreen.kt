@@ -424,11 +424,15 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pai
                     Text(
                         text = label,
                         fontFamily = PixelFont,
-                        fontSize = 12.sp,
-                        color = Color.Black
+                        fontSize = 10.sp,
+                        color = Color.Black,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis // Optional: Add ellipsis (...)
                     )
                 }
             }
         }
     }
 }
+
+

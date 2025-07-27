@@ -189,16 +189,21 @@ class RoadmapViewModel @Inject constructor(
             _currentRoadmapTitle.value = roadmap?.title ?: "Learning"
         }
     }
+
     fun getRoadmapTitleAndIcon(roadmapId: String?): Pair<String, Int> {
-        return when (roadmapId) {
+        val normalizedId = roadmapId?.trim()?.lowercase() ?: ""
+        Log.d("DEBUG_ICON", "normalizedId = $normalizedId")
+
+        return when (normalizedId) {
             "java" -> "Java Programming" to R.drawable.ic_java
             "python" -> "Python Programming" to R.drawable.ic_python
             "cpp" -> "C++ Programming" to R.drawable.ic_cpp
             "kotlin" -> "Kotlin Programming" to R.drawable.ic_kotlin
-            "js","javaScript" -> "JavaScript Programming" to R.drawable.ic_javascript
+            "js", "javascript" -> "JavaScript Programming" to R.drawable.ic_javascript
             else -> "No Roadmap Selected" to R.drawable.ic_none
         }
     }
+
 
 
 }

@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Roadmap
@@ -218,8 +217,16 @@ fun RoadmapIconCard(title: String, icon: String, onClick: () -> Unit) {
             color = Color.Black
         ) {
             Box(contentAlignment = Alignment.Center) {
-                AsyncImage(
-                    model = icon,
+                val iconRes = when (icon) {
+                    "ic_java" -> R.drawable.ic_java
+                    "ic_python" -> R.drawable.ic_python
+                    "ic_cpp" -> R.drawable.ic_cpp
+                    "ic_kotlin" -> R.drawable.ic_kotlin
+                    "ic_javascript" -> R.drawable.ic_javascript
+                    else -> R.drawable.ic_none
+                }
+                Image(
+                    painter = painterResource(id = iconRes),
                     contentDescription = title,
                     modifier = Modifier.size(100.dp)
                 )
