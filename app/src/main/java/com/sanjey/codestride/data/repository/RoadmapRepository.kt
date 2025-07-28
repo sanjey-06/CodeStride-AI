@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
 import javax.inject.Inject
 
 
@@ -157,12 +158,10 @@ class RoadmapRepository @Inject constructor(
             val snapshot = docRef.get().await()
             val completed = (snapshot.get("completed_modules") as? List<*>)?.filterIsInstance<String>()?.toMutableList() ?: mutableListOf()
 
-            // ✅ Add current module if not already completed
             if (!completed.contains(moduleId)) {
                 completed.add(moduleId)
             }
 
-            // ✅ Fetch all modules in this roadmap
             val modulesSnapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
                 .document(roadmapId)
                 .collection(Constants.FirestorePaths.MODULES)
@@ -172,14 +171,15 @@ class RoadmapRepository @Inject constructor(
                 .map { it.id }
                 .sortedBy { it.removePrefix("module").toIntOrNull() ?: Int.MAX_VALUE }
 
-            // ✅ Find next module (first one not completed)
             val nextModuleId = allModules.firstOrNull { it !in completed }
 
-            // ✅ Update Firestore with completed modules and next module
+            val today = LocalDate.now().toString() // ✅ NEW
+
             docRef.update(
                 mapOf(
                     "completed_modules" to completed,
-                    "current_module" to (nextModuleId ?: moduleId) // fallback if all done
+                    "current_module" to (nextModuleId ?: moduleId),
+                    "lastLearnedDate" to today // ✅ NEW LINE
                 )
             ).await()
 

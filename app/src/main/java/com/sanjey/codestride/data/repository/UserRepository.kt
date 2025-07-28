@@ -12,16 +12,29 @@ class UserRepository @Inject constructor(
 ) {
 
     suspend fun updateStreakOnLearning(userId: String): UserStats {
-        val userRef = firestore.collection(Constants.FirestorePaths.USERS).document(userId)
-        val userDoc = userRef.get().await()
+        val progressDocs = firestore.collection("users")
+            .document(userId)
+            .collection("progress")
+            .get()
+            .await()
 
-        val lastActiveDate = userDoc.getString("lastActiveDate")
-        val currentStreak = userDoc.getLong("streak")?.toInt() ?: 0
+        var mostRecentDate: String? = null
+
+        for (doc in progressDocs.documents) {
+            val date = doc.getString("lastLearnedDate")
+            if (date != null && (mostRecentDate == null || date > mostRecentDate)) {
+                mostRecentDate = date
+            }
+        }
 
         val today = LocalDate.now().toString()
         val yesterday = LocalDate.now().minusDays(1).toString()
 
-        val newStreak = when (lastActiveDate) {
+        val userRef = firestore.collection("users").document(userId)
+        val userDoc = userRef.get().await()
+        val currentStreak = userDoc.getLong("streak")?.toInt() ?: 0
+
+        val newStreak = when (mostRecentDate) {
             today -> currentStreak
             yesterday -> currentStreak + 1
             else -> 1
@@ -43,6 +56,7 @@ class UserRepository @Inject constructor(
 
         return UserStats(newStreak, progress, nextBadgeMsg)
     }
+
 
     suspend fun getUserStats(userId: String): UserStats {
         val snapshot = firestore.collection(Constants.FirestorePaths.USERS)
