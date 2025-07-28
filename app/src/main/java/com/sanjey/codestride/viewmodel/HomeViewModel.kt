@@ -46,7 +46,6 @@ class HomeViewModel @Inject constructor(
                 val userId = FirebaseAuth.getInstance().currentUser?.uid
                     ?: throw Exception("User not logged in")
 
-                // ✅ Listen to current roadmap and combine with roadmaps + progress
                 roadmapRepository.observeCurrentRoadmap(userId)
                     .flatMapLatest { currentRoadmapId ->
                         combine(
@@ -61,10 +60,10 @@ class HomeViewModel @Inject constructor(
                     .collect { (currentRoadmapId, roadmaps, progressData) ->
                         val (currentModuleId, completedModules) = progressData
 
-                        // ✅ Fetch additional data
                         val firstName = firebaseRepository.getFirstName()
                         val userStats = userRepository.getUserStats(userId)
                         val quotes = firebaseRepository.getQuotes()
+                        val badgeDocs = firebaseRepository.getUserBadges(userId)
                         val quote = if (quotes.isNotEmpty()) {
                             val uidHash = userId.hashCode().absoluteValue
                             val dayIndex = (LocalDate.now().dayOfYear + uidHash) % quotes.size
@@ -73,17 +72,14 @@ class HomeViewModel @Inject constructor(
                             Quote("Keep pushing!", "CodeStride")
                         }
 
-                        // ✅ Find current roadmap
                         val roadmap = roadmaps.find { it.id == currentRoadmapId }
 
-                        // ✅ Current module title
                         val currentModuleTitle = if (currentModuleId != null && roadmap != null) {
                             roadmapRepository.getModuleTitle(roadmap.id, currentModuleId)
                         } else {
                             "Start from Module 1"
                         }
 
-                        // ✅ Calculate progress
                         val totalModules = if (roadmap != null) {
                             roadmapRepository.getModulesCount(roadmap.id)
                         } else 0
@@ -101,9 +97,6 @@ Completed Modules: ${completedModules.size} → $completedModules
 Calculated Progress: $progressPercent%
 ------------------------------
 """.trimIndent())
-
-
-                        // ✅ Emit UI State
                         _homeUiState.value = UiState.Success(
                             HomeScreenData(
                                 firstName = firstName,
@@ -122,11 +115,7 @@ Calculated Progress: $progressPercent%
                                         progressPercent = 0
                                     )
                                 },
-                                badges = listOf(
-                                    Triple("Kotlin Novice", R.drawable.kotlin_novice_badge, true),
-                                    Triple("Security Specialist", R.drawable.security_specialist_badge, false),
-                                    Triple("Jetpack Explorer", R.drawable.jetpack_explorer_badge, false)
-                                ),
+                                badges = badgeDocs,
                                 exploreRoadmaps = roadmaps,
                                 quote = quote
                             )

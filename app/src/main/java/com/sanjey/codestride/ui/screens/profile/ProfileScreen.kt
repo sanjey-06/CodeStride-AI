@@ -223,6 +223,7 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
                     is UiState.Success -> {
                         val data = (homeState as UiState.Success<HomeScreenData>).data
                         BadgePreviewSection(data.badges)
+
                     }
                     else -> {
                         Text(

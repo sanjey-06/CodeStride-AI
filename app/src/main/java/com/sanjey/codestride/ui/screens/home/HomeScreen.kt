@@ -10,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,17 +25,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.common.getIconResource
+import com.sanjey.codestride.data.model.Badge
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.data.model.HomeScreenData
 import com.sanjey.codestride.data.model.Roadmap
+import com.sanjey.codestride.ui.components.BadgeInfoCard
 import com.sanjey.codestride.ui.components.RoadmapReplaceDialog
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
@@ -206,6 +209,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     Spacer(modifier = Modifier.height(28.dp))
 
                     BadgePreviewSection(data.badges)
+
+
                     ExploreOtherRoadmapsSection(
                         navController = navController,
                         roadmaps = data.exploreRoadmaps,
@@ -339,8 +344,12 @@ fun RoadmapCard(iconResId: Int, title: String, progressPercent: Int, modifier: M
     }
 }
 
+
+
 @Composable
-fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>) {
+fun BadgePreviewSection(badges: List<Badge>) {
+    var selectedBadge by remember { mutableStateOf<Badge?>(null) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -358,13 +367,15 @@ fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>) {
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            badges.forEach { (_, imageRes, unlocked) ->
+            badges.forEach { badge ->
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.width(100.dp)
+                    modifier = Modifier
+                        .width(100.dp)
+                        .clickable { selectedBadge = badge } // ✅ Handles click
                 ) {
-                    Image(
-                        painter = painterResource(id = imageRes),
+                    AsyncImage(
+                        model = badge.image,
                         contentDescription = null,
                         modifier = Modifier
                             .size(100.dp)
@@ -377,27 +388,29 @@ fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>) {
                         modifier = Modifier.padding(top = 6.dp)
                     ) {
                         Text(
-                            text = if (unlocked) "Unlocked" else "Locked",
+                            text = "Unlocked",
                             fontFamily = SoraFont,
                             fontSize = 12.sp,
-                            color = if (unlocked) Color(0xFFB4FF63) else Color.Gray
+                            color = Color(0xFFB4FF63)
                         )
-                        if (!unlocked) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null,
-                                tint = Color.Gray,
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .padding(start = 4.dp)
-                            )
-                        }
                     }
                 }
             }
         }
     }
+
+    // ✅ Keep this OUTSIDE the Column
+    selectedBadge?.let {
+        Dialog(onDismissRequest = { selectedBadge = null }) {
+            BadgeInfoCard(
+                badge = it,
+                onClose = { selectedBadge = null }
+            )
+        }
+    }
 }
+
+
 
 @Composable
 fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Roadmap>, onRoadmapClick: (String) -> Unit) {

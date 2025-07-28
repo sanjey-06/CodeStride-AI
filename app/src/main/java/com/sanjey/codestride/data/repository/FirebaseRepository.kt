@@ -121,10 +121,24 @@ class FirebaseRepository @Inject constructor(
             "moduleId" to moduleId,
             "dateEarned" to System.currentTimeMillis()
         )
-        firestore.collection("users").document(userId)
+        firestore.collection("users")
+            .document(userId)
             .collection("badges")
-            .add(badgeData)
+            .document("${roadmapId}_$moduleId") // 🧠 deterministic doc ID
+            .set(badgeData)
             .await()
     }
+
+    suspend fun getUserBadges(userId: String): List<com.sanjey.codestride.data.model.Badge> {
+        val snapshot = firestore.collection("users")
+            .document(userId)
+            .collection("badges")
+            .get()
+            .await()
+
+        return snapshot.toObjects(com.sanjey.codestride.data.model.Badge::class.java)
+    }
+
+
 
 }
