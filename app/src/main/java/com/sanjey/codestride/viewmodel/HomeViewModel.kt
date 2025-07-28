@@ -127,7 +127,7 @@ Calculated Progress: $progressPercent%
                                     Triple("Security Specialist", R.drawable.security_specialist_badge, false),
                                     Triple("Jetpack Explorer", R.drawable.jetpack_explorer_badge, false)
                                 ),
-                                exploreRoadmaps = roadmaps.map { getIconResource(it.icon) to it.title },
+                                exploreRoadmaps = roadmaps,
                                 quote = quote
                             )
                         )

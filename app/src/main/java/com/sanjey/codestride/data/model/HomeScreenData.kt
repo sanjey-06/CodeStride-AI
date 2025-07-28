@@ -5,6 +5,6 @@ data class HomeScreenData(
     val userStats: UserStats,
     val currentRoadmap: RoadmapUI,
     val badges: List<Triple<String, Int, Boolean>>,
-    val exploreRoadmaps: List<Pair<Int, String>>,
+    val exploreRoadmaps: List<Roadmap>,
     val quote: Quote
 )

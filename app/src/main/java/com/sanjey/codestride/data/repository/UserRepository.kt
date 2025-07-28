@@ -1,6 +1,5 @@
 package com.sanjey.codestride.data.repository
 
-import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.UserStats
@@ -63,36 +62,41 @@ class UserRepository @Inject constructor(
     }
 
     suspend fun replaceUserRoadmap(userId: String, newRoadmapId: String) {
-        Log.d("ROADMAP_DEBUG", "replaceUserRoadmap() → deleting old progress for user=$userId")
+        val userRef = firestore.collection("users").document(userId)
 
-        // ✅ Delete all old progress docs
-        val progressRef = firestore.collection("users")
-            .document(userId)
-            .collection("progress")
-
+        // Step 1: Delete all old progress
+        val progressRef = userRef.collection("progress")
         val docs = progressRef.get().await()
         val batch = firestore.batch()
         for (doc in docs.documents) {
             batch.delete(doc.reference)
         }
         batch.commit().await()
-        Log.d("ROADMAP_DEBUG", "Old progress deleted successfully")
 
-        // ✅ Create new progress doc for new roadmap
+        // Step 2: Get the first module ID from the new roadmap
+        val firstModuleId = firestore.collection("roadmaps")
+            .document(newRoadmapId)
+            .collection("modules")
+            .orderBy("order")
+            .limit(1)
+            .get()
+            .await()
+            .documents
+            .firstOrNull()
+            ?.id ?: ""
+
+        // Step 3: Set new progress with first module
         progressRef.document(newRoadmapId).set(
             mapOf(
                 "completed_modules" to emptyList<String>(),
-                "current_module" to ""
+                "current_module" to firstModuleId
             )
         ).await()
-        Log.d("ROADMAP_DEBUG", "New roadmap $newRoadmapId set in progress collection")
 
-        // ✅ Update user document with new roadmap ID
-        firestore.collection("users").document(userId)
-            .update("currentRoadmapId", newRoadmapId)
-            .await()
-        Log.d("ROADMAP_DEBUG", "User document updated → currentRoadmapId=$newRoadmapId")
+        // Step 4: Update current roadmap ID
+        userRef.update("currentRoadmapId", newRoadmapId).await()
     }
+
 
 
 

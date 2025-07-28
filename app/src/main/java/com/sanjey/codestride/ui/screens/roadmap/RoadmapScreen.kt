@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.data.model.Roadmap
 import com.sanjey.codestride.ui.components.RoadmapReplaceDialog
 import com.sanjey.codestride.ui.screens.home.ExploreOtherRoadmapsSection
 import com.sanjey.codestride.ui.theme.CustomBlue
@@ -65,10 +66,9 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
     }
 
 
-    val exploreRoadmaps = if (homeState is UiState.Success) {
-        (homeState as UiState.Success).data.exploreRoadmaps
-    } else {
-        emptyList()
+    val exploreRoadmaps: List<Roadmap> = when (val state = homeState) {
+        is UiState.Success -> state.data.exploreRoadmaps
+        else -> emptyList()
     }
 
 
@@ -263,16 +263,18 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 ExploreOtherRoadmapsSection(
                     navController = appNavController,
-                    roadmaps = exploreRoadmaps,
+                    roadmaps = exploreRoadmaps, // ✅ Now a List<Roadmap>
                     onRoadmapClick = { selectedRoadmapId ->
                         if (roadmapViewModel.hasActiveRoadmap()) {
                             newRoadmapId = selectedRoadmapId
                             showDialog = true
                         } else {
-                            roadmapViewModel.startRoadmap(selectedRoadmapId) // ✅ No Firebase in UI
+                            roadmapViewModel.startRoadmap(selectedRoadmapId)
+                            appNavController.navigate("learning/$selectedRoadmapId") // ✅ Add this if missing
                         }
                     }
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 RoadmapReplaceDialog(

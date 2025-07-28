@@ -56,6 +56,11 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
     }
 
+    LaunchedEffect(modulesState) {
+        Log.d("MODULES_STATE", "Current state: $modulesState")
+    }
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()

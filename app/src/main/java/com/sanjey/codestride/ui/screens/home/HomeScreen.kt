@@ -30,11 +30,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.common.getIconResource
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.data.model.HomeScreenData
+import com.sanjey.codestride.data.model.Roadmap
+import com.sanjey.codestride.ui.components.RoadmapReplaceDialog
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
@@ -50,6 +53,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
     LaunchedEffect(homeState) {
         Log.d("HOME_UI_DEBUG", "HomeScreen recomposed → homeState=$homeState, currentRoadmapId=$currentRoadmapId")
     }
+    var showDialog by remember { mutableStateOf(false) }
+    var newRoadmapId by remember { mutableStateOf<String?>(null) }
+
 
 
     when (homeState) {
@@ -200,7 +206,32 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     Spacer(modifier = Modifier.height(28.dp))
 
                     BadgePreviewSection(data.badges)
-                    ExploreOtherRoadmapsSection(navController, data.exploreRoadmaps,  onRoadmapClick = { } )
+                    ExploreOtherRoadmapsSection(
+                        navController = navController,
+                        roadmaps = data.exploreRoadmaps,
+                        onRoadmapClick = { roadmapId ->
+                            if (roadmapViewModel.hasActiveRoadmap()) {
+                                newRoadmapId = roadmapId
+                                showDialog = true
+                            } else {
+                                roadmapViewModel.startRoadmap(roadmapId)
+                                navController.navigate("learning/$roadmapId")
+                            }
+                        }
+                    )
+
+                    RoadmapReplaceDialog(
+                        showDialog = showDialog && newRoadmapId != null,
+                        onDismiss = { showDialog = false },
+                        onConfirm = {
+                            roadmapViewModel.replaceRoadmap(newRoadmapId!!)
+                            showDialog = false
+                            navController.navigate("learning/${newRoadmapId!!}") {
+                                popUpTo("roadmap") { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -369,7 +400,7 @@ fun BadgePreviewSection(badges: List<Triple<String, Int, Boolean>>) {
 }
 
 @Composable
-fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pair<Int, String>>, onRoadmapClick: (String) -> Unit) {
+fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Roadmap>, onRoadmapClick: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -402,11 +433,15 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pai
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
         ) {
-            roadmaps.forEach { (icon, label) ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally,
+            roadmaps.forEach { roadmap ->
+                val iconRes = getIconResource(roadmap.icon)
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.clickable {
-                        onRoadmapClick(label.lowercase()) // ✅ Trigger the callback
-                    }) {
+                        onRoadmapClick(roadmap.id) // ✅ Firestore-safe ID
+                    }
+                ) {
                     Surface(
                         modifier = Modifier.size(84.dp),
                         shape = RoundedCornerShape(16.dp),
@@ -414,20 +449,22 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Pai
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Image(
-                                painter = painterResource(id = icon),
-                                contentDescription = label,
+                                painter = painterResource(id = iconRes),
+                                contentDescription = roadmap.title,
                                 modifier = Modifier.size(80.dp)
                             )
                         }
                     }
+
                     Spacer(modifier = Modifier.height(4.dp))
+
                     Text(
-                        text = label,
+                        text = roadmap.title,
                         fontFamily = PixelFont,
                         fontSize = 10.sp,
                         color = Color.Black,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis // Optional: Add ellipsis (...)
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
