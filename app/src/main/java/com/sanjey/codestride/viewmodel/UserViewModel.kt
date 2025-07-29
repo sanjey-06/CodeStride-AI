@@ -6,12 +6,25 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.data.model.UserProfileData
 import com.sanjey.codestride.data.prefs.OnboardingPreferences
+import com.sanjey.codestride.data.repository.UserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class UserViewModel : ViewModel() {
+@HiltViewModel
+class UserViewModel @Inject constructor(
+    private val userRepository: UserRepository
+) : ViewModel() {
+    private val _profileState = MutableStateFlow<UiState<UserProfileData>>(UiState.Loading)
+    val profileState: StateFlow<UiState<UserProfileData>> = _profileState
+
 
     private val auth = FirebaseAuth.getInstance()
 
@@ -34,4 +47,16 @@ class UserViewModel : ViewModel() {
             _splashNavigationState.postValue(target)
         }
     }
+    fun loadUserProfile() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                val data = userRepository.getUserProfileData(userId)
+                _profileState.value = UiState.Success(data)
+            } catch (e: Exception) {
+                _profileState.value = UiState.Error(e.message ?: "Failed to load profile")
+            }
+        }
+    }
+
 }

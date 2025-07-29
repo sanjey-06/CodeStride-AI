@@ -27,6 +27,7 @@ import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.ui.screens.home.BadgePreviewSection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,15 +39,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.HomeScreenData
 import com.sanjey.codestride.viewmodel.HomeViewModel
+import com.sanjey.codestride.viewmodel.UserViewModel
 
 
 @Composable
-fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
+fun ProfileScreen(
+    navController: NavController,
+    viewModel: HomeViewModel = hiltViewModel(),
+    userViewModel: UserViewModel = hiltViewModel()
+) {
     val homeState by viewModel.homeUiState.collectAsState()
+    val profileState by userViewModel.profileState.collectAsState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     var showEditDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        userViewModel.loadUserProfile()
+    }
 
     Column(
         modifier = Modifier
@@ -116,25 +126,16 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
 
                         Spacer(modifier = Modifier.height(8.dp))
 
+                        val profileName = when (val state = profileState) {
+                            is UiState.Success -> state.data.fullName
+                            else -> "Loading..."
+                        }
+
                         Text(
-                            text = "Sanjey T.S",
+                            text = profileName,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
                             fontSize = 18.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "Level 3",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-
-                        Text(
-                            text = "Intermediate",
-                            color = Color.Gray,
-                            fontSize = 14.sp
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -157,26 +158,30 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 🔥 Streak Section
-                Text(
-                    text = "\uD83D\uDD25 Streak : 3 days",
-                    fontFamily = PixelFont,
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    modifier = Modifier.align(Alignment.Start)
-                )
+                // ✅ 🔥 Reused from HomeScreen — NO fallback
+                if (homeState is UiState.Success) {
+                    val data = (homeState as UiState.Success<HomeScreenData>).data
 
-                Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "\uD83D\uDD25 Streak : ${data.userStats.streak} days",
+                        fontFamily = PixelFont,
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
 
-                LinearProgressIndicator(
-                    progress = { 0.3f },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(50.dp)),
-                    color = CustomBlue,
-                    trackColor = Color.LightGray,
-                )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    LinearProgressIndicator(
+                        progress = { data.currentRoadmap.progressPercent / 100f },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(50.dp)),
+                        color = CustomBlue,
+                        trackColor = Color.LightGray,
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -197,8 +202,13 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
 
                         Spacer(modifier = Modifier.height(4.dp))
 
+                        val moduleText = when (val state = profileState) {
+                            is UiState.Success -> state.data.currentRoadmapTitle
+                            else -> "Loading current module..."
+                        }
+
                         Text(
-                            text = "Python Programming",
+                            text = moduleText,
                             fontFamily = PixelFont,
                             fontSize = 16.sp,
                             color = Color.White
@@ -209,8 +219,13 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 📊 Module Progress
+                val progressText = when (val state = profileState) {
+                    is UiState.Success -> "Modules completed: ${state.data.completedModulesCount}/${state.data.totalModulesCount}"
+                    else -> "Modules completed: Calculating..."
+                }
+
                 Text(
-                    text = "Modules completed: 2/10",
+                    text = progressText,
                     fontFamily = PixelFont,
                     fontSize = 14.sp,
                     color = Color.Black,
@@ -219,11 +234,11 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                // 🏅 Badge Section
                 when (homeState) {
                     is UiState.Success -> {
                         val data = (homeState as UiState.Success<HomeScreenData>).data
                         BadgePreviewSection(data.badges)
-
                     }
                     else -> {
                         Text(
@@ -235,6 +250,7 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
                         )
                     }
                 }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // 🤖 Ask CodeBot
@@ -265,19 +281,21 @@ fun ProfileScreen(navController: NavController, viewModel: HomeViewModel = hiltV
                 }
             }
         }
+
         if (showEditDialog) {
-            Dialog(onDismissRequest = { showEditDialog = false },
+            Dialog(
+                onDismissRequest = { showEditDialog = false },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
                 EditProfileCard(
-                    onSave = { showEditDialog = false /* TODO: Save changes */ },
+                    onSave = { showEditDialog = false },
                     onCancel = { showEditDialog = false }
                 )
             }
         }
-
     }
 }
+
 
 @Composable
 fun EditProfileCard(

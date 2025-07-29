@@ -2,6 +2,7 @@ package com.sanjey.codestride.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.common.Constants
+import com.sanjey.codestride.data.model.UserProfileData
 import com.sanjey.codestride.data.model.UserStats
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
@@ -110,6 +111,51 @@ class UserRepository @Inject constructor(
         // Step 4: Update current roadmap ID
         userRef.update("currentRoadmapId", newRoadmapId).await()
     }
+
+    suspend fun getUserProfileData(userId: String): UserProfileData {
+        val userDoc = firestore.collection("users").document(userId).get().await()
+        val firstName = userDoc.getString("firstName") ?: ""
+        val lastName = userDoc.getString("lastName") ?: ""
+        val avatar = userDoc.getString("avatar") ?: "avatar_1"
+
+        val progressSnapshot = firestore.collection("users")
+            .document(userId)
+            .collection("progress")
+            .get()
+            .await()
+
+        if (progressSnapshot.isEmpty) {
+            return UserProfileData("$firstName $lastName", avatar, "None", "None", 0, 0)
+        }
+
+        val firstProgress = progressSnapshot.documents.first()
+        val roadmapId = firstProgress.id
+        val completedModules = firstProgress.get("completed_modules") as? List<*> ?: emptyList<Any>()
+        val currentModuleId = firstProgress.getString("current_module") ?: ""
+
+        val roadmapDoc = firestore.collection("roadmaps").document(roadmapId).get().await()
+        val roadmapTitle = roadmapDoc.getString("title") ?: roadmapId
+
+        val modulesSnapshot = firestore.collection("roadmaps")
+            .document(roadmapId)
+            .collection("modules")
+            .get()
+            .await()
+
+        val totalModulesCount = modulesSnapshot.size()
+        val currentModuleDoc = modulesSnapshot.documents.find { it.id == currentModuleId }
+        val currentModuleTitle = currentModuleDoc?.getString("title") ?: currentModuleId
+
+        return UserProfileData(
+            fullName = "$firstName $lastName",
+            avatar = avatar,
+            currentRoadmapTitle = roadmapTitle,
+            currentModuleTitle = currentModuleTitle,
+            completedModulesCount = completedModules.size,
+            totalModulesCount = totalModulesCount
+        )
+    }
+
 
 
 
