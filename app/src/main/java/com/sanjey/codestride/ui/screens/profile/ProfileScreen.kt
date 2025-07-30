@@ -194,7 +194,7 @@ fun ProfileScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "\uD83D\uDCD8 Current Learning",
+                            text = "Current Learning",
                             fontFamily = PixelFont,
                             fontSize = 14.sp,
                             color = Color.White
