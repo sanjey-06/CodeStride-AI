@@ -142,10 +142,11 @@ class RoadmapViewModel @Inject constructor(
             }
         }
     }
-    fun updateStreak() {
+    fun updateStreak(roadmapId: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
             try {
+                userRepository.markLearnedToday(userId, roadmapId) // ✅ NEW
                 userRepository.updateStreakOnLearning(userId)
             } catch (e: Exception) {
                 Log.e("STREAK_DEBUG", "Failed to update streak: ${e.message}")

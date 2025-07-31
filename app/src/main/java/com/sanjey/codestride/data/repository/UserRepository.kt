@@ -58,6 +58,17 @@ class UserRepository @Inject constructor(
         return UserStats(newStreak, progress, nextBadgeMsg)
     }
 
+    suspend fun markLearnedToday(userId: String, roadmapId: String) {
+        val today = LocalDate.now().toString()
+        firestore.collection("users")
+            .document(userId)
+            .collection("progress")
+            .document(roadmapId)
+            .update("lastLearnedDate", today)
+            .await()
+    }
+
+
 
     suspend fun getUserStats(userId: String): UserStats {
         val snapshot = firestore.collection(Constants.FirestorePaths.USERS)

@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sanjey.codestride.common.FireProgressBar
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.HomeScreenData
 import com.sanjey.codestride.viewmodel.HomeViewModel
@@ -172,15 +173,11 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    LinearProgressIndicator(
-                        progress = { data.currentRoadmap.progressPercent / 100f },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(50.dp)),
-                        color = CustomBlue,
-                        trackColor = Color.LightGray,
+                    FireProgressBar(
+                        progress = data.userStats.progressPercent,
+                        isOnFire = true
                     )
+
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
