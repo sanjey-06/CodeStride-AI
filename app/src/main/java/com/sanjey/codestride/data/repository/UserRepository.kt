@@ -67,6 +67,12 @@ class UserRepository @Inject constructor(
             .update("lastLearnedDate", today)
             .await()
     }
+    fun updateAvatar(userId: String, avatar: String) {
+        firestore.collection(Constants.FirestorePaths.USERS)
+            .document(userId)
+            .update("avatar", avatar)
+    }
+
 
 
 
@@ -128,6 +134,8 @@ class UserRepository @Inject constructor(
         val firstName = userDoc.getString("firstName") ?: ""
         val lastName = userDoc.getString("lastName") ?: ""
         val avatar = userDoc.getString("avatar") ?: "avatar_1"
+        val email = userDoc.getString("email") ?: ""
+
 
         val progressSnapshot = firestore.collection("users")
             .document(userId)
@@ -136,8 +144,15 @@ class UserRepository @Inject constructor(
             .await()
 
         if (progressSnapshot.isEmpty) {
-            return UserProfileData("$firstName $lastName", avatar, "None", "None", 0, 0)
-        }
+            return UserProfileData(
+                fullName = "$firstName $lastName",
+                avatar = avatar,
+                email = email, // ✅ if you have email as a variable, use it. Else, ""
+                currentRoadmapTitle = "None",
+                currentModuleTitle = "None",
+                completedModulesCount = 0,
+                totalModulesCount = 0
+            )        }
 
         val firstProgress = progressSnapshot.documents.first()
         val roadmapId = firstProgress.id

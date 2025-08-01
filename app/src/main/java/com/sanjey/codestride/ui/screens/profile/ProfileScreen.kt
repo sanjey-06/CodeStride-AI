@@ -2,6 +2,7 @@ package com.sanjey.codestride.ui.screens.profile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -38,6 +39,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sanjey.codestride.common.FireProgressBar
 import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.common.getAvatarResourceId
 import com.sanjey.codestride.data.model.HomeScreenData
 import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.viewmodel.UserViewModel
@@ -54,6 +56,13 @@ fun ProfileScreen(
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     var showEditDialog by remember { mutableStateOf(false) }
+
+
+    var showPasswordDialog by remember { mutableStateOf(false) }
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var passwordChangeMessage by remember { mutableStateOf<String?>(null) }
+
 
     LaunchedEffect(Unit) {
         userViewModel.loadUserProfile()
@@ -117,8 +126,13 @@ fun ProfileScreen(
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        val currentAvatar = when (val state = profileState) {
+                            is UiState.Success -> state.data.avatar
+                            else -> "ic_none"
+                        }
+
                         Image(
-                            painter = painterResource(id = R.drawable.avatar_1),
+                            painter = painterResource(id = getAvatarResourceId(currentAvatar)),
                             contentDescription = "User profile picture",
                             modifier = Modifier
                                 .size(100.dp)
@@ -284,125 +298,199 @@ fun ProfileScreen(
                 onDismissRequest = { showEditDialog = false },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
-                EditProfileCard(
-                    onSave = { showEditDialog = false },
-                    onCancel = { showEditDialog = false }
-                )
+                EditProfileCard(userViewModel = userViewModel)
             }
         }
+
+
+        if (showPasswordDialog) {
+            Dialog(
+                onDismissRequest = { showPasswordDialog = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .wrapContentHeight(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Black
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Change Password", color = Color.White, fontFamily = PixelFont)
+
+                        OutlinedTextField(
+                            value = currentPassword,
+                            onValueChange = { currentPassword = it },
+                            label = { Text("Current Password") }
+                        )
+
+                        OutlinedTextField(
+                            value = newPassword,
+                            onValueChange = { newPassword = it },
+                            label = { Text("New Password") }
+                        )
+
+                        passwordChangeMessage?.let {
+                            Text(it, color = Color.Red, fontSize = 12.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                userViewModel.changePassword(
+                                    currentPassword,
+                                    newPassword
+                                ) { success, error ->
+                                    if (success) {
+                                        passwordChangeMessage = "Password updated successfully"
+                                        showPasswordDialog = false
+                                    } else {
+                                        passwordChangeMessage = error
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
+                        ) {
+                            Text("Update", color = Color.White, fontFamily = PixelFont)
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }
 
 
 @Composable
-fun EditProfileCard(
-    onSave: () -> Unit = {},
-    onCancel: () -> Unit = {}
-) {
-    Box(
+fun EditProfileCard(userViewModel: UserViewModel) {
+    val avatarOptions = listOf("avatar_1", "avatar_2")
+    var showAvatarDialog by remember { mutableStateOf(false) }
+    val selectedAvatar = userViewModel.avatar
+    val profileEmail = userViewModel.email
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp), // Small edge margin
-        contentAlignment = Alignment.Center
+            .padding(16.dp)
+            .clip(RoundedCornerShape(36.dp))
+            .background(Color.Black),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Surface(
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 🖼 Avatar - only 1 visible
+        Image(
+            painter = painterResource(id = getAvatarResourceId(selectedAvatar)),
+            contentDescription = "Profile Image",
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(36.dp)),
-            color = Color.Black
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                .size(100.dp)
+                .clip(CircleShape)
+                .clickable { showAvatarDialog = true }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val profileName = (userViewModel.profileState.collectAsState().value as? UiState.Success)?.data?.fullName ?: ""
+
+        EditProfileField("Name", profileName, onEditClick = {})
+
+
+        // 📧 Email (wrapped properly)
+        EditProfileField(
+            label = "Email",
+            value = profileEmail,
+            onEditClick = {}
+        )
+
+        // 🔒 Password
+        EditProfileField(
+            label = "Password",
+            value = "********",
+            onEditClick = {} // You already handled password dialog
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Dialog to change avatar
+        if (showAvatarDialog) {
+            Dialog(
+                onDismissRequest = { showAvatarDialog = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
-
-                // 🖼️ Avatar
-                Image(
-                    painter = painterResource(id = R.drawable.avatar_1),
-                    contentDescription = "Profile Image",
+                Surface(
                     modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = { /* TODO: Image picker */ },
-                    shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
+                        .fillMaxWidth(0.9f)
+                        .wrapContentHeight(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color.Black
                 ) {
-                    Text(
-                        text = "Edit Image",
-                        fontFamily = PixelFont,
-                        fontSize = 14.sp,
-                        color = Color.White
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // ✏️ Fields
-                EditProfileField("Name", "Sanjey T.S") { /* TODO */ }
-                EditProfileField("Email", "sanjey@example.com") { /* TODO */ }
-                EditProfileField("Password", "********") { /* TODO */ }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // ✅ Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Button(
-                        onClick = onSave,
-                        shape = RoundedCornerShape(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "Save",
-                            fontFamily = PixelFont,
-                            fontSize = 14.sp,
-                            color = Color.White
-                        )
-                    }
+                        Text("Choose Avatar", color = Color.White, fontFamily = PixelFont)
 
-                    Button(
-                        onClick = { onCancel() },
-                        shape = RoundedCornerShape(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                    ) {
-                        Text(
-                            text = "Cancel",
-                            fontFamily = PixelFont,
-                            fontSize = 14.sp,
-                            color = Color.Black
-                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            avatarOptions.forEach { avatar ->
+                                val isSelected = avatar == userViewModel.avatar
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isSelected) CustomBlue else Color.Transparent,
+                                            shape = CircleShape
+                                        )
+                                        .padding(2.dp)
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = getAvatarResourceId(avatar)),
+                                        contentDescription = avatar,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape)
+                                            .clickable { userViewModel.updateAvatar(avatar) }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = {
+                                userViewModel.saveAvatar()
+                                showAvatarDialog = false
+                                userViewModel.loadUserProfile() // 🔁 refresh profile to update UI
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Save Avatar", color = Color.White, fontFamily = PixelFont)
+                        }
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 fun EditProfileField(label: String, value: String, onEditClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(vertical = 16.dp, horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
                 fontFamily = SoraFont,
@@ -412,8 +500,10 @@ fun EditProfileField(label: String, value: String, onEditClick: () -> Unit) {
             Text(
                 text = value,
                 fontFamily = PixelFont,
-                fontSize = 14.sp,
-                color = Color.White
+                fontSize = 12.sp,
+                color = Color.White,
+                lineHeight = 16.sp,
+                maxLines = 1
             )
         }
 
@@ -423,8 +513,6 @@ fun EditProfileField(label: String, value: String, onEditClick: () -> Unit) {
                 contentDescription = "Edit",
                 tint = Color.White
             )
-
         }
     }
 }
-
