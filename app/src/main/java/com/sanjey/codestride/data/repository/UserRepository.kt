@@ -186,15 +186,22 @@ class UserRepository @Inject constructor(
 
 
     suspend fun getUserSettings(userId: String): UserSettings {
-        val snapshot = firestore.collection("users")
+        val docRef = firestore.collection("users")
             .document(userId)
-            .collection("meta") // You can also use `.document("settings")` directly
+            .collection("meta")
             .document("settings")
-            .get()
-            .await()
 
-        return snapshot.toObject(UserSettings::class.java) ?: UserSettings()
+        val snapshot = docRef.get().await()
+
+        return if (snapshot.exists()) {
+            snapshot.toObject(UserSettings::class.java) ?: UserSettings()
+        } else {
+            val defaultSettings = UserSettings()
+            docRef.set(defaultSettings).await()
+            defaultSettings
+        }
     }
+
 
     suspend fun updateUserSettings(userId: String, settings: UserSettings) {
         firestore.collection("users")

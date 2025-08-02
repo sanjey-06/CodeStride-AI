@@ -1,6 +1,7 @@
 package com.sanjey.codestride.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -66,13 +67,20 @@ class UserViewModel @Inject constructor(
     }
 
     fun loadUserSettings() {
+        Log.d("SETTINGS_DEBUG", "userId = ${FirebaseAuth.getInstance().currentUser?.uid}")
+
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
             try {
+                Log.d("SETTINGS_DEBUG", "Fetching user settings for $userId")
+
                 val settings = userRepository.getUserSettings(userId)
+                Log.d("SETTINGS_DEBUG", "Fetched settings: $settings")
+
                 _userSettings.value = settings
             } catch (e: Exception) {
-                // Optionally handle error
+                Log.e("SETTINGS_DEBUG", "Error fetching settings: ${e.message}")
+
             }
         }
     }
