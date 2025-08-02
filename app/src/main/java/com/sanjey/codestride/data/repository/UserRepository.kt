@@ -3,13 +3,15 @@ package com.sanjey.codestride.data.repository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.UserProfileData
+import com.sanjey.codestride.data.model.UserSettings
 import com.sanjey.codestride.data.model.UserStats
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import javax.inject.Inject
 
 class UserRepository @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val firebaseRepository: FirebaseRepository
 ) {
 
     suspend fun updateStreakOnLearning(userId: String): UserStats {
@@ -183,11 +185,39 @@ class UserRepository @Inject constructor(
     }
 
 
+    suspend fun getUserSettings(userId: String): UserSettings {
+        val snapshot = firestore.collection("users")
+            .document(userId)
+            .collection("meta") // You can also use `.document("settings")` directly
+            .document("settings")
+            .get()
+            .await()
+
+        return snapshot.toObject(UserSettings::class.java) ?: UserSettings()
+    }
+
+    suspend fun updateUserSettings(userId: String, settings: UserSettings) {
+        firestore.collection("users")
+            .document(userId)
+            .collection("meta")
+            .document("settings")
+            .set(settings)
+            .await()
+    }
 
 
+    suspend fun deleteUserSettings(userId: String) {
+        firestore.collection("users")
+            .document(userId)
+            .collection("meta")
+            .document("settings")
+            .delete()
+            .await()
+    }
 
-
-
+    fun logout() {
+        firebaseRepository.logout()
+    }
 
 
 }

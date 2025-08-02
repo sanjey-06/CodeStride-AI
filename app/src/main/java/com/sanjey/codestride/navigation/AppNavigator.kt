@@ -22,6 +22,7 @@ import com.sanjey.codestride.ui.screens.roadmap.RoadmapScreen
 import com.sanjey.codestride.ui.screens.settings.SettingsScreen
 import com.sanjey.codestride.ui.screens.splash.SplashScreen
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
+import com.sanjey.codestride.viewmodel.UserViewModel
 
 @Composable
 fun AppNavigator() {
@@ -61,12 +62,17 @@ fun AppNavigator() {
                 ProfileScreen(navController)
             }
         }
-
         composable(Routes.SETTINGS) {
+            val userViewModel: UserViewModel = hiltViewModel()
+
             MainScreen(navController = navController, currentRoute = Routes.SETTINGS) {
-                SettingsScreen(navController)
+                SettingsScreen(
+                    navController = navController,
+                    userViewModel = userViewModel
+                )
             }
         }
+
 
         composable("${Routes.LEARNING}/{roadmapId}") { backStackEntry ->
             val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""

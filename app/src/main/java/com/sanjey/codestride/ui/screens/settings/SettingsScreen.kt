@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimeInput
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,19 +25,51 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
+import com.sanjey.codestride.data.model.UserSettings
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.viewmodel.UserViewModel
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
+    LaunchedEffect(Unit) {
+        userViewModel.loadUserSettings()
+    }
+    val accountDeleted by userViewModel.accountDeleted.observeAsState()
+    LaunchedEffect(accountDeleted) {
+        if (accountDeleted == true) {
+            navController.navigate("login") {
+                popUpTo("main") { inclusive = true }
+            }
+        }
+    }
+    val isLoggedOut by userViewModel.isLoggedOut.observeAsState()
+    LaunchedEffect(isLoggedOut) {
+        if (isLoggedOut == true) {
+            navController.navigate("login") {
+                popUpTo("main") { inclusive = true }
+            }
+        }
+    }
+
+
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
 
-    var isReminderOn by remember { mutableStateOf(true) }
-    val timeState = rememberTimePickerState(initialHour = 17, initialMinute = 0, is24Hour = false)
+    val settings by userViewModel.userSettings.observeAsState()
+
+    val isReminderOn = remember(settings) { mutableStateOf(settings?.reminderEnabled ?: true) }
+    val timeState = rememberTimePickerState(
+        initialHour = settings?.reminderHour ?: 17,
+        initialMinute = settings?.reminderMinute ?: 0,
+        is24Hour = false
+    )
     var showTimeInput by remember { mutableStateOf(false) }
 
     Column(
@@ -105,8 +138,17 @@ fun SettingsScreen(navController: NavController) {
                         ) {
                             Text("Reminders", fontFamily = SoraFont, color = Color.White)
                             Switch(
-                                checked = isReminderOn,
-                                onCheckedChange = { isReminderOn = it },
+                                checked = isReminderOn.value,
+                                onCheckedChange = {
+                                    isReminderOn.value = it
+                                    userViewModel.saveUserSettings(
+                                        UserSettings(
+                                            reminderEnabled = it,
+                                            reminderHour = timeState.hour,
+                                            reminderMinute = timeState.minute
+                                        )
+                                    )
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = CustomBlue
@@ -120,17 +162,17 @@ fun SettingsScreen(navController: NavController) {
                         Text(
                             text = "Reminder Timings",
                             fontFamily = SoraFont,
-                            color = if (isReminderOn) Color.White else Color.Gray
+                            color = if (isReminderOn.value) Color.White else Color.Gray
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Surface(
-                            color = if (isReminderOn) CustomBlue else Color.Gray,
+                            color = if (isReminderOn.value) CustomBlue else Color.Gray,
                             shape = RoundedCornerShape(50.dp),
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
-                                .clickable(enabled = isReminderOn) { showTimeInput = true }
+                                .clickable(enabled = isReminderOn.value) { showTimeInput = true }
                         ) {
                             Text(
                                 text = formatTime(timeState.hour, timeState.minute),
@@ -161,6 +203,13 @@ fun SettingsScreen(navController: NavController) {
                             Button(
                                 onClick = {
                                     showTimeInput = false
+                                    userViewModel.saveUserSettings(
+                                        UserSettings(
+                                            reminderEnabled = isReminderOn.value,
+                                            reminderHour = timeState.hour,
+                                            reminderMinute = timeState.minute
+                                        )
+                                    )
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                                 shape = RoundedCornerShape(50.dp)
@@ -194,6 +243,9 @@ fun SettingsScreen(navController: NavController) {
                         if (item == "Manage your Profile") {
                             navController.navigate("profile")
                         }
+                        if (item == "Delete Account"){
+                            showDeleteDialog = true
+                        }
                     }
                 )
 
@@ -201,7 +253,10 @@ fun SettingsScreen(navController: NavController) {
 
                 // Logout Button
                 Button(
-                    onClick = { /* handle logout */ },
+                    onClick = {
+                        showLogoutDialog = true
+
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
                     shape = RoundedCornerShape(50.dp),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -217,6 +272,50 @@ fun SettingsScreen(navController: NavController) {
             }
         }
     }
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Account?", fontFamily = PixelFont) },
+            text = { Text("Are you sure you want to permanently delete your account?", fontFamily = SoraFont) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    userViewModel.deleteUserAccount()
+                }) {
+                    Text("Yes", color = Color.Red, fontFamily = PixelFont)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel", fontFamily = PixelFont)
+                }
+            },
+            containerColor = Color.White
+        )
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout?", fontFamily = PixelFont) },
+            text = { Text("Are you sure you want to logout?", fontFamily = SoraFont) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    userViewModel.logout()
+                }) {
+                    Text("Yes", color = CustomBlue, fontFamily = PixelFont)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel", fontFamily = PixelFont)
+                }
+            },
+            containerColor = Color.White
+        )
+    }
+
 }
 
 @Composable

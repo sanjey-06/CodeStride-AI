@@ -10,8 +10,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.UserProfileData
+import com.sanjey.codestride.data.model.UserSettings
 import com.sanjey.codestride.data.prefs.OnboardingPreferences
 import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,12 +22,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+
 
 @HiltViewModel
 class UserViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val firestore: FirebaseFirestore
 ) : ViewModel() {
+    private val _userSettings = MutableLiveData<UserSettings>()
+    val userSettings: LiveData<UserSettings> = _userSettings
+
     private val _profileState = MutableStateFlow<UiState<UserProfileData>>(UiState.Loading)
     val profileState: StateFlow<UiState<UserProfileData>> = _profileState
 
@@ -56,6 +64,80 @@ class UserViewModel @Inject constructor(
             _splashNavigationState.postValue(target)
         }
     }
+
+    fun loadUserSettings() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                val settings = userRepository.getUserSettings(userId)
+                _userSettings.value = settings
+            } catch (e: Exception) {
+                // Optionally handle error
+            }
+        }
+    }
+
+    fun saveUserSettings(settings: UserSettings) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                userRepository.updateUserSettings(userId, settings)
+                _userSettings.value = settings
+            } catch (e: Exception) {
+                // Optionally handle error
+            }
+        }
+    }
+
+    private val _accountDeleted = MutableLiveData<Boolean>()
+    val accountDeleted: LiveData<Boolean> = _accountDeleted
+
+    fun deleteUserAccount() {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+
+        viewModelScope.launch {
+            try {
+                val userId = user.uid
+
+                // 🔹 1. Delete settings
+                userRepository.deleteUserSettings(userId)
+
+                // 🔹 2. Delete progress subcollection
+                val progressCollection = firestore.collection("users")
+                    .document(userId)
+                    .collection("progress")
+                    .get()
+                    .await()
+
+                for (doc in progressCollection.documents) {
+                    doc.reference.delete().await()
+                }
+
+                // 🔹 3. Delete main user document
+                firestore.collection("users").document(userId).delete().await()
+
+                // 🔹 4. Delete from FirebaseAuth
+                user.delete().addOnCompleteListener { task ->
+                    _accountDeleted.postValue(task.isSuccessful)
+                }
+
+            } catch (e: Exception) {
+                _accountDeleted.postValue(false)
+            }
+        }
+    }
+
+    private val _isLoggedOut = MutableLiveData<Boolean>()
+    val isLoggedOut: LiveData<Boolean> = _isLoggedOut
+
+    fun logout() {
+        userRepository.logout()
+        _isLoggedOut.value = true
+    }
+
+
+
+
 
     fun changePassword(
         currentPassword: String,
