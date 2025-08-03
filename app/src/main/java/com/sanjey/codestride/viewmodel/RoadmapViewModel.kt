@@ -154,6 +154,12 @@ class RoadmapViewModel @Inject constructor(
         }
     }
 
+    fun generateAiRoadmap(topic: String) {
+        // Placeholder: Will implement actual AI logic later
+        Log.d("AI_GENERATION", "Requested AI roadmap for → $topic")
+    }
+
+
 
 
 

@@ -24,6 +24,7 @@ import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Roadmap
+import com.sanjey.codestride.ui.components.AiGeneratorSection
 import com.sanjey.codestride.ui.components.RoadmapReplaceDialog
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
@@ -45,6 +46,8 @@ fun ExploreRoadmapsScreen(navController: NavController) {
     var showReplaceDialog by remember { mutableStateOf(false) }
     var newRoadmapId by remember { mutableStateOf<String?>(null) }
     val roadmapsState by roadmapViewModel.roadmapsState.collectAsState()
+    var showPromptDialog by remember { mutableStateOf(false) }
+
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
@@ -97,6 +100,7 @@ fun ExploreRoadmapsScreen(navController: NavController) {
             }
         }
 
+
         // 🔲 Grid of Roadmaps
         Surface(
             modifier = Modifier
@@ -122,11 +126,13 @@ fun ExploreRoadmapsScreen(navController: NavController) {
 
                 is UiState.Success -> {
                     val roadmaps = (roadmapsState as UiState.Success).data
+
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
                         contentPadding = PaddingValues(20.dp),
                         verticalArrangement = Arrangement.spacedBy(28.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         items(roadmaps) { roadmap ->
                             RoadmapIconCard(roadmap.title, roadmap.icon) {
@@ -134,10 +140,28 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                                 showPreviewDialog = true
                             }
                         }
+
+                        // ✅ Full-width item for the AI Generator
+                        item(span = { GridItemSpan(2) }) {
+                            AiGeneratorSection {
+                                showPromptDialog = true
+                            }
+                        }
                     }
+
+//                    if (showPromptDialog) {
+//                        GenerateAiPromptDialog(
+//                            onDismiss = { showPromptDialog = false },
+//                            onGenerate = { topic ->
+//                                roadmapViewModel.generateAiRoadmap(topic)
+//                            }
+//                        )
+//                    }
                 }
             }
+
         }
+
     }
 
     // ✅ Preview Dialog for roadmap details
@@ -201,6 +225,8 @@ fun ExploreRoadmapsScreen(navController: NavController) {
             }
         }
     )
+
+
 }
 
 @Composable

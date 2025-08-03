@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Roadmap
+import com.sanjey.codestride.ui.components.AiGeneratorSection
 import com.sanjey.codestride.ui.components.RoadmapReplaceDialog
 import com.sanjey.codestride.ui.screens.home.ExploreOtherRoadmapsSection
 import com.sanjey.codestride.ui.theme.CustomBlue
@@ -33,6 +34,7 @@ import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
 fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapViewModel, homeViewModel: HomeViewModel) {
+
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
 
@@ -43,6 +45,7 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
     val currentRoadmapId by roadmapViewModel.currentRoadmapId.collectAsState()
     val progressState by roadmapViewModel.progressState.collectAsState()
     val homeState by homeViewModel.homeUiState.collectAsState()
+
 
 
     var currentModule by remember { mutableStateOf("Loading...") }
@@ -222,42 +225,11 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // 🔷 AI Generator Section
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.Black)
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "🚀 Want a custom learning path?",
-                        fontFamily = PixelFont,
-                        fontSize = 16.sp,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Let AI generate a roadmap just for you!",
-                        fontFamily = SoraFont,
-                        fontSize = 14.sp,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = { /* Future AI logic */ },
-                        shape = RoundedCornerShape(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Generate with AI",
-                            fontFamily = PixelFont,
-                            fontSize = 14.sp,
-                            color = Color.White
-                        )
-                    }
+
+                AiGeneratorSection { topic ->
+                    roadmapViewModel.generateAiRoadmap(topic)
                 }
+
 
                 Spacer(modifier = Modifier.height(24.dp))
 
