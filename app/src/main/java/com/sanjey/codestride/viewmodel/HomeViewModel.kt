@@ -73,6 +73,8 @@ class HomeViewModel @Inject constructor(
                         }
 
                         val roadmap = roadmaps.find { it.id == currentRoadmapId }
+                            ?: currentRoadmapId?.let { roadmapRepository.getRoadmapById(it) }
+
 
                         val currentModuleTitle = if (currentModuleId != null && roadmap != null) {
                             roadmapRepository.getModuleTitle(roadmap.id, currentModuleId)

@@ -73,30 +73,38 @@ class RoadmapRepository @Inject constructor(
 
 
     suspend fun getModulesCount(roadmapId: String): Int {
-        val snapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
+        val baseCollection = if (roadmapId.startsWith("ai_")) "ai_roadmaps" else Constants.FirestorePaths.ROADMAPS
+
+        val snapshot = firestore.collection(baseCollection)
             .document(roadmapId)
             .collection(Constants.FirestorePaths.MODULES)
             .get()
             .await()
+
         return snapshot.size()
     }
 
 
 
+
     suspend fun getRoadmapById(roadmapId: String): Roadmap? {
         return try {
-            val doc = firestore.collection("roadmaps")
-                .document(roadmapId)
-                .get()
-                .await()
-            doc.toObject(Roadmap::class.java)?.copy(id = doc.id)
+            val doc = firestore.collection("roadmaps").document(roadmapId).get().await()
+            if (doc.exists()) {
+                doc.toObject(Roadmap::class.java)?.copy(id = doc.id)
+            } else {
+                val aiDoc = firestore.collection("ai_roadmaps").document(roadmapId).get().await()
+                aiDoc.toObject(Roadmap::class.java)?.copy(id = aiDoc.id)
+            }
         } catch (e: Exception) {
             null
         }
     }
+
     suspend fun getModuleTitle(roadmapId: String, moduleId: String): String {
+        val collectionPath = if (roadmapId.startsWith("ai_")) "ai_roadmaps" else "roadmaps"
         return try {
-            val snapshot = firestore.collection("roadmaps")
+            val snapshot = firestore.collection(collectionPath)
                 .document(roadmapId)
                 .collection("modules")
                 .document(moduleId)
@@ -107,6 +115,7 @@ class RoadmapRepository @Inject constructor(
             "Module"
         }
     }
+
 
 
 

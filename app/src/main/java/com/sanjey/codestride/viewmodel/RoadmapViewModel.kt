@@ -6,23 +6,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.ProgressState
 import com.sanjey.codestride.data.model.Roadmap
+import com.sanjey.codestride.data.repository.AiGenerationRepository
 import com.sanjey.codestride.data.repository.RoadmapRepository
 import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class RoadmapViewModel @Inject constructor(
     private val repository: RoadmapRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val aiGenerationRepository: AiGenerationRepository
 ) : ViewModel() {
 
     private val _roadmapsState = MutableStateFlow<UiState<List<Roadmap>>>(UiState.Idle)
@@ -54,6 +60,8 @@ class RoadmapViewModel @Inject constructor(
             }
         }
     }
+
+
 
     fun startRoadmap(roadmapId: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
@@ -154,10 +162,41 @@ class RoadmapViewModel @Inject constructor(
         }
     }
 
-    fun generateAiRoadmap(topic: String) {
-        // Placeholder: Will implement actual AI logic later
-        Log.d("AI_GENERATION", "Requested AI roadmap for → $topic")
+    suspend fun generateAiRoadmapAndReturnId(topic: String): String? = withContext(Dispatchers.IO) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@withContext null
+        val items = aiGenerationRepository.generateRoadmap(topic)
+
+        if (items.isEmpty()) return@withContext null
+
+        val roadmapId = "ai_" + topic.lowercase().replace(" ", "_")
+        val firestore = FirebaseFirestore.getInstance()
+        val roadmapRef = firestore.collection("ai_roadmaps").document(roadmapId)
+
+        val roadmapData = mapOf(
+            "title" to topic.replaceFirstChar { it.uppercase() },
+            "description" to "Custom roadmap for $topic",
+            "icon" to "ic_none",
+            "created_by" to userId,
+            "isCustom" to true
+        )
+        roadmapRef.set(roadmapData).await()
+
+        items.forEachIndexed { index, item ->
+            val moduleId = "module${index + 1}"
+            val moduleData = mapOf(
+                "title" to item.title,
+                "order" to index + 1,
+                "custom_content" to "<h2>${item.title}</h2><p>${item.description}</p><a href='${item.link}'>Resource</a>",
+                "yt_url" to item.link,
+                "description" to item.description,
+                "quiz_id" to ""
+            )
+            roadmapRef.collection("modules").document(moduleId).set(moduleData).await()
+        }
+
+        return@withContext roadmapId
     }
+
 
 
 
@@ -201,12 +240,17 @@ class RoadmapViewModel @Inject constructor(
         val normalizedId = roadmapId?.trim()?.lowercase() ?: ""
         Log.d("DEBUG_ICON", "normalizedId = $normalizedId")
 
-        return when (normalizedId) {
-            "java" -> "Java Programming" to R.drawable.ic_java
-            "python" -> "Python Programming" to R.drawable.ic_python
-            "cpp" -> "C++ Programming" to R.drawable.ic_cpp
-            "kotlin" -> "Kotlin Programming" to R.drawable.ic_kotlin
-            "js", "javascript" -> "JavaScript Programming" to R.drawable.ic_javascript
+        return when {
+            normalizedId.startsWith("ai_") -> {
+                val title = normalizedId.removePrefix("ai_").replace("_", " ")
+                    .replaceFirstChar { it.uppercase() }
+                title to R.drawable.ic_none
+            }
+            normalizedId == "java" -> "Java Programming" to R.drawable.ic_java
+            normalizedId == "python" -> "Python Programming" to R.drawable.ic_python
+            normalizedId == "cpp" -> "C++ Programming" to R.drawable.ic_cpp
+            normalizedId == "kotlin" -> "Kotlin Programming" to R.drawable.ic_kotlin
+            normalizedId in listOf("js", "javascript") -> "JavaScript Programming" to R.drawable.ic_javascript
             else -> "No Roadmap Selected" to R.drawable.ic_none
         }
     }

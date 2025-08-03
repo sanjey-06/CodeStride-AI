@@ -9,10 +9,17 @@ import javax.inject.Inject
 class ModuleRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
+
+    private fun getCollectionPath(roadmapId: String): String {
+        return if (roadmapId.startsWith("ai_")) "ai_roadmaps" else Constants.FirestorePaths.ROADMAPS
+    }
+
     // ✅ Fetch modules for a roadmap
     suspend fun getModulesForRoadmap(roadmapId: String): List<Module> {
         return try {
-            val snapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
+            val collectionPath = getCollectionPath(roadmapId)
+
+            val snapshot = firestore.collection(collectionPath)
                 .document(roadmapId)
                 .collection(Constants.FirestorePaths.MODULES)
                 .orderBy("order")
@@ -27,11 +34,14 @@ class ModuleRepository @Inject constructor(
         }
     }
 
+    // ✅ Fetch individual module by ID
     suspend fun getModuleById(roadmapId: String, moduleId: String): Module? {
         return try {
-            val snapshot = firestore.collection("roadmaps")
+            val collectionPath = getCollectionPath(roadmapId)
+
+            val snapshot = firestore.collection(collectionPath)
                 .document(roadmapId)
-                .collection("modules")
+                .collection(Constants.FirestorePaths.MODULES)
                 .document(moduleId)
                 .get()
                 .await()
@@ -42,11 +52,12 @@ class ModuleRepository @Inject constructor(
         }
     }
 
-
     // ✅ Fetch module content
     suspend fun getModuleContent(roadmapId: String, moduleId: String): String? {
         return try {
-            val docSnapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
+            val collectionPath = getCollectionPath(roadmapId)
+
+            val docSnapshot = firestore.collection(collectionPath)
                 .document(roadmapId)
                 .collection(Constants.FirestorePaths.MODULES)
                 .document(moduleId)

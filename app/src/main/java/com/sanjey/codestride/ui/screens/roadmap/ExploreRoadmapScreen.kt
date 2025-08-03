@@ -30,6 +30,9 @@ import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun ExploreRoadmapsScreen(navController: NavController) {
@@ -46,8 +49,6 @@ fun ExploreRoadmapsScreen(navController: NavController) {
     var showReplaceDialog by remember { mutableStateOf(false) }
     var newRoadmapId by remember { mutableStateOf<String?>(null) }
     val roadmapsState by roadmapViewModel.roadmapsState.collectAsState()
-    var showPromptDialog by remember { mutableStateOf(false) }
-
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
@@ -143,20 +144,22 @@ fun ExploreRoadmapsScreen(navController: NavController) {
 
                         // ✅ Full-width item for the AI Generator
                         item(span = { GridItemSpan(2) }) {
-                            AiGeneratorSection {
-                                showPromptDialog = true
+                            AiGeneratorSection { topic ->
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    val newId = roadmapViewModel.generateAiRoadmapAndReturnId(topic)
+                                    if (newId != null) {
+                                        if (roadmapViewModel.hasActiveRoadmap()) {
+                                            newRoadmapId = newId           // ✅ Reuse existing var
+                                            showReplaceDialog = true       // ✅ Reuse existing dialog
+                                        } else {
+                                            roadmapViewModel.startRoadmap(newId)
+                                            navController.navigate("learning/$newId")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-
-//                    if (showPromptDialog) {
-//                        GenerateAiPromptDialog(
-//                            onDismiss = { showPromptDialog = false },
-//                            onGenerate = { topic ->
-//                                roadmapViewModel.generateAiRoadmap(topic)
-//                            }
-//                        )
-//                    }
                 }
             }
 

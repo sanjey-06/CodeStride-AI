@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-    import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -31,6 +31,9 @@ import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapViewModel, homeViewModel: HomeViewModel) {
@@ -46,6 +49,8 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
     val progressState by roadmapViewModel.progressState.collectAsState()
     val homeState by homeViewModel.homeUiState.collectAsState()
 
+    var showReplaceDialog by remember { mutableStateOf(false) }
+    var generatedRoadmapId by remember { mutableStateOf<String?>(null) }
 
 
     var currentModule by remember { mutableStateOf("Loading...") }
@@ -227,8 +232,21 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
 
                 AiGeneratorSection { topic ->
-                    roadmapViewModel.generateAiRoadmap(topic)
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val newId = roadmapViewModel.generateAiRoadmapAndReturnId(topic)
+                        if (newId != null) {
+                            if (roadmapViewModel.hasActiveRoadmap()) {
+                                generatedRoadmapId = newId
+                                showReplaceDialog = true
+                            } else {
+                                roadmapViewModel.startRoadmap(newId)
+                                appNavController.navigate("learning/$newId")
+                            }
+                        }
+                    }
                 }
+
+
 
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -265,4 +283,16 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
             }
         }
     }
+    RoadmapReplaceDialog(
+        showDialog = showReplaceDialog && generatedRoadmapId != null,
+        onDismiss = { showReplaceDialog = false },
+        onConfirm = {
+            roadmapViewModel.replaceRoadmap(generatedRoadmapId!!)     // ✅ This updates Firestore
+            showReplaceDialog = false
+            appNavController.navigate("learning/${generatedRoadmapId!!}") {
+                popUpTo("roadmap") { inclusive = false }
+                launchSingleTop = true
+            }
+        }
+    )
 }
