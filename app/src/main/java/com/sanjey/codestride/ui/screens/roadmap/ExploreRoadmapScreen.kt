@@ -23,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.common.getIconResource
 import com.sanjey.codestride.data.model.Roadmap
 import com.sanjey.codestride.ui.components.AiGeneratorSection
 import com.sanjey.codestride.ui.components.RoadmapReplaceDialog
@@ -136,7 +137,7 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(roadmaps) { roadmap ->
-                            RoadmapIconCard(roadmap.title, roadmap.icon) {
+                            RoadmapIconCard(roadmap = roadmap) {
                                 selectedRoadmap = roadmap
                                 showPreviewDialog = true
                             }
@@ -233,7 +234,7 @@ fun ExploreRoadmapsScreen(navController: NavController) {
 }
 
 @Composable
-fun RoadmapIconCard(title: String, icon: String, onClick: () -> Unit) {
+fun RoadmapIconCard(roadmap: Roadmap, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -246,24 +247,18 @@ fun RoadmapIconCard(title: String, icon: String, onClick: () -> Unit) {
             color = Color.Black
         ) {
             Box(contentAlignment = Alignment.Center) {
-                val iconRes = when (icon) {
-                    "ic_java" -> R.drawable.ic_java
-                    "ic_python" -> R.drawable.ic_python
-                    "ic_cpp" -> R.drawable.ic_cpp
-                    "ic_kotlin" -> R.drawable.ic_kotlin
-                    "ic_javascript" -> R.drawable.ic_javascript
-                    else -> R.drawable.ic_none
-                }
+                val iconRes = getIconResource(roadmap.icon, roadmap.id)
+
                 Image(
                     painter = painterResource(id = iconRes),
-                    contentDescription = title,
+                    contentDescription = roadmap.title,
                     modifier = Modifier.size(100.dp)
                 )
             }
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = title,
+            text = roadmap.title,
             fontFamily = PixelFont,
             fontSize = 14.sp,
             color = Color.Black

@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
+import com.sanjey.codestride.common.getIconResource
 import com.sanjey.codestride.data.model.ProgressState
 import com.sanjey.codestride.data.model.Roadmap
 import com.sanjey.codestride.data.repository.AiGenerationRepository
@@ -244,7 +245,7 @@ class RoadmapViewModel @Inject constructor(
             normalizedId.startsWith("ai_") -> {
                 val title = normalizedId.removePrefix("ai_").replace("_", " ")
                     .replaceFirstChar { it.uppercase() }
-                title to R.drawable.ic_none
+                title to getIconResource(null, roadmapId)
             }
             normalizedId == "java" -> "Java Programming" to R.drawable.ic_java
             normalizedId == "python" -> "Python Programming" to R.drawable.ic_python

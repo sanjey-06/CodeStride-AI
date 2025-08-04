@@ -447,7 +447,7 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Roa
             horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
         ) {
             roadmaps.forEach { roadmap ->
-                val iconRes = getIconResource(roadmap.icon)
+                val iconRes = getIconResource(roadmap.icon, roadmap.id)
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
