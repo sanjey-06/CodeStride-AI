@@ -163,6 +163,9 @@ class UserRepository @Inject constructor(
 
         val roadmapDoc = firestore.collection("roadmaps").document(roadmapId).get().await()
         val roadmapTitle = roadmapDoc.getString("title") ?: roadmapId
+            .removePrefix("ai_")
+            .split("_")
+            .joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
 
         val modulesSnapshot = firestore.collection("roadmaps")
             .document(roadmapId)

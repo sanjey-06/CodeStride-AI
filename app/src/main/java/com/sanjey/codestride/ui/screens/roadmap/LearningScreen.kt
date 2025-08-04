@@ -21,6 +21,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -99,10 +101,15 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
             Text(
                 text = roadmapTitle,
                 fontFamily = PixelFont,
-                fontSize = 24.sp,
+                fontSize = 22.sp,
                 color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
-            )
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp))
         }
 
         // 🔽 Scrollable White Section with roadmap steps
