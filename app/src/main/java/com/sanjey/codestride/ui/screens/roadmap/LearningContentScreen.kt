@@ -87,11 +87,14 @@ fun LearningContentScreen(navController: NavController, roadmapId: String, modul
             }
 
             Text(
-                text = title,
+                text = title.replaceFirstChar { it.uppercase() },
                 fontFamily = PixelFont,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
+                lineHeight = 20.sp,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 24.dp)
             )
         }
 

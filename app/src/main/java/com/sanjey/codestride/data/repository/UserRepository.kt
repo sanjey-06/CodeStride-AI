@@ -107,8 +107,11 @@ class UserRepository @Inject constructor(
         }
         batch.commit().await()
 
+
+        val collectionPath = if (newRoadmapId.startsWith("ai_")) "ai_roadmaps" else "roadmaps"
+
         // Step 2: Get the first module ID from the new roadmap
-        val firstModuleId = firestore.collection("roadmaps")
+        val firstModuleId = firestore.collection(collectionPath)
             .document(newRoadmapId)
             .collection("modules")
             .orderBy("order")

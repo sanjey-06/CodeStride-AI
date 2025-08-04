@@ -173,6 +173,7 @@ class RoadmapViewModel @Inject constructor(
         val firestore = FirebaseFirestore.getInstance()
         val roadmapRef = firestore.collection("ai_roadmaps").document(roadmapId)
 
+
         val roadmapData = mapOf(
             "title" to topic.replaceFirstChar { it.uppercase() },
             "description" to "Custom roadmap for $topic",
@@ -187,7 +188,9 @@ class RoadmapViewModel @Inject constructor(
             val moduleData = mapOf(
                 "title" to item.title,
                 "order" to index + 1,
-                "custom_content" to "<h2>${item.title}</h2><p>${item.description}</p><a href='${item.link}'>Resource</a>",
+                "custom_content" to (item.html_content.ifBlank {
+                    "<h2>${item.title}</h2><p>${item.description}</p><a href='${item.link}'>Resource</a>"
+                }),
                 "yt_url" to item.link,
                 "description" to item.description,
                 "quiz_id" to ""
