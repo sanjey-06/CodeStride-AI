@@ -165,15 +165,9 @@ class RoadmapViewModel @Inject constructor(
 
     suspend fun generateAiRoadmapAndReturnId(topic: String): String? = withContext(Dispatchers.IO) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@withContext null
-        val items = aiGenerationRepository.generateRoadmap(topic)
-
-        if (items.isEmpty()) return@withContext null
-
         val roadmapId = "ai_" + topic.lowercase().replace(" ", "_")
-        val firestore = FirebaseFirestore.getInstance()
-        val roadmapRef = firestore.collection("ai_roadmaps").document(roadmapId)
 
-
+        // Save roadmap metadata first
         val roadmapData = mapOf(
             "title" to topic.replaceFirstChar { it.uppercase() },
             "description" to "Custom roadmap for $topic",
@@ -181,25 +175,25 @@ class RoadmapViewModel @Inject constructor(
             "created_by" to userId,
             "isCustom" to true
         )
-        roadmapRef.set(roadmapData).await()
 
-        items.forEachIndexed { index, item ->
-            val moduleId = "module${index + 1}"
-            val moduleData = mapOf(
-                "title" to item.title,
-                "order" to index + 1,
-                "custom_content" to (item.html_content.ifBlank {
-                    "<h2>${item.title}</h2><p>${item.description}</p><a href='${item.link}'>Resource</a>"
-                }),
-                "yt_url" to item.link,
-                "description" to item.description,
-                "quiz_id" to ""
-            )
-            roadmapRef.collection("modules").document(moduleId).set(moduleData).await()
+        try {
+            val firestore = FirebaseFirestore.getInstance()
+            val roadmapRef = firestore.collection("ai_roadmaps").document(roadmapId)
+            roadmapRef.set(roadmapData).await()
+
+            // 👇 Call new function to generate + store enriched modules
+            aiGenerationRepository.generateAndStoreRoadmap(topic, roadmapId) {
+                Log.d("ROADMAP_AI", "All AI modules uploaded for $roadmapId")
+            }
+
+            return@withContext roadmapId
+
+        } catch (e: Exception) {
+            Log.e("ROADMAP_AI", "Error creating AI roadmap: ${e.message}")
+            return@withContext null
         }
-
-        return@withContext roadmapId
     }
+
 
 
 

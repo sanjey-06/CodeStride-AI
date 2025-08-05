@@ -15,17 +15,25 @@ object NetworkModule {
 
     @Provides
     fun provideRetrofit(): Retrofit {
+        val okHttpClient = OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)   // ⏱️ Connection timeout
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)      // ⏱️ Response read timeout
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .addHeader(
+                        "Authorization",
+                        "Bearer REMOVED_KEY"
+                    ) // TODO: Replace with secure key management
+                    .build()
+                chain.proceed(request)
+            }
+            .build()
+
         return Retrofit.Builder()
             .baseUrl("https://api.openai.com/v1/")
+            .client(okHttpClient) // 🔧 apply the custom client with timeouts
             .addConverterFactory(GsonConverterFactory.create())
-            .client(
-                OkHttpClient.Builder().addInterceptor { chain ->
-                    val request = chain.request().newBuilder()
-                        .addHeader("Authorization", "Bearer REMOVED_KEY") // Replace securely
-                        .build()
-                    chain.proceed(request)
-                }.build()
-            )
             .build()
     }
 

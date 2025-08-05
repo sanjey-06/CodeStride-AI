@@ -2,6 +2,9 @@ package com.sanjey.codestride.common
 
 object Constants {
 
+    const val YOUTUBE_API_KEY = "REMOVED_KEY"
+
+
 
     // ✅ Navigation Routes
     object Routes {
