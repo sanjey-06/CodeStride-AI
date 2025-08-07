@@ -34,6 +34,19 @@ class ModuleRepository @Inject constructor(
         }
     }
 
+    suspend fun updateModuleContent(roadmapId: String, moduleId: String, content: String) {
+        val collectionPath = getCollectionPath(roadmapId)
+
+        firestore.collection(collectionPath)
+            .document(roadmapId)
+            .collection(Constants.FirestorePaths.MODULES)
+            .document(moduleId)
+            .update("custom_content", content)
+            .await()
+    }
+
+
+
     // ✅ Fetch individual module by ID
     suspend fun getModuleById(roadmapId: String, moduleId: String): Module? {
         return try {

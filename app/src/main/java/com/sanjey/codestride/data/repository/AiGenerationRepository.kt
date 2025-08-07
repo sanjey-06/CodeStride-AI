@@ -22,26 +22,31 @@ class AiGenerationRepository @Inject constructor(
 ) {
     private suspend fun generateRoadmap(topic: String): List<RoadmapItem> {
         val prompt = """
-        You are an expert curriculum designer.
+You are an expert curriculum designer and HTML writer.
 
-        Create a 10-step beginner-friendly roadmap for learning "$topic".
+Create a 10-step beginner-friendly roadmap for learning "$topic".
 
-        Each step must:
-        - Have a short, specific, and unique title (use Title Case, max 6 words)
-        - Be logically ordered from beginner to advanced
-        - Clearly define a learning milestone
+Each step must include these 4 fields:
 
-        Each step should include these 4 fields:
-        - "title": A concise module name
-        - "description": What the learner will achieve
-        - "link": A YouTube video URL (use "https://www.youtube.com/watch?v=xxxxx" if unsure)
-        - "html_content": 2 to 4 paragraphs of clean HTML using <h2>, <p>, <ul>, <pre><code>...</code></pre>
+1. "title": A concise module name (Title Case, max 6 words)
+2. "description": One-sentence summary of what the learner will achieve
+3. "link": A relevant YouTube video URL. Use "https://www.youtube.com/watch?v=xxxxx" if unknown.
+4. "html_content": A rich, detailed HTML tutorial-style section with:
 
-        Important:
-        - All content must be beginner-friendly and self-contained
-        - Focus on teaching concepts clearly
-        - Format response as pure JSON array with exactly 10 items
-    """.trimIndent()
+    - A <h2> title for the topic
+    - 3 to 5 <p> paragraphs explaining the concept in depth
+    - One <ul><li></li></ul> list with examples, tools, or tips
+    - One <pre><code> block with a relevant code example (with comments)
+    - Use <b> and <i> tags for emphasis
+    - If helpful, include a real-world analogy or use-case
+
+Important:
+
+- Make the content feel like a short blog tutorial
+- Do not skip paragraphs or code
+- Format response as a pure JSON array with 10 items only (no markdown wrapping)
+""".trimIndent()
+
 
         Log.d("AI_DEBUG", "🟡 Starting AI roadmap generation for topic: $topic")
         Log.d("AI_DEBUG", "📝 Prompt size = ${prompt.length} characters")
@@ -49,9 +54,15 @@ class AiGenerationRepository @Inject constructor(
         val startTime = System.currentTimeMillis()
 
         return try {
+            Log.d("AI_PROMPT_USED", "Prompt:\n$prompt")
+            Log.d("AI_PARAMS", "Tokens: 2000, Temp: 0.7, Model: gpt-3.5-turbo")
+
             val response = api.getAiRoadmap(
                 AiRequest(
-                    messages = listOf(Message(content = prompt))
+                    model = "gpt-3.5-turbo",
+                    messages = listOf(Message(content = prompt)),
+                    max_tokens = 2000,
+                    temperature = 0.7
                 )
             )
 
@@ -93,6 +104,44 @@ class AiGenerationRepository @Inject constructor(
     }
 
 
+    suspend fun generateModuleContent(topic: String, moduleTitle: String): String {
+        val prompt = """
+You are an expert curriculum designer and HTML writer.
+
+Write a rich HTML tutorial for the topic: "$moduleTitle" as part of the "$topic" learning roadmap.
+
+The tutorial must include:
+
+- A <h2> title
+- 3 to 5 <p> paragraphs explaining the concept clearly
+- One <ul><li></li></ul> list (tools, tips, features)
+- One <pre><code> code block with comments
+- Use <b> and <i> tags for emphasis
+- Include a real-world analogy if helpful
+
+Format the output as a single HTML string (no JSON, no markdown).
+""".trimIndent()
+
+        return try {
+            val response = api.getAiRoadmap(
+                AiRequest(
+                    model = "gpt-3.5-turbo",
+                    messages = listOf(Message(content = prompt)),
+                    max_tokens = 1500,
+                    temperature = 0.7
+                )
+            )
+            response.choices.firstOrNull()?.message?.content?.trim().orEmpty()
+        } catch (e: Exception) {
+            Log.e("AI_SINGLE_MODULE", "❌ Error generating content for $moduleTitle: ${e.message}")
+            ""
+        }
+    }
+
+
+
+
+
     suspend fun generateAndStoreRoadmap(
         topic: String,
         roadmapId: String,
@@ -114,7 +163,6 @@ class AiGenerationRepository @Inject constructor(
             val moduleId = "module${index + 1}"
             val title = module.title
             val description = module.description
-            val html = module.html_content
             val placeholder = "https://www.youtube.com/watch?v=xxxxx"
 
             Log.d("AI_MODULE_UPLOAD", "🔹 Processing $moduleId → $title")
@@ -140,7 +188,7 @@ class AiGenerationRepository @Inject constructor(
             val moduleData = hashMapOf(
                 "title" to title,
                 "description" to description,
-                "custom_content" to html,
+                "custom_content" to "",
                 "yt_url" to finalUrl,
                 "order" to index + 1,
                 "quiz_id" to ""

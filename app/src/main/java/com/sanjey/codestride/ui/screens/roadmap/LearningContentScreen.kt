@@ -38,7 +38,7 @@ fun LearningContentScreen(navController: NavController, roadmapId: String, modul
 
     // ✅ Fetch content on launch
     LaunchedEffect(moduleId) {
-        viewModel.fetchModuleContent(roadmapId, moduleId)
+        viewModel.generateContentIfNeeded(topic = roadmapId.removePrefix("ai_").replace("_", " "), roadmapId, moduleId)
         viewModel.fetchModuleDetails(roadmapId, moduleId)
 
     }
