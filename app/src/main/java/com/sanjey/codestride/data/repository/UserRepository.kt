@@ -5,6 +5,8 @@ import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.UserProfileData
 import com.sanjey.codestride.data.model.UserSettings
 import com.sanjey.codestride.data.model.UserStats
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import javax.inject.Inject
@@ -14,30 +16,24 @@ class UserRepository @Inject constructor(
     private val firebaseRepository: FirebaseRepository
 ) {
 
-    suspend fun updateStreakOnLearning(userId: String): UserStats {
-        val progressDocs = firestore.collection("users")
-            .document(userId)
-            .collection("progress")
-            .get()
-            .await()
-
-        var mostRecentDate: String? = null
-
-        for (doc in progressDocs.documents) {
-            val date = doc.getString("lastLearnedDate")
-            if (date != null && (mostRecentDate == null || date > mostRecentDate)) {
-                mostRecentDate = date
-            }
-        }
-
+    suspend fun updateStreakOnLearning(userId: String, roadmapId: String): UserStats {
         val today = LocalDate.now().toString()
         val yesterday = LocalDate.now().minusDays(1).toString()
 
+        // ✅ Fetch the progress document for this roadmap
+        val progressDoc = firestore.collection("users")
+            .document(userId)
+            .collection("progress")
+            .document(roadmapId)
+            .get()
+            .await()
+
+        val lastLearnedDate = progressDoc.getString("lastLearnedDate")
         val userRef = firestore.collection("users").document(userId)
         val userDoc = userRef.get().await()
         val currentStreak = userDoc.getLong("streak")?.toInt() ?: 0
 
-        val newStreak = when (mostRecentDate) {
+        val newStreak = when (lastLearnedDate) {
             today -> currentStreak
             yesterday -> currentStreak + 1
             else -> 1
@@ -60,6 +56,7 @@ class UserRepository @Inject constructor(
         return UserStats(newStreak, progress, nextBadgeMsg)
     }
 
+
     suspend fun markLearnedToday(userId: String, roadmapId: String) {
         val today = LocalDate.now().toString()
         firestore.collection("users")
@@ -78,21 +75,22 @@ class UserRepository @Inject constructor(
 
 
 
-    suspend fun getUserStats(userId: String): UserStats {
-        val snapshot = firestore.collection(Constants.FirestorePaths.USERS)
+
+    fun observeUserStats(userId: String) = callbackFlow {
+        val reg = firestore.collection("users")
             .document(userId)
-            .get()
-            .await()
-
-        val streak = snapshot.getLong("streak")?.toInt() ?: 0
-        val progress = (streak / 10f).coerceAtMost(1f)
-        val nextBadgeMsg = if (streak >= 10) {
-            "🔥 Amazing! You're on fire with $streak days streak!"
-        } else {
-            "You're ${10 - streak} day(s) away from hitting 10 days!"
-        }
-
-        return UserStats(streak, progress, nextBadgeMsg)
+            .addSnapshotListener { snap, err ->
+                if (err != null) { close(err); return@addSnapshotListener }
+                val streak = snap?.getLong("streak")?.toInt() ?: 0
+                val progress = (streak / 10f).coerceAtMost(1f)
+                val nextBadgeMsg = if (streak >= 10) {
+                    "🔥 Amazing! You're on fire with $streak days streak!"
+                } else {
+                    "You're ${10 - streak} day(s) away from hitting 10 days!"
+                }
+                trySend(UserStats(streak, progress, nextBadgeMsg))
+            }
+        awaitClose { reg.remove() }
     }
 
     suspend fun replaceUserRoadmap(userId: String, newRoadmapId: String) {

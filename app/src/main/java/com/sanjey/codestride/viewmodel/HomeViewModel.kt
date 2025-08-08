@@ -52,16 +52,17 @@ class HomeViewModel @Inject constructor(
                             roadmapRepository.observeRoadmaps(),
                             if (currentRoadmapId != null)
                                 roadmapRepository.observeProgress(userId, currentRoadmapId)
-                            else flowOf(null to emptyList())
-                        ) { roadmaps, progressData ->
-                            Triple(currentRoadmapId, roadmaps, progressData)
+                            else flowOf(null to emptyList()),
+                            userRepository.observeUserStats(userId) // 👈 NEW live stream for streak
+                        ) { roadmaps, progressData, userStats ->
+                            Triple(Triple(currentRoadmapId, roadmaps, progressData), userStats, Unit)
                         }
                     }
-                    .collect { (currentRoadmapId, roadmaps, progressData) ->
+                    .collect { (triple, userStats) ->
+                        val (currentRoadmapId, roadmaps, progressData) = triple
                         val (currentModuleId, completedModules) = progressData
 
                         val firstName = firebaseRepository.getFirstName()
-                        val userStats = userRepository.getUserStats(userId)
                         val quotes = firebaseRepository.getQuotes()
                         val badgeDocs = firebaseRepository.getUserBadges(userId)
                         val quote = if (quotes.isNotEmpty()) {
@@ -74,7 +75,6 @@ class HomeViewModel @Inject constructor(
 
                         val roadmap = roadmaps.find { it.id == currentRoadmapId }
                             ?: currentRoadmapId?.let { roadmapRepository.getRoadmapById(it) }
-
 
                         val currentModuleTitle = if (currentModuleId != null && roadmap != null) {
                             roadmapRepository.getModuleTitle(roadmap.id, currentModuleId)
@@ -99,10 +99,11 @@ Completed Modules: ${completedModules.size} → $completedModules
 Calculated Progress: $progressPercent%
 ------------------------------
 """.trimIndent())
+
                         _homeUiState.value = UiState.Success(
                             HomeScreenData(
                                 firstName = firstName,
-                                userStats = userStats,
+                                userStats = userStats, // 👈 now comes from live observer
                                 currentRoadmap = if (roadmap != null) {
                                     RoadmapUI(
                                         title = roadmap.title,
