@@ -30,6 +30,7 @@ import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
+import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Module
 import com.sanjey.codestride.data.model.ProgressState
@@ -232,8 +233,12 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                             Button(
                                                 onClick = {
+                                                    Log.d("QUIZ_DEBUG", "📌 Take Quiz button clicked → roadmapId=$roadmapId, moduleId=${module.id}, quizId=${module.quizId}")
+
+                                                    val route = "${Constants.Routes.QUIZ_SCREEN}/$roadmapId/${module.id}/${module.quizId}"
+                                                    Log.d("QUIZ_NAV", "Navigating to: $route")
+                                                    navController.navigate(route)
                                                     roadmapViewModel.updateStreak(roadmapId)
-                                                    navController.navigate("quiz_screen/$roadmapId/${module.id}/${module.quizId}")
                                                 },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),

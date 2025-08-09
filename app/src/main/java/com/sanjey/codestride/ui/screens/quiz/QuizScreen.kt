@@ -53,6 +53,17 @@ fun QuizScreen(
     val score by quizViewModel.score.collectAsState()
     val currentQuestion by quizViewModel.currentQuestion.collectAsState()
 
+    LaunchedEffect(Unit) {
+        Log.d("QUIZ_DEBUG", "📌 QuizScreen LaunchedEffect → starting quiz load")
+
+        quizViewModel.generateQuizIfNeeded(
+            roadmapId = roadmapId,
+            moduleId = moduleId,
+            quizId = quizId // <-- pass the actual quizId here
+        )
+    }
+
+
     // ✅ Load quiz data
     LaunchedEffect(roadmapId, moduleId, quizId) {
         quizViewModel.loadQuizData(roadmapId, moduleId, quizId)

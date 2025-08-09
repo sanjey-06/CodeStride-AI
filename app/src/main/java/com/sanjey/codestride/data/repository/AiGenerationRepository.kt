@@ -5,6 +5,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.gson.Gson
 import com.sanjey.codestride.common.Constants
+import com.sanjey.codestride.data.model.Question
 import com.sanjey.codestride.data.model.RoadmapItem
 import com.sanjey.codestride.data.model.ai.AiRequest
 import com.sanjey.codestride.data.model.ai.Message
@@ -26,7 +27,7 @@ You are an expert curriculum designer and HTML writer.
 
 Create a 10-step beginner-friendly roadmap for learning "$topic".
 
-Each step must include these 4 fields:
+Each step must include these 5 fields:
 
 1. "title": A concise module name (Title Case, max 6 words)
 2. "description": One-sentence summary of what the learner will achieve
@@ -39,6 +40,8 @@ Each step must include these 4 fields:
     - One <pre><code> block with a relevant code example (with comments)
     - Use <b> and <i> tags for emphasis
     - If helpful, include a real-world analogy or use-case
+5. "quizId": A unique string identifier for the module's quiz (e.g., "quiz1", "quiz2")
+
 
 Important:
 
@@ -86,6 +89,8 @@ Important:
             if (cleanedJson.endsWith("```")) {
                 cleanedJson = cleanedJson.removeSuffix("```").trim()
             }
+            cleanedJson = cleanedJson.replace("\\", "\\\\")
+
 
             Log.d("AI_RAW_JSON", "✅ Cleaned JSON:\n$cleanedJson")
 
@@ -191,7 +196,7 @@ Format the output as a single HTML string (no JSON, no markdown).
                 "custom_content" to "",
                 "yt_url" to finalUrl,
                 "order" to index + 1,
-                "quiz_id" to ""
+                "quiz_id" to module.quizId.ifBlank { "ai_quiz_${index + 1}" }
             )
 
             try {
@@ -225,6 +230,10 @@ Format the output as a single HTML string (no JSON, no markdown).
             call.enqueue(object : retrofit2.Callback<YouTubeResponse> {
                 override fun onResponse(call: Call<YouTubeResponse>, response: retrofit2.Response<YouTubeResponse>) {
                     val videoId = response.body()?.items?.firstOrNull()?.id?.videoId
+                    Log.d("YOUTUBE_FETCH", "Response code: ${response.code()}")
+                    Log.d("YOUTUBE_FETCH", "Response body: ${response.body()}")
+                    Log.d("YOUTUBE_FETCH", "Video ID: ${videoId ?: "NULL"}")
+
                     cont.resume(
                         videoId?.let { "https://www.youtube.com/watch?v=$it" },
                         null
@@ -236,4 +245,59 @@ Format the output as a single HTML string (no JSON, no markdown).
                 }
             })
         }
+
+    suspend fun generateQuiz(topic: String, moduleTitle: String): List<Question> {
+        Log.d("QUIZ_DEBUG", "🚀 Starting AI quiz generation → topic=$topic, moduleTitle=$moduleTitle")
+
+        val prompt = """
+You are an expert quiz maker.
+
+Create a multiple-choice quiz for the topic "$moduleTitle" in the "$topic" learning roadmap.
+
+Requirements:
+- 5 questions
+- Each question has exactly 4 options
+- Only ONE correct answer per question
+- Provide a detailed explanation for the correct answer
+- Return in pure JSON array format, where each object contains:
+    - question_text (string)
+    - options (array of 4 strings)
+    - correct_answer (string)
+""".trimIndent()
+
+
+        return try {
+            Log.d("QUIZ_DEBUG", "📡 Sending prompt to AI (${prompt.length} chars)")
+
+            val response = api.getAiRoadmap(
+                AiRequest(
+                    model = "gpt-3.5-turbo",
+                    messages = listOf(Message(content = prompt)),
+                    max_tokens = 1000,
+                    temperature = 0.7
+                )
+            )
+
+
+            val innerJson = response.choices.firstOrNull()?.message?.content?.trim().orEmpty()
+            Log.d("QUIZ_DEBUG", "🔥 Raw AI output: $innerJson")
+
+
+            var cleanedJson = innerJson
+            if (cleanedJson.startsWith("```json")) {
+                cleanedJson = cleanedJson.removePrefix("```json").trim()
+            }
+            if (cleanedJson.endsWith("```")) {
+                cleanedJson = cleanedJson.removeSuffix("```").trim()
+            }
+            Log.d("QUIZ_DEBUG", "✅ Cleaned JSON: $cleanedJson")
+
+            return Gson().fromJson(cleanedJson, Array<Question>::class.java).toList()
+
+        } catch (e: Exception) {
+            Log.e("QUIZ_DEBUG", "❌ Error generating quiz for $moduleTitle: ${e.message}")
+            emptyList()
+        }
+    }
+
 }
