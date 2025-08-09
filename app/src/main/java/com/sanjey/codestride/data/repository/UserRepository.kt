@@ -16,24 +16,19 @@ class UserRepository @Inject constructor(
     private val firebaseRepository: FirebaseRepository
 ) {
 
-    suspend fun updateStreakOnLearning(userId: String, roadmapId: String): UserStats {
+    // CHANGED: removed roadmapId param and per-roadmap lookup
+    // Remove roadmapId parameter
+    suspend fun updateStreakOnLearning(userId: String): UserStats {
         val today = LocalDate.now().toString()
         val yesterday = LocalDate.now().minusDays(1).toString()
 
-        // ✅ Fetch the progress document for this roadmap
-        val progressDoc = firestore.collection("users")
-            .document(userId)
-            .collection("progress")
-            .document(roadmapId)
-            .get()
-            .await()
-
-        val lastLearnedDate = progressDoc.getString("lastLearnedDate")
         val userRef = firestore.collection("users").document(userId)
         val userDoc = userRef.get().await()
+
+        val lastActiveDate = userDoc.getString("lastActiveDate")
         val currentStreak = userDoc.getLong("streak")?.toInt() ?: 0
 
-        val newStreak = when (lastLearnedDate) {
+        val newStreak = when (lastActiveDate) {
             today -> currentStreak
             yesterday -> currentStreak + 1
             else -> 1
@@ -47,11 +42,10 @@ class UserRepository @Inject constructor(
         ).await()
 
         val progress = (newStreak / 10f).coerceAtMost(1f)
-        val nextBadgeMsg = if (newStreak >= 10) {
+        val nextBadgeMsg = if (newStreak >= 10)
             "🔥 Amazing! You're on fire with $newStreak days streak!"
-        } else {
+        else
             "You're ${10 - newStreak} day(s) away from hitting 10 days!"
-        }
 
         return UserStats(newStreak, progress, nextBadgeMsg)
     }

@@ -7,8 +7,6 @@ import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Module
 import com.sanjey.codestride.data.repository.AiGenerationRepository
 import com.sanjey.codestride.data.repository.ModuleRepository
-import com.sanjey.codestride.data.repository.RoadmapRepository
-import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,8 +16,6 @@ import javax.inject.Inject
 @HiltViewModel
 class ModuleViewModel @Inject constructor(
     private val repository: ModuleRepository,
-    private val userRepository: UserRepository,
-    private val roadmapRepository: RoadmapRepository,
     private val aiGenerationRepository: AiGenerationRepository
 ) : ViewModel() {
 
@@ -63,37 +59,6 @@ class ModuleViewModel @Inject constructor(
             }
         }
     }
-
-    // ✅ Fetch HTML content for a specific module
-    fun fetchModuleContent(roadmapId: String, moduleId: String) {
-        viewModelScope.launch {
-            _moduleHtmlState.value = UiState.Loading
-            try {
-                val htmlContent = repository.getModuleContent(roadmapId, moduleId)
-                if (!htmlContent.isNullOrBlank()) {
-                    _moduleHtmlState.value = UiState.Success(htmlContent)
-                } else {
-                    _moduleHtmlState.value = UiState.Error("Content not found")
-                }
-            } catch (e: Exception) {
-                _moduleHtmlState.value = UiState.Error("Failed to load content")
-            }
-        }
-    }
-    fun updateLearningProgress(roadmapId: String, moduleId: String) {
-        viewModelScope.launch {
-            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
-            try {
-                userRepository.updateStreakOnLearning(userId, roadmapId)
-                roadmapRepository.updateProgress(userId, roadmapId, moduleId)
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
-    }
-
-
-
 
     fun generateContentIfNeeded(topic: String, roadmapId: String, moduleId: String) {
         viewModelScope.launch {

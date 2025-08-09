@@ -65,21 +65,4 @@ class ModuleRepository @Inject constructor(
         }
     }
 
-    // ✅ Fetch module content
-    suspend fun getModuleContent(roadmapId: String, moduleId: String): String? {
-        return try {
-            val collectionPath = getCollectionPath(roadmapId)
-
-            val docSnapshot = firestore.collection(collectionPath)
-                .document(roadmapId)
-                .collection(Constants.FirestorePaths.MODULES)
-                .document(moduleId)
-                .get()
-                .await()
-
-            docSnapshot.getString("custom_content")
-        } catch (e: Exception) {
-            null
-        }
-    }
 }
