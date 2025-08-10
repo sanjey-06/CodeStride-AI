@@ -6,6 +6,8 @@ import com.sanjey.codestride.common.FireProgressBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -363,43 +365,54 @@ fun BadgePreviewSection(badges: List<Badge>) {
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            badges.forEach { badge ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .width(100.dp)
-                        .clickable { selectedBadge = badge } // ✅ Handles click
-                ) {
-                    AsyncImage(
-                        model = badge.image,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(RoundedCornerShape(8.dp))
+            if (badges.isEmpty()) {
+                item {
+                    Text(
+                        text = "No achievements yet",
+                        fontFamily = SoraFont,
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(vertical = 20.dp)
                     )
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(top = 6.dp)
+                }
+            } else {
+                items(badges) { badge ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .width(100.dp)
+                            .clickable { selectedBadge = badge }
                     ) {
-                        Text(
-                            text = "Unlocked",
-                            fontFamily = SoraFont,
-                            fontSize = 12.sp,
-                            color = Color(0xFFB4FF63)
+                        AsyncImage(
+                            model = badge.image,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(8.dp))
                         )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(top = 6.dp)
+                        ) {
+                            Text(
+                                text = "Unlocked",
+                                fontFamily = SoraFont,
+                                fontSize = 12.sp,
+                                color = Color(0xFFB4FF63)
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
-    // ✅ Keep this OUTSIDE the Column
     selectedBadge?.let {
         Dialog(onDismissRequest = { selectedBadge = null }) {
             BadgeInfoCard(
@@ -409,6 +422,7 @@ fun BadgePreviewSection(badges: List<Badge>) {
         }
     }
 }
+
 
 
 
