@@ -62,11 +62,62 @@ fun QuizScreen(
         showInitialLoader = false
     }
     if (showInitialLoader) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color.Blue)
+        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+        val bannerHeight = screenHeight * 0.15f
+
+        Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+            // 🔼 Top Banner
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(bannerHeight)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.quizscreen_background),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f))
+                )
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(start = 12.dp, top = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
+                }
+                Text(
+                    text = "Quiz",
+                    fontFamily = PixelFont,
+                    fontSize = 28.sp,
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            // 🔽 Loader in White Rounded Section
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)),
+                color = Color.White
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.Blue)
+                }
+            }
         }
-        return
     }
+
 
     when {
         questionsState is UiState.Loading || quizDetailsState is UiState.Loading -> {
