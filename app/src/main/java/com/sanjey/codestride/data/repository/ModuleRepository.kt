@@ -34,6 +34,7 @@ class ModuleRepository @Inject constructor(
         }
     }
 
+    //Write - Firebase Firestore
     suspend fun updateModuleContent(roadmapId: String, moduleId: String, content: String) {
         val collectionPath = getCollectionPath(roadmapId)
 

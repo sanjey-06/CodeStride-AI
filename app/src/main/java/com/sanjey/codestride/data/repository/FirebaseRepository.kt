@@ -18,7 +18,7 @@ class FirebaseRepository @Inject constructor(
     private fun pathFor(roadmapId: String) =
         if (roadmapId.startsWith("ai_")) "ai_roadmaps" else Constants.FirestorePaths.ROADMAPS
 
-    // ✅ Fetch user first name
+
     suspend fun getFirstName(): String {
         val uid = auth.currentUser?.uid ?: return "Learner"
         val snapshot = firestore.collection(Constants.FirestorePaths.USERS)
@@ -65,7 +65,7 @@ class FirebaseRepository @Inject constructor(
     }
 
 
-    // ✅ Fetch questions (Suspend)
+    // Read - Firebase Firestore
     suspend fun getQuestionsByQuiz(roadmapId: String, moduleId: String, quizId: String): List<Question> {
         val base = pathFor(roadmapId)
         val snapshot = firestore.collection(base)
@@ -81,7 +81,7 @@ class FirebaseRepository @Inject constructor(
     }
 
 
-    // ✅ Fetch quotes
+    // Read Simple Collection
     suspend fun getQuotes(): List<Quote> {
         return try {
             firestore.collection(Constants.FirestorePaths.QUOTES)
@@ -106,7 +106,7 @@ class FirebaseRepository @Inject constructor(
             .await()
         return doc.toObject(Quiz::class.java)
     }
-
+    // Write - Firebase Firestore
     suspend fun saveBadge(userId: String, title: String, image: String, roadmapId: String, moduleId: String) {
         val badgeData = mapOf(
             "title" to title,
@@ -118,7 +118,7 @@ class FirebaseRepository @Inject constructor(
         firestore.collection("users")
             .document(userId)
             .collection("badges")
-            .document("${roadmapId}_$moduleId") // 🧠 deterministic doc ID
+            .document("${roadmapId}_$moduleId")
             .set(badgeData)
             .await()
     }
@@ -140,7 +140,7 @@ class FirebaseRepository @Inject constructor(
         quiz: Quiz,
         questions: List<Question>
     ) {
-        // ✅ Select correct top-level collection for AI roadmaps
+
         val topCollection = if (roadmapId.startsWith("ai_")) {
             "ai_roadmaps"
         } else {

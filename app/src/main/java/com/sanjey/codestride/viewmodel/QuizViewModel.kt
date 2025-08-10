@@ -37,8 +37,6 @@
 
         private var passingScore: Int = 0
 
-        private val _quizState = MutableStateFlow<UiState<Pair<Quiz, List<Question>>>>(UiState.Idle)
-
 
         // ✅ Internal state for current quiz progress
         private val _currentIndex = MutableStateFlow(0)
@@ -133,69 +131,38 @@
         }
 
 
-        fun generateQuizIfNeeded(roadmapId: String, moduleId: String, quizId: String) {
-            viewModelScope.launch {
-                Log.d("QUIZ_DEBUG", "🚀 generateQuizIfNeeded called → roadmapId=$roadmapId, moduleId=$moduleId, quizId=$quizId")
+        suspend fun generateQuizIfNeeded(roadmapId: String, moduleId: String, quizId: String) {
+            // NOTE: no viewModelScope.launch here — let the caller await this.
+            try {
+                val quizDetails = firebaseRepository.getQuizDetails(roadmapId, moduleId, quizId)
+                val questions   = firebaseRepository.getQuestionsByQuiz(roadmapId, moduleId, quizId)
 
-                _quizState.value = UiState.Loading
-                try {
-                    val quizDetails = firebaseRepository.getQuizDetails(roadmapId, moduleId, quizId)
-                    val questions = firebaseRepository.getQuestionsByQuiz(roadmapId, moduleId, quizId)
-                    Log.d("QUIZ_DEBUG", "📡 Checking Firestore for existing quiz...")
+                if (quizDetails == null || questions.isEmpty()) {
+                    val module = moduleRepository.getModuleById(roadmapId, moduleId)
+                    val generated = aiGenerationRepository.generateQuiz(roadmapId, module?.title ?: "Learning")
+                    if (generated.isNotEmpty()) {
+                        val badgeId = "quiz${moduleId.removePrefix("module")}"
+                        val badge   = firebaseRepository.getBadgeById(badgeId)
 
-                    if (quizDetails == null || questions.isEmpty()) {
-                        val module = moduleRepository.getModuleById(roadmapId, moduleId)
-                        val generatedQuestions = aiGenerationRepository.generateQuiz(
-                            roadmapId, // topic
-                            module?.title ?: "Learning"
+                        val aiQuiz = Quiz(
+                            id = quizId,
+                            passingScore = 3,
+                            totalQuestions = generated.size,
+                            badgeImage = badge?.imageUrl ?: "",
+                            badgeTitle = badge?.title ?: "",
+                            badgeDescription = badge?.description ?: ""
                         )
 
-                        if (generatedQuestions.isNotEmpty()) {
-                            // 🎯 Map moduleN -> quizN (default_ai_badges/quizN)
-                            val badgeId = "quiz${moduleId.removePrefix("module")}"
-                            val badge = firebaseRepository.getBadgeById(badgeId) // make sure this reads default_ai_badges
-
-                            val aiQuiz = Quiz(
-                                id = quizId,
-                                passingScore = 3, // fixed for now
-                                totalQuestions = generatedQuestions.size,
-                                badgeImage = badge?.imageUrl ?: "",
-                                badgeTitle = badge?.title ?: "",
-                                badgeDescription = badge?.description ?: ""
-                            )
-
-                            // ✅ 1) Optimistic UI: show immediately to avoid "No questions available"
-                            _quizState.value = UiState.Success(aiQuiz to generatedQuestions)
-
-                            // ✅ 2) Save in background (don’t block UI)
-                            viewModelScope.launch {
-                                try {
-                                    firebaseRepository.saveAIQuiz(
-                                        roadmapId,
-                                        moduleId,
-                                        quizId,
-                                        aiQuiz,
-                                        generatedQuestions
-                                    )
-                                    Log.d("QUIZ_DEBUG", "✅ Generated and saved quiz with ${generatedQuestions.size} questions")
-                                } catch (e: Exception) {
-                                    Log.e("QUIZ_DEBUG", "❌ Save failed: ${e.message}")
-                                }
-                            }
-
-                        } else {
-                            _quizState.value = UiState.Error("Failed to generate quiz")
-                        }
-                    } else {
-                        _quizState.value = UiState.Success(quizDetails to questions)
+                        // Save (blocking here is fine — ensures data exists before load)
+                        firebaseRepository.saveAIQuiz(roadmapId, moduleId, quizId, aiQuiz, generated)
                     }
-
-                } catch (e: Exception) {
-                    Log.e("AI_QUIZ_GEN", "❌ Error: ${e.message}")
-                    _quizState.value = UiState.Error("Something went wrong: ${e.message}")
                 }
+            } catch (e: Exception) {
+                Log.e("QUIZ_DEBUG", "generateQuizIfNeeded error: ${e.message}")
+                // no UI state changes here; just let loadQuizData handle UI later
             }
         }
+
 
 
 

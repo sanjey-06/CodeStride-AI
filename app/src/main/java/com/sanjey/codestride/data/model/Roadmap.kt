@@ -4,6 +4,6 @@ data class Roadmap(
     val id: String = "",
     val title: String = "",
     val description: String = "",
-    val icon: String = "",  // Firestore: could store image URL or icon name
+    val icon: String = "",
     val isCustom: Boolean = false
 )

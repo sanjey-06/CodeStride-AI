@@ -25,8 +25,8 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             _loginState.value = UiState.Loading
             try {
-                firebaseRepository.loginUser(email, password) // ✅ Move logic to repo
-                _loginState.value = UiState.Success(Unit) // Success, no extra data
+                firebaseRepository.loginUser(email, password)
+                _loginState.value = UiState.Success(Unit)
             } catch (e: Exception) {
                 _loginState.value = UiState.Error(e.message ?: "Login failed")
             }

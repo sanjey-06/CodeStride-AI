@@ -16,8 +16,7 @@ class UserRepository @Inject constructor(
     private val firebaseRepository: FirebaseRepository
 ) {
 
-    // CHANGED: removed roadmapId param and per-roadmap lookup
-    // Remove roadmapId parameter
+
     suspend fun updateStreakOnLearning(userId: String): UserStats {
         val today = LocalDate.now().toString()
         val yesterday = LocalDate.now().minusDays(1).toString()
@@ -144,7 +143,7 @@ class UserRepository @Inject constructor(
             return UserProfileData(
                 fullName = "$firstName $lastName",
                 avatar = avatar,
-                email = email, // ✅ if you have email as a variable, use it. Else, ""
+                email = email,
                 currentRoadmapTitle = "None",
                 currentModuleTitle = "None",
                 completedModulesCount = 0,

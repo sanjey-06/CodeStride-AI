@@ -51,22 +51,21 @@ fun QuizScreen(
     val currentIndex by quizViewModel.currentIndex.collectAsState()
     val selectedOption by quizViewModel.selectedOption.collectAsState()
     val score by quizViewModel.score.collectAsState()
+    var showInitialLoader by remember { mutableStateOf(true) }
     val currentQuestion by quizViewModel.currentQuestion.collectAsState()
 
-    LaunchedEffect(Unit) {
-        Log.d("QUIZ_DEBUG", "📌 QuizScreen LaunchedEffect → starting quiz load")
-
-        quizViewModel.generateQuizIfNeeded(
-            roadmapId = roadmapId,
-            moduleId = moduleId,
-            quizId = quizId // <-- pass the actual quizId here
-        )
-    }
-
-
-    // ✅ Load quiz data
     LaunchedEffect(roadmapId, moduleId, quizId) {
+        showInitialLoader = true
+        Log.d("QUIZ_DEBUG", "🔸 sequential prepare → gen then load")
+        quizViewModel.generateQuizIfNeeded(roadmapId, moduleId, quizId)
         quizViewModel.loadQuizData(roadmapId, moduleId, quizId)
+        showInitialLoader = false
+    }
+    if (showInitialLoader) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color.Blue)
+        }
+        return
     }
 
     when {
