@@ -65,11 +65,6 @@ fun ChatbotScreen(navController: NavHostController) {
         }
 
 
-
-
-
-
-
         // Header
         Box(
             modifier = Modifier
@@ -86,7 +81,7 @@ fun ChatbotScreen(navController: NavHostController) {
             )
         }
 
-        // Messages
+
         LazyColumn(
             modifier = Modifier
                 .weight(1f)

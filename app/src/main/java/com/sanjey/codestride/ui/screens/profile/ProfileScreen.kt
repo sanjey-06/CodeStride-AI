@@ -1,5 +1,7 @@
 package com.sanjey.codestride.ui.screens.profile
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,7 +35,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,6 +47,7 @@ import com.sanjey.codestride.common.getAvatarResourceId
 import com.sanjey.codestride.data.model.HomeScreenData
 import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.viewmodel.UserViewModel
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -67,6 +72,7 @@ fun ProfileScreen(
     LaunchedEffect(Unit) {
         userViewModel.loadUserProfile()
     }
+
 
     Column(
         modifier = Modifier
@@ -155,11 +161,22 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        val scale = remember { Animatable(1f) }
+                        val scope = rememberCoroutineScope()
+
                         Button(
-                            onClick = { showEditDialog = true },
+                            onClick = {
+                                scope.launch {
+                                    scale.animateTo(0.9f, tween(100))
+                                    scale.animateTo(1f, tween(100))
+                                }
+                                showEditDialog = true
+                            },
                             shape = RoundedCornerShape(50.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .scale(scale.value)
                         ) {
                             Text(
                                 text = "Edit Profile",
@@ -173,7 +190,6 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ✅ 🔥 Reused from HomeScreen — NO fallback
                 if (homeState is UiState.Success) {
                     val data = (homeState as UiState.Success<HomeScreenData>).data
 

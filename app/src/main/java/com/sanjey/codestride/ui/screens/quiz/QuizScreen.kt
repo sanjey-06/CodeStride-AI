@@ -251,8 +251,6 @@ fun QuizContentUI(
                 modifier = Modifier.align(Alignment.Center)
             )
         }
-
-        // 🔽 Scrollable White Rounded Section
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -273,7 +271,6 @@ fun QuizContentUI(
                     modifier = Modifier.padding(vertical = 12.dp)
                 )
 
-                // 🟦 Question Label
                 Surface(
                     color = Color(0xFF03A9F4),
                     shape = RoundedCornerShape(50),

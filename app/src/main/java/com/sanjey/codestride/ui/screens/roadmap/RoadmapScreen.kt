@@ -126,7 +126,7 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
             )
         }
 
-        // 🔷 Main White Container
+
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -148,7 +148,6 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ✅ Dynamic Icon
                 Surface(
                     modifier = Modifier.size(84.dp),
                     shape = RoundedCornerShape(16.dp),
@@ -165,7 +164,6 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // ✅ Dynamic Title
                 Text(
                     text = currentTitle,
                     fontFamily = PixelFont,

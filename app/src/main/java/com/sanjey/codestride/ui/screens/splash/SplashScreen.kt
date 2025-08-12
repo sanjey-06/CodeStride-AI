@@ -32,17 +32,14 @@ fun SplashScreen(
 
 
     LaunchedEffect(Unit) {
-        // Start text animation
         for (i in fullText.indices) {
             visibleText = fullText.substring(0, i + 1)
             delay(150)
         }
 
-        // Check login state after splash animation
         userViewModel.handleSplashNavigation(context)
     }
 
-    // React to login state changes
     LaunchedEffect(splashTarget) {
         splashTarget?.let { target ->
             navController.navigate(target) {
@@ -51,7 +48,6 @@ fun SplashScreen(
         }
     }
 
-    // UI for Splash Screen
     Box(
         modifier = Modifier
             .fillMaxSize()

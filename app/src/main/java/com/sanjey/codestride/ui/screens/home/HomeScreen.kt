@@ -244,10 +244,29 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
         }
 
         is UiState.Error -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Something went wrong", color = Color.Red, fontFamily = PixelFont)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_failed),
+                        contentDescription = "Error Icon",
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "Something went wrong",
+                        color = Color.Red,
+                        fontFamily = PixelFont
+                    )
+                }
             }
         }
+
         UiState.Idle -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Welcome!", color = Color.Gray, fontFamily = PixelFont)
