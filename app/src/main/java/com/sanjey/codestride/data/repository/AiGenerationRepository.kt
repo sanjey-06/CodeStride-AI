@@ -81,15 +81,8 @@ Important:
 
             Log.d("AI_RAW_JSON", "🔥 Raw AI response:\n$innerJson")
 
-            var cleanedJson = innerJson.trim()
+            val cleanedJson = sanitizeAiJson(innerJson)
 
-            if (cleanedJson.startsWith("```json")) {
-                cleanedJson = cleanedJson.removePrefix("```json").trim()
-            }
-            if (cleanedJson.endsWith("```")) {
-                cleanedJson = cleanedJson.removeSuffix("```").trim()
-            }
-            cleanedJson = cleanedJson.replace("\\", "\\\\")
 
 
             Log.d("AI_RAW_JSON", "✅ Cleaned JSON:\n$cleanedJson")
@@ -107,6 +100,28 @@ Important:
             emptyList()
         }
     }
+
+
+    private fun sanitizeAiJson(raw: String): String {
+        var result = raw.trim()
+
+        if (result.startsWith("```json")) {
+            result = result.removePrefix("```json").trim()
+        }
+        if (result.endsWith("```")) {
+            result = result.removeSuffix("```").trim()
+        }
+
+        // Escape unescaped quotes inside html_content
+        result = result.replace(Regex("(?<=html_content\":\\s?\").*?(?=\")")) {
+            it.value.replace("\"", "\\\"")
+        }
+
+        return result
+    }
+
+
+
 
 
     suspend fun generateModuleContent(topic: String, moduleTitle: String): String {

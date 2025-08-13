@@ -31,6 +31,7 @@ import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Quiz
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.viewmodel.HomeViewModel
 import com.sanjey.codestride.viewmodel.QuizResultState
 import com.sanjey.codestride.viewmodel.QuizViewModel
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
@@ -165,6 +166,8 @@ fun QuizScreen(
 
                 QuizResultState.Passed, QuizResultState.Failed -> {
                     if (quizResultState == QuizResultState.Passed) {
+                        val homeViewModel: HomeViewModel = hiltViewModel()
+
                         LaunchedEffect(Unit) {
                             Log.d("QUIZ_DEBUG", "Quiz Passed → Updating Progress for $moduleId in $roadmapId")
 
@@ -172,9 +175,11 @@ fun QuizScreen(
                             val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
                             if (userId != null && quizDetails != null) {
                                 quizViewModel.saveBadge(userId, quizDetails.badgeTitle, quizDetails.badgeImage, roadmapId, moduleId)
+                                homeViewModel.refreshBadges() // 🔹 Force refresh so Home/Profile update instantly
                             }
                         }
                     }
+
 
                     ResultUI(
                         score = score,

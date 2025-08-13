@@ -4,6 +4,8 @@
     import androidx.lifecycle.ViewModel
     import androidx.lifecycle.viewModelScope
     import com.sanjey.codestride.common.UiState
+    import com.sanjey.codestride.data.model.AIBadge
+    import com.sanjey.codestride.data.model.Badge
     import com.sanjey.codestride.data.model.Question
     import com.sanjey.codestride.data.model.Quiz
     import com.sanjey.codestride.data.repository.AiGenerationRepository
@@ -132,36 +134,77 @@
 
 
         suspend fun generateQuizIfNeeded(roadmapId: String, moduleId: String, quizId: String) {
-            // NOTE: no viewModelScope.launch here — let the caller await this.
             try {
-                val quizDetails = firebaseRepository.getQuizDetails(roadmapId, moduleId, quizId)
-                val questions   = firebaseRepository.getQuestionsByQuiz(roadmapId, moduleId, quizId)
+                Log.d("QUIZ_DEBUG", "=== generateQuizIfNeeded START ===")
+                Log.d("QUIZ_DEBUG", "roadmapId=$roadmapId, moduleId=$moduleId, quizId=$quizId")
 
+                val quizDetails = firebaseRepository.getQuizDetails(roadmapId, moduleId, quizId)
+                val questions = firebaseRepository.getQuestionsByQuiz(roadmapId, moduleId, quizId)
+
+                Log.d("QUIZ_DEBUG", "Existing quizDetails=$quizDetails, questionsCount=${questions.size}")
+
+                // Determine badge details
+                val isAiRoadmap = roadmapId.startsWith("ai_")
+                val badgeImage: String
+                val badgeTitle: String
+                val badgeDescription: String
+
+                if (isAiRoadmap) {
+                    val index = moduleId.removePrefix("module").toIntOrNull() ?: 1
+                    val aiBadge: AIBadge? = firebaseRepository.getAiBadgeByIndex(index)
+                    Log.d("BADGE_DEBUG", "AI badge fetched for index=$index → $aiBadge")
+
+                    badgeImage = aiBadge?.imageUrl ?: ""
+                    badgeTitle = aiBadge?.title ?: ""
+                    badgeDescription = aiBadge?.description ?: ""
+                } else {
+                    val badgeId = "quiz${moduleId.removePrefix("module")}"
+                    val staticBadge: Badge? = firebaseRepository.getBadgeById(badgeId)
+                    Log.d("BADGE_DEBUG", "Static badge fetched for badgeId=$badgeId → $staticBadge")
+
+                    badgeImage = staticBadge?.image ?: ""
+                    badgeTitle = staticBadge?.title ?: ""
+                    badgeDescription = "" // static badges have no description
+                }
+
+                // If quiz doesn't exist yet, generate it
                 if (quizDetails == null || questions.isEmpty()) {
                     val module = moduleRepository.getModuleById(roadmapId, moduleId)
-                    val generated = aiGenerationRepository.generateQuiz(roadmapId, module?.title ?: "Learning")
+                    Log.d("QUIZ_DEBUG", "Module fetched for quiz generation → $module")
+
+                    val generated = aiGenerationRepository.generateQuiz(
+                        roadmapId,
+                        module?.title ?: "Learning"
+                    )
+                    Log.d("QUIZ_DEBUG", "Generated ${generated.size} questions for module '${module?.title}'")
+
                     if (generated.isNotEmpty()) {
-                        val badgeId = "quiz${moduleId.removePrefix("module")}"
-                        val badge   = firebaseRepository.getBadgeById(badgeId)
+                        Log.d("BADGE_DEBUG", "Saving quiz with badgeTitle='$badgeTitle', badgeImage='$badgeImage', badgeDescription='$badgeDescription'")
 
                         val aiQuiz = Quiz(
                             id = quizId,
                             passingScore = 3,
                             totalQuestions = generated.size,
-                            badgeImage = badge?.imageUrl ?: "",
-                            badgeTitle = badge?.title ?: "",
-                            badgeDescription = badge?.description ?: ""
+                            badgeImage = badgeImage,
+                            badgeTitle = badgeTitle,
+                            badgeDescription = badgeDescription
                         )
 
-                        // Save (blocking here is fine — ensures data exists before load)
                         firebaseRepository.saveAIQuiz(roadmapId, moduleId, quizId, aiQuiz, generated)
+                        Log.d("QUIZ_DEBUG", "Quiz saved successfully")
+                    } else {
+                        Log.w("QUIZ_DEBUG", "No questions generated, quiz not saved")
                     }
+                } else {
+                    Log.d("QUIZ_DEBUG", "Quiz already exists, skipping generation")
                 }
             } catch (e: Exception) {
-                Log.e("QUIZ_DEBUG", "generateQuizIfNeeded error: ${e.message}")
-                // no UI state changes here; just let loadQuizData handle UI later
+                Log.e("QUIZ_DEBUG", "generateQuizIfNeeded error: ${e.message}", e)
             }
         }
+
+
+
 
 
 

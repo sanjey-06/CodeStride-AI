@@ -35,7 +35,7 @@ class RoadmapRepository @Inject constructor(
         val progressRef = userRef.collection(Constants.FirestorePaths.PROGRESS).document(roadmapId)
 
         // Update current roadmap
-        userRef.update("currentRoadmapId", roadmapId).await()
+        userRef.set(mapOf("currentRoadmapId" to roadmapId), SetOptions.merge()).await()
 
         // Initialize progress
         val progressData = mapOf(

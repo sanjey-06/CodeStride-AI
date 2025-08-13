@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.AIBadge
+import com.sanjey.codestride.data.model.Badge
 import com.sanjey.codestride.data.model.Question
 import com.sanjey.codestride.data.model.Quiz
 import com.sanjey.codestride.data.model.Quote
@@ -123,15 +124,45 @@ class FirebaseRepository @Inject constructor(
             .await()
     }
 
-    suspend fun getUserBadges(userId: String): List<com.sanjey.codestride.data.model.Badge> {
-        val snapshot = firestore.collection("users")
+    suspend fun getUserBadges(userId: String): List<Badge> {
+        val userBadgeSnapshot = firestore.collection("users")
             .document(userId)
             .collection("badges")
             .get()
             .await()
 
-        return snapshot.toObjects(com.sanjey.codestride.data.model.Badge::class.java)
+        val mergedBadges = mutableListOf<Badge>()
+
+        for (doc in userBadgeSnapshot.documents) {
+            val basicBadge = doc.toObject(Badge::class.java)
+            if (basicBadge != null) {
+                // Try to enrich with AI badge details if available
+                val aiBadgeSnapshot = firestore.collection("default_ai_badges")
+                    .document(doc.id) // Use same doc.id to match AI badge ID
+                    .get()
+                    .await()
+
+                if (aiBadgeSnapshot.exists()) {
+                    val aiBadge = aiBadgeSnapshot.toObject(AIBadge::class.java)
+                    mergedBadges.add(
+                        Badge(
+                            title = aiBadge?.title ?: basicBadge.title,
+                            image = aiBadge?.imageUrl ?: basicBadge.image,
+                            roadmapId = basicBadge.roadmapId,
+                            moduleId = basicBadge.moduleId,
+                            dateEarned = basicBadge.dateEarned
+                        )
+                    )
+                } else {
+                    mergedBadges.add(basicBadge)
+                }
+            }
+        }
+        return mergedBadges
     }
+
+
+
 
     suspend fun saveAIQuiz(
         roadmapId: String,
@@ -172,17 +203,31 @@ class FirebaseRepository @Inject constructor(
         batch.commit().await()
     }
 
-
-
-    suspend fun getBadgeById(badgeId: String): AIBadge? {
+    suspend fun getAiBadgeByIndex(index: Int): AIBadge? {
         return try {
             val snapshot = firestore.collection("default_ai_badges")
-                .document(badgeId)
+                .document(index.toString())
                 .get()
                 .await()
             snapshot.toObject(AIBadge::class.java)
         } catch (e: Exception) {
-            Log.e("FIREBASE_REPO", "❌ Failed to fetch badge: ${e.message}")
+            Log.e("FIREBASE_REPO", "❌ Failed to fetch AI badge: ${e.message}")
+            null
+        }
+    }
+
+
+
+
+    suspend fun getBadgeById(badgeId: String): Badge? {
+        return try {
+            val snapshot = firestore.collection("badges")
+                .document(badgeId)
+                .get()
+                .await()
+            snapshot.toObject(Badge::class.java)
+        } catch (e: Exception) {
+            Log.e("FIREBASE_REPO", "❌ Failed to fetch static badge: ${e.message}")
             null
         }
     }

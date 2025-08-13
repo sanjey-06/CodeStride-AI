@@ -130,4 +130,22 @@ Calculated Progress: $progressPercent%
             }
         }
     }
+    fun refreshBadges() {
+        viewModelScope.launch {
+            try {
+                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+                val badgeDocs = firebaseRepository.getUserBadges(userId)
+
+                val currentState = _homeUiState.value
+                if (currentState is UiState.Success) {
+                    _homeUiState.value = currentState.copy(
+                        data = currentState.data.copy(badges = badgeDocs)
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("HOME_DEBUG", "Failed to refresh badges: ${e.message}")
+            }
+        }
+    }
+
 }
