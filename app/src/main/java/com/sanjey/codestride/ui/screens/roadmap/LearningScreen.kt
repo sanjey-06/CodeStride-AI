@@ -292,8 +292,6 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                     .padding(horizontal = 24.dp)
                                     .clickable(enabled = isUnlocked) {
                                         if (isUnlocked) {
-                                            Log.d("STREAK_DEBUG", "Dialog opened for ${module.id}")
-
                                             showDialog = true
                                         }
                                     }

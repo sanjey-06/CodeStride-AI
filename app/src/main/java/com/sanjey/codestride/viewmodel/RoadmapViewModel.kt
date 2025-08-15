@@ -155,8 +155,8 @@ class RoadmapViewModel @Inject constructor(
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
             try {
-                val stats = userRepository.updateStreakOnLearning(userId) // ✅ now ignores roadmap
-                userRepository.markLearnedToday(userId, roadmapId)        // keeps per-roadmap date
+                val stats = userRepository.updateStreakOnLearning(userId)
+                userRepository.markLearnedToday(userId, roadmapId)
 
                 Log.d("STREAK_DEBUG", "✅ New streak = ${stats.streak}, progress = ${stats.progressPercent}")
             } catch (e: Exception) {
@@ -169,8 +169,6 @@ class RoadmapViewModel @Inject constructor(
     suspend fun generateAiRoadmapAndReturnId(topic: String): String? = withContext(Dispatchers.IO) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@withContext null
         val roadmapId = "ai_" + topic.lowercase().replace(" ", "_")
-
-        // Save roadmap metadata first
         val roadmapData = mapOf(
             "title" to topic.replaceFirstChar { it.uppercase() },
             "description" to "Custom roadmap for $topic",
@@ -178,13 +176,11 @@ class RoadmapViewModel @Inject constructor(
             "created_by" to userId,
             "isCustom" to true
         )
-
         try {
             val firestore = FirebaseFirestore.getInstance()
             val roadmapRef = firestore.collection("ai_roadmaps").document(roadmapId)
             roadmapRef.set(roadmapData).await()
 
-            // 👇 Call new function to generate + store enriched modules
             aiGenerationRepository.generateAndStoreRoadmap(topic, roadmapId) {
                 Log.d("ROADMAP_AI", "All AI modules uploaded for $roadmapId")
             }
