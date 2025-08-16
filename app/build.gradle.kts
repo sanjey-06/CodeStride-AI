@@ -50,7 +50,19 @@ android {
 
 dependencies {
 
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+
+// Retrofit + Gson converter
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+// OkHttp for interceptors (for Authorization header)
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+
+
+    implementation ("androidx.work:work-runtime-ktx:2.10.3")
     implementation("androidx.activity:activity-compose:1.9.0")
+    implementation ("com.airbnb.android:lottie-compose:6.1.0")
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.compose.material3:material3")
