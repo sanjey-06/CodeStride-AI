@@ -206,7 +206,7 @@ class FirebaseRepository @Inject constructor(
     suspend fun getAiBadgeByIndex(index: Int): AIBadge? {
         return try {
             val snapshot = firestore.collection("default_ai_badges")
-                .document(index.toString())
+                .document("badge_$index")
                 .get()
                 .await()
             snapshot.toObject(AIBadge::class.java)
