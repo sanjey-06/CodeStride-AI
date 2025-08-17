@@ -194,21 +194,21 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
                         Log.d("ROADMAP_DEBUG", "Start Learning clicked")
 
                         val roadmapId = currentRoadmapId
-                        val completedModules = if (progressState is UiState.Success) {
-                            (progressState as UiState.Success).data.completedModules
-                        } else {
-                            emptyList()
-                        }
+//                        val completedModules = if (progressState is UiState.Success) {
+//                            (progressState as UiState.Success).data.completedModules
+//                        } else {
+//                            emptyList()
+//                        }
 
                         val currentModuleId = (progressState as? UiState.Success)?.data?.currentModuleId
 
                         // ✅ Update Firestore only if moving forward
                         if (roadmapId != null && currentModuleId != null) {
-                            roadmapViewModel.updateCurrentModuleIfForward(
-                                roadmapId = roadmapId,
-                                moduleId = currentModuleId, // ✅ Correct ID now
-                                completedModules = completedModules
-                            )
+//                            roadmapViewModel.updateCurrentModuleIfForward(
+//                                roadmapId = roadmapId,
+//                                moduleId = currentModuleId, // ✅ Correct ID now
+//                                completedModules = completedModules
+//                            )
 
                             // ✅ Navigate to learning screen
                             appNavController.navigate("learning/$roadmapId")

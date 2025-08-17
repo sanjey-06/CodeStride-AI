@@ -45,14 +45,14 @@ class RoadmapRepository @Inject constructor(
         progressRef.set(progressData).await()
     }
 
-    suspend fun updateCurrentModule(userId: String, roadmapId: String, moduleId: String) {
-        firestore.collection("users")
-            .document(userId)
-            .collection("progress")
-            .document(roadmapId)
-            .set(mapOf("current_module" to moduleId), SetOptions.merge())
-            .await()
-    }
+//    suspend fun updateCurrentModule(userId: String, roadmapId: String, moduleId: String) {
+//        firestore.collection("users")
+//            .document(userId)
+//            .collection("progress")
+//            .document(roadmapId)
+//            .set(mapOf("current_module" to moduleId), SetOptions.merge())
+//            .await()
+//    }
 
 
     fun observeCurrentRoadmap(userId: String): Flow<String?> = callbackFlow {
@@ -166,7 +166,8 @@ class RoadmapRepository @Inject constructor(
             val snapshot = docRef.get().await()
             val completed = (snapshot.get("completed_modules") as? List<*>)?.filterIsInstance<String>()?.toMutableList() ?: mutableListOf()
 
-            if (!completed.contains(moduleId)) {
+            // ✅ Prevent adding "completed_all" into completed_modules
+            if (moduleId != "completed_all" && !completed.contains(moduleId)) {
                 completed.add(moduleId)
             }
 
@@ -175,29 +176,38 @@ class RoadmapRepository @Inject constructor(
                 .collection(Constants.FirestorePaths.MODULES)
                 .get()
                 .await()
+
             val allModules = modulesSnapshot.documents
                 .map { it.id }
                 .sortedBy { it.removePrefix("module").toIntOrNull() ?: Int.MAX_VALUE }
 
             val nextModuleId = allModules.firstOrNull { it !in completed }
 
-            val today = LocalDate.now().toString() // ✅ NEW
+            val today = LocalDate.now().toString()
+
+            // ✅ Only set completed_all if ALL actual modules are done
+            val newCurrent = if (nextModuleId == null && completed.containsAll(allModules)) {
+                "completed_all"
+            } else {
+                nextModuleId
+            }
 
             docRef.update(
                 mapOf(
-                    "completed_modules" to completed,
-                    "current_module" to (nextModuleId ?: moduleId),
-                    "lastLearnedDate" to today // ✅ NEW LINE
+                    "completed_modules" to completed.distinct(), // ✅ remove duplicates
+                    "current_module" to newCurrent,
+                    "lastLearnedDate" to today
                 )
             ).await()
 
-            Log.d("PROGRESS_DEBUG", "Updated progress: completed=$completed, next=$nextModuleId")
+            Log.d("PROGRESS_DEBUG", "Updated progress: completed=$completed, allModules=$allModules, newCurrent=$newCurrent")
         } catch (e: Exception) {
             Log.e("QUIZ_DEBUG", "updateProgress() ERROR: ${e.message}", e)
         }
 
         Log.d("QUIZ_DEBUG", "updateProgress() END for moduleId=$moduleId")
     }
+
 
 
 }

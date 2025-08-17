@@ -169,7 +169,7 @@ fun QuizScreen(
                         val homeViewModel: HomeViewModel = hiltViewModel()
 
                         LaunchedEffect(Unit) {
-                            roadmapViewModel.updateProgress(roadmapId, moduleId)
+                            //roadmapViewModel.updateProgress(roadmapId, moduleId)
                             val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
                             if (userId != null && quizDetails != null) {
                                 quizViewModel.saveBadge(userId, quizDetails.badgeTitle, quizDetails.badgeImage, roadmapId, moduleId)
