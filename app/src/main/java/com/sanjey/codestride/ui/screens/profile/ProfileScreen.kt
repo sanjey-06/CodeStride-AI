@@ -247,7 +247,7 @@ fun ProfileScreen(
 
                 // 📊 Module Progress
                 val progressText = when (val state = profileState) {
-                    is UiState.Success -> "Modules completed: ${state.data.completedModulesCount}/${state.data.totalModulesCount}"
+                    is UiState.Success -> "Modules completed: ${state.data.completedModulesCount}/10"
                     else -> "Modules completed: Calculating..."
                 }
 
