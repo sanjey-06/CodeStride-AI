@@ -113,16 +113,15 @@ class RoadmapViewModel @Inject constructor(
         }
     }
 
-    fun updateCurrentModuleIfForward(roadmapId: String, moduleId: String, completedModules: List<String>) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        viewModelScope.launch {
-            // ✅ Only update if this module is not already completed
-            if (!completedModules.contains(moduleId)) {
-                repository.updateCurrentModule(userId, roadmapId, moduleId)
-            }
-
-        }
-    }
+//    fun updateCurrentModuleIfForward(roadmapId: String, moduleId: String, completedModules: List<String>) {
+//        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+//        viewModelScope.launch {
+//            // ✅ Only update progress if this module is not already completed
+//            if (!completedModules.contains(moduleId)) {
+//                repository.updateProgress(userId, roadmapId, moduleId) // 🔹 Use updateProgress instead of updateCurrentModule
+//            }
+//        }
+//    }
 
 
 
@@ -130,11 +129,10 @@ class RoadmapViewModel @Inject constructor(
     private fun observeProgress(userId: String, roadmapId: String) {
         viewModelScope.launch {
             repository.observeProgress(userId, roadmapId).collectLatest { (currentModuleId, completedModules) ->
-                val moduleTitle = if (currentModuleId != null) {
-                    repository.getModuleTitle(roadmapId, currentModuleId)
-
-                } else {
-                    "Start from Module 1"
+                val moduleTitle = when {
+                    currentModuleId == "completed_all" -> "🎉 All modules completed!"
+                    currentModuleId != null -> repository.getModuleTitle(roadmapId, currentModuleId)
+                    else -> "Start from Module 1"
                 }
 
                 _progressState.value = UiState.Success(
