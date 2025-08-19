@@ -113,15 +113,6 @@ class RoadmapViewModel @Inject constructor(
         }
     }
 
-//    fun updateCurrentModuleIfForward(roadmapId: String, moduleId: String, completedModules: List<String>) {
-//        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-//        viewModelScope.launch {
-//            // ✅ Only update progress if this module is not already completed
-//            if (!completedModules.contains(moduleId)) {
-//                repository.updateProgress(userId, roadmapId, moduleId) // 🔹 Use updateProgress instead of updateCurrentModule
-//            }
-//        }
-//    }
 
 
 
