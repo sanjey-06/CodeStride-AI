@@ -113,9 +113,6 @@ class RoadmapViewModel @Inject constructor(
         }
     }
 
-
-
-
     // ✅ Observe progress from repository
     private fun observeProgress(userId: String, roadmapId: String) {
         viewModelScope.launch {
@@ -196,7 +193,6 @@ class RoadmapViewModel @Inject constructor(
                 Log.d("ROADMAP_DEBUG", "updateProgress() START → roadmapId=$roadmapId, moduleId=$moduleId")
                 repository.updateProgress(userId, roadmapId, moduleId)
 
-                // ✅ Update UI immediately
                 val moduleTitle = repository.getModuleTitle(roadmapId, moduleId)
                 Log.d("ROADMAP_DEBUG", "updateProgress() Firestore update COMPLETE")
 
