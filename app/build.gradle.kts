@@ -13,6 +13,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -21,6 +22,8 @@ android {
 
 
     defaultConfig {
+
+
         applicationId = "com.sanjey.codestride"
         minSdk = 26
         targetSdk = 35
@@ -28,9 +31,20 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "OPENAI_API_KEY",
+            "\"${project.findProperty("OPENAI_API_KEY") ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "YOUTUBE_API_KEY",
+            "\"${project.findProperty("YOUTUBE_API_KEY") ?: ""}\""
+        )
     }
 
-    buildTypes {
+        buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
