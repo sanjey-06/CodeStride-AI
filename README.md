@@ -1,6 +1,3 @@
-Perfect 👍 here’s the **full README.md content** you can copy-paste directly into your repo:
-
----
 
 # CodeStride 📚⚡
 
