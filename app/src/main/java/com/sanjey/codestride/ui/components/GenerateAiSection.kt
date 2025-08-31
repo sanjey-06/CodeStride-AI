@@ -113,7 +113,7 @@ private fun GenerateAiPromptDialog(
                 OutlinedTextField(
                     value = topic,
                     onValueChange = { topic = it },
-                    label = { Text("e.g., Learn Kotlin") },
+                    label = { Text("Enter only Topic") },
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(color = Color.White)
                 )

@@ -43,6 +43,7 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
     var showDialog by remember { mutableStateOf(false) }
     var newRoadmapId by remember { mutableStateOf<String?>(null) }
+    val isGenerating by roadmapViewModel.isGeneratingAiRoadmap.collectAsState()
 
 
     val currentRoadmapId by roadmapViewModel.currentRoadmapId.collectAsState()
@@ -91,7 +92,7 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
     // ✅ Derive UI title & icon based on roadmapId
     val (currentTitle, currentIcon) = roadmapViewModel.getRoadmapTitleAndIcon(currentRoadmapId)
 
-
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -281,6 +282,10 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
             }
         }
     }
+        if (isGenerating) {
+            LoadingCard("Building your roadmap…")
+        }
+    }
     RoadmapReplaceDialog(
         showDialog = showReplaceDialog && generatedRoadmapId != null,
         onDismiss = { showReplaceDialog = false },
@@ -293,4 +298,33 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
             }
         }
     )
+}
+@Composable
+fun LoadingCard(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.padding(24.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(color = CustomBlue)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = message,
+                    fontFamily = PixelFont,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+            }
+        }
+    }
 }

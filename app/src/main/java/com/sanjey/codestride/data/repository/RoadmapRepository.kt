@@ -171,26 +171,29 @@ class RoadmapRepository @Inject constructor(
                 completed.add(moduleId)
             }
 
-            val modulesSnapshot = firestore.collection(Constants.FirestorePaths.ROADMAPS)
+            val baseCollection = if (roadmapId.startsWith("ai_")) "ai_roadmaps" else Constants.FirestorePaths.ROADMAPS
+
+            val modulesSnapshot = firestore.collection(baseCollection)
                 .document(roadmapId)
                 .collection(Constants.FirestorePaths.MODULES)
                 .get()
                 .await()
 
+
             val allModules = modulesSnapshot.documents
                 .map { it.id }
                 .sortedBy { it.removePrefix("module").toIntOrNull() ?: Int.MAX_VALUE }
 
-            val nextModuleId = allModules.firstOrNull { it !in completed }
 
             val today = LocalDate.now().toString()
 
-            // ✅ Only set completed_all if ALL actual modules are done
-            val newCurrent = if (nextModuleId == null && completed.containsAll(allModules)) {
+            val remainingModules = allModules.filterNot { completed.contains(it) }
+            val newCurrent = if (remainingModules.isEmpty()) {
                 "completed_all"
             } else {
-                nextModuleId
+                remainingModules.first()
             }
+
 
             docRef.update(
                 mapOf(

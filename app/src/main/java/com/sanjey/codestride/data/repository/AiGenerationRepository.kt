@@ -237,17 +237,22 @@ Format the output as a single HTML string (no JSON, no markdown).
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun fetchYouTubeUrlSuspend(query: String): String? =
         suspendCancellableCoroutine { cont ->
+
+            Log.d("YOUTUBE_FETCH", "🚀 fetchYouTubeUrlSuspend CALLED with query=$query, key=${Constants.YOUTUBE_API_KEY.take(6)}***")
+
             val call = YouTubeApiClient.retrofit.searchVideos(
                 query = "$query tutorial",
                 apiKey = Constants.YOUTUBE_API_KEY
             )
 
+            Log.d("YOUTUBE_FETCH", "📡 Executing YouTube API call → ${call.request().url}")
+
             call.enqueue(object : retrofit2.Callback<YouTubeResponse> {
                 override fun onResponse(call: Call<YouTubeResponse>, response: retrofit2.Response<YouTubeResponse>) {
                     val videoId = response.body()?.items?.firstOrNull()?.id?.videoId
-                    Log.d("YOUTUBE_FETCH", "Response code: ${response.code()}")
-                    Log.d("YOUTUBE_FETCH", "Response body: ${response.body()}")
-                    Log.d("YOUTUBE_FETCH", "Video ID: ${videoId ?: "NULL"}")
+                    Log.d("YOUTUBE_FETCH", "✅ Response code: ${response.code()}")
+                    Log.d("YOUTUBE_FETCH", "✅ Response body: ${response.body()}")
+                    Log.d("YOUTUBE_FETCH", "🎥 Video ID: ${videoId ?: "NULL"}")
 
                     cont.resume(
                         videoId?.let { "https://www.youtube.com/watch?v=$it" },
@@ -256,10 +261,12 @@ Format the output as a single HTML string (no JSON, no markdown).
                 }
 
                 override fun onFailure(call: Call<YouTubeResponse>, t: Throwable) {
+                    Log.e("YOUTUBE_FETCH", "❌ API call failed: ${t.message}", t)
                     cont.resume(null, null)
                 }
             })
         }
+
 
     suspend fun generateQuiz(topic: String, moduleTitle: String): List<Question> {
         Log.d("QUIZ_DEBUG", "🚀 Starting AI quiz generation → topic=$topic, moduleTitle=$moduleTitle")

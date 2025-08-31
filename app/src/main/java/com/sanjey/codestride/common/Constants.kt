@@ -1,8 +1,10 @@
 package com.sanjey.codestride.common
 
+import com.sanjey.codestride.BuildConfig
+
 object Constants {
 
-    const val YOUTUBE_API_KEY = "REMOVED_KEY"
+    const val YOUTUBE_API_KEY = BuildConfig.YOUTUBE_API_KEY
 
 
 

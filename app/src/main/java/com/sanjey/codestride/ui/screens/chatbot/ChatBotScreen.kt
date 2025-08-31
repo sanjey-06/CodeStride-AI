@@ -4,9 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -16,16 +17,23 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.sanjey.codestride.R
+import com.sanjey.codestride.data.model.ai.Message
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
-
+import com.sanjey.codestride.viewmodel.ChatViewModel
 
 @Composable
-
-fun ChatbotScreen(navController: NavHostController) {
+fun ChatbotScreen(
+    navController: NavHostController,
+    viewModel: ChatViewModel = hiltViewModel()
+) {
     val backgroundColor = colorResource(id = R.color.ChatBotBlue)
+    var input by remember { mutableStateOf("") }
+    val messages by viewModel.messages.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Column(
         modifier = Modifier
@@ -45,11 +53,11 @@ fun ChatbotScreen(navController: NavHostController) {
                 contentDescription = "AI Bot",
                 modifier = Modifier
                     .fillMaxSize(),
-//                contentScale = ContentScale.Crop,
+//              contentScale = ContentScale.Crop,
                 alignment = Alignment.Center
             )
 
-        IconButton(
+            IconButton(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier
                     .padding(start = 12.dp, top = 12.dp)
@@ -63,7 +71,6 @@ fun ChatbotScreen(navController: NavHostController) {
                 )
             }
         }
-
 
         // Header
         Box(
@@ -81,17 +88,27 @@ fun ChatbotScreen(navController: NavHostController) {
             )
         }
 
-
+        // 🔹 Dynamic message list from ViewModel
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 16.dp)
         ) {
-            item {
-                Spacer(modifier = Modifier.height(12.dp))
-                UserMessage("What is meant by constructor?")
+            items(messages) { msg: Message ->
+                if (msg.role == "user") {
+                    UserMessage(msg.content)
+                } else {
+                    BotMessage(msg.content)
+                }
                 Spacer(modifier = Modifier.height(8.dp))
-                BotMessage("A constructor is a special method used to initialize objects.")
+            }
+
+            // 🔹 Show "thinking..." while waiting for bot reply
+            if (isLoading) {
+                item {
+                    BotMessage("thinking...")
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
         }
 
@@ -103,7 +120,8 @@ fun ChatbotScreen(navController: NavHostController) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
-                value = "", onValueChange = {},
+                value = input,
+                onValueChange = { input = it },
                 placeholder = { Text("Ask a question...") },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(16.dp),
@@ -118,19 +136,24 @@ fun ChatbotScreen(navController: NavHostController) {
 
             // ✅ Themed button
             Button(
-                onClick = { /* TODO: Send logic */ },
+                onClick = {
+                    if (input.isNotBlank()) {
+                        viewModel.sendMessage(input)
+                        input = ""
+                    }
+                },
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = CustomBlue // your app's theme color
                 )
             ) {
-                Text("Send",
+                Text(
+                    "Send",
                     fontFamily = PixelFont,
-                    fontSize = 12.sp)
+                    fontSize = 12.sp
+                )
             }
         }
-
-
     }
 }
 

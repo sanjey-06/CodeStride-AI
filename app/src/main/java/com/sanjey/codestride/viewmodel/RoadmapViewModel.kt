@@ -44,6 +44,10 @@ class RoadmapViewModel @Inject constructor(
     private val _currentRoadmapTitle = mutableStateOf("Learning")
     val currentRoadmapTitle: State<String> = _currentRoadmapTitle
 
+    private val _isGeneratingAiRoadmap = MutableStateFlow(false)
+    val isGeneratingAiRoadmap: StateFlow<Boolean> = _isGeneratingAiRoadmap
+
+
 
     // ✅ Load all roadmaps
     fun loadRoadmaps() {
@@ -91,9 +95,6 @@ class RoadmapViewModel @Inject constructor(
             Log.e("ROADMAP_DEBUG", "replaceRoadmap ERROR: ${e.message}")
         }
     }
-
-
-
 
 
 
@@ -155,6 +156,7 @@ class RoadmapViewModel @Inject constructor(
     suspend fun generateAiRoadmapAndReturnId(topic: String): String? = withContext(Dispatchers.IO) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@withContext null
         val roadmapId = "ai_" + topic.lowercase().replace(" ", "_")
+
         val roadmapData = mapOf(
             "title" to topic.replaceFirstChar { it.uppercase() },
             "description" to "Custom roadmap for $topic",
@@ -162,6 +164,9 @@ class RoadmapViewModel @Inject constructor(
             "created_by" to userId,
             "isCustom" to true
         )
+
+        _isGeneratingAiRoadmap.value = true   // ✅ start loading
+
         try {
             val firestore = FirebaseFirestore.getInstance()
             val roadmapRef = firestore.collection("ai_roadmaps").document(roadmapId)
@@ -172,42 +177,32 @@ class RoadmapViewModel @Inject constructor(
             }
 
             return@withContext roadmapId
-
         } catch (e: Exception) {
             Log.e("ROADMAP_AI", "Error creating AI roadmap: ${e.message}")
             return@withContext null
+        } finally {
+            _isGeneratingAiRoadmap.value = false   // ✅ stop loading
         }
     }
 
 
 
 
-
-
-
-    // ✅ Update progress
     fun updateProgress(roadmapId: String, moduleId: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
             try {
                 Log.d("ROADMAP_DEBUG", "updateProgress() START → roadmapId=$roadmapId, moduleId=$moduleId")
                 repository.updateProgress(userId, roadmapId, moduleId)
-
-                val moduleTitle = repository.getModuleTitle(roadmapId, moduleId)
                 Log.d("ROADMAP_DEBUG", "updateProgress() Firestore update COMPLETE")
-
-                val completedModules = (progressState.value as? UiState.Success)?.data?.completedModules ?: emptyList()
-                _progressState.value = UiState.Success(
-                    ProgressState(
-                        completedModules = completedModules + moduleId,
-                        currentModuleTitle = moduleTitle
-                    )
-                )
+                // ❌ No need to manually update _progressState
+                // observeProgress() will push the fresh data from Firestore
             } catch (e: Exception) {
                 Log.e("ROADMAP_DEBUG", "updateProgress() ERROR: ${e.message}")
             }
         }
     }
+
 
 
 

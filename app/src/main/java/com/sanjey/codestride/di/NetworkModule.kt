@@ -1,5 +1,6 @@
 package com.sanjey.codestride.di
 
+import com.sanjey.codestride.BuildConfig
 import com.sanjey.codestride.data.remote.AiApiService
 import dagger.Module
 import dagger.Provides
@@ -23,7 +24,7 @@ object NetworkModule {
                 val request = chain.request().newBuilder()
                     .addHeader(
                         "Authorization",
-                        "Bearer REMOVED_KEY"
+                        "Bearer ${BuildConfig.OPENAI_API_KEY}"
                     ) // TODO: Replace with secure key management
                     .build()
                 chain.proceed(request)
