@@ -13,7 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 
@@ -21,17 +21,26 @@ import androidx.core.content.ContextCompat
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-        // 🔔 Permission launcher
-        private val requestPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                if (isGranted) {
-                    Log.d("NOTIFICATION", "✅ Notifications permission granted")
-                } else {
-                    Log.d("NOTIFICATION", "❌ Notifications permission denied")
-                }
+    // 🔔 Permission launcher
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(
+                    this,
+                    "✅ Notifications enabled! You'll get streak reminders.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    "⚠️ Notifications are disabled. You won’t get streak reminders.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
+        }
 
-        private fun askNotificationPermission() {
+
+    private fun askNotificationPermission() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 when {
                     ContextCompat.checkSelfPermission(
