@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 Toast.makeText(
                     this,
-                    "⚠️ Notifications are disabled. You won’t get streak reminders.",
+                    "⚠️ Notifications are disabled. Please enable it in the Settings.",
                     Toast.LENGTH_LONG
                 ).show()
             }
