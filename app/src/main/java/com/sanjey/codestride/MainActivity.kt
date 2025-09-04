@@ -10,14 +10,50 @@ import com.sanjey.codestride.ui.theme.CodeStrideTheme
 import com.google.firebase.FirebaseApp
 import com.sanjey.codestride.workers.ReminderScheduler
 import dagger.hilt.android.AndroidEntryPoint
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+        // 🔔 Permission launcher
+        private val requestPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+                if (isGranted) {
+                    Log.d("NOTIFICATION", "✅ Notifications permission granted")
+                } else {
+                    Log.d("NOTIFICATION", "❌ Notifications permission denied")
+                }
+            }
+
+        private fun askNotificationPermission() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                when {
+                    ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED -> {
+                        // Already granted
+                    }
+                    else -> {
+                        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            }
+        }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
 
-        // ✅ Schedule daily reminder if enabled
+        askNotificationPermission()
+
         val prefs = getSharedPreferences("reminder_prefs", MODE_PRIVATE)
         val enabled = prefs.getBoolean("reminder_enabled", false)
         if (enabled) {
