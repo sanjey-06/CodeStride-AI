@@ -47,6 +47,8 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
     val scrollState = rememberScrollState()
 
     val moduleViewModel: ModuleViewModel = hiltViewModel()
+    var showCongratsDialog by remember { mutableStateOf(false) }
+
 
 
     val modulesState by moduleViewModel.modulesState.collectAsState()
@@ -319,7 +321,10 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                             }
                         }
 
-                        // 🎓 Final certificate button
+                        val isCompletedAll = progressState is UiState.Success &&
+                                (progressState as UiState.Success<ProgressState>).data.currentModuleId == "completed_all"
+
+                        // 🎉 Final Congratulations button
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -327,24 +332,80 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                 .padding(horizontal = 32.dp)
                         ) {
                             Button(
-                                onClick = { /* TODO */ },
+                                onClick = {
+                                    if (isCompletedAll) {
+                                        showCongratsDialog = true   // trigger dialog
+                                    }
+                                },
+                                enabled = isCompletedAll,
                                 modifier = Modifier
                                     .align(Alignment.Center)
                                     .fillMaxWidth(0.85f)
                                     .height(56.dp),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(
-                                        0xFFBDBDBD
-                                    )
+                                    containerColor = if (isCompletedAll) Color(0xFF4CAF50) else Color(0xFFBDBDBD)
                                 )
                             ) {
                                 Text(
-                                    text = "Get Certificate",
+                                    text = "Congratulations!",
                                     fontSize = 14.sp,
                                     fontFamily = PixelFont,
                                     color = Color.White
                                 )
+                            }
+                        }
+
+                        if (showCongratsDialog) {
+                            Dialog(onDismissRequest = { showCongratsDialog = false }) {
+                                Surface(
+                                    shape = RoundedCornerShape(32.dp),
+                                    color = Color.Black,
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.9f)
+                                        .wrapContentHeight()
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(24.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "Congratulations!",
+                                            fontFamily = PixelFont,
+                                            fontSize = 14.sp,
+                                            color = CustomBlue
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = "You’ve successfully completed $roadmapTitle.",
+                                            fontFamily = SoraFont,
+                                            fontSize = 16.sp,
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = "But remember — finishing this roadmap is just the beginning. " +
+                                                    "Keep practicing, building projects, and learning on your own!",
+                                            fontFamily = SoraFont,
+                                            fontSize = 14.sp,
+                                            color = Color.White,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Spacer(modifier = Modifier.height(20.dp))
+                                        Button(
+                                            onClick = {
+                                                showCongratsDialog = false
+                                                navController.navigate("home") {
+                                                    popUpTo("home") { inclusive = true }
+                                                }
+                                            },
+                                            shape = RoundedCornerShape(50.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = CustomBlue)
+                                        ) {
+                                            Text("Back to Home", fontFamily = PixelFont, color = Color.White)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
