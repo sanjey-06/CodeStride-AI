@@ -230,10 +230,15 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
                 Spacer(modifier = Modifier.height(24.dp))
 
 
+                var showErrorState by remember { mutableStateOf(false) }
+
                 AiGeneratorSection { topic ->
                     CoroutineScope(Dispatchers.Main).launch {
                         val newId = roadmapViewModel.generateAiRoadmapAndReturnId(topic)
+
                         if (newId != null) {
+                            // ✅ Success
+                            showErrorState = false
                             if (roadmapViewModel.hasActiveRoadmap()) {
                                 generatedRoadmapId = newId
                                 showReplaceDialog = true
@@ -241,6 +246,30 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
                                 roadmapViewModel.startRoadmap(newId)
                                 appNavController.navigate("learning/$newId")
                             }
+                        } else {
+                            // ❌ Failure → show retry option
+                            showErrorState = true
+                        }
+                    }
+                }
+
+                if (showErrorState) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("⚠️ Couldn’t generate roadmap. Please try again.")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    val retryId = roadmapViewModel.generateAiRoadmapAndReturnId("Retry Topic")
+                                    if (retryId != null) {
+                                        showErrorState = false
+                                        roadmapViewModel.startRoadmap(retryId)
+                                        appNavController.navigate("learning/$retryId")
+                                    }
+                                }
+                            }
+                        ) {
+                            Text("Refresh")
                         }
                     }
                 }

@@ -81,18 +81,18 @@ Important:
 
             Log.d("AI_RAW_JSON", "🔥 Raw AI response:\n$innerJson")
 
+            // 🔹 Clean and parse JSON
             val cleanedJson = sanitizeAiJson(innerJson)
-
-
-
             Log.d("AI_RAW_JSON", "✅ Cleaned JSON:\n$cleanedJson")
 
             val parsed = Gson().fromJson(cleanedJson, Array<RoadmapItem>::class.java).toList()
+
+            if (parsed.size != 10) {
+                Log.w("AI_DEBUG", "⚠️ Expected 10 modules, got ${parsed.size}.")
+            }
+
             Log.d("AI_DEBUG", "✅ Parsed ${parsed.size} modules successfully")
-
-            return parsed
-
-
+            parsed
 
         } catch (e: Exception) {
             val duration = System.currentTimeMillis() - startTime
@@ -105,6 +105,7 @@ Important:
     private fun sanitizeAiJson(raw: String): String {
         var result = raw.trim()
 
+        // 1. Remove markdown code fences
         if (result.startsWith("```json")) {
             result = result.removePrefix("```json").trim()
         }
@@ -112,7 +113,14 @@ Important:
             result = result.removeSuffix("```").trim()
         }
 
-        // Escape unescaped quotes inside html_content
+        // 2. Extract only the JSON array part
+        val start = result.indexOf("[")
+        val end = result.lastIndexOf("]")
+        if (start != -1 && end != -1 && end > start) {
+            result = result.substring(start, end + 1)
+        }
+
+        // 3. Escape unescaped quotes inside html_content
         result = result.replace(Regex("(?<=html_content\":\\s?\").*?(?=\")")) {
             it.value.replace("\"", "\\\"")
         }

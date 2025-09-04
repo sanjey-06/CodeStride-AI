@@ -103,7 +103,6 @@ fun ChatbotScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // 🔹 Show "thinking..." while waiting for bot reply
             if (isLoading) {
                 item {
                     BotMessage("thinking...")
