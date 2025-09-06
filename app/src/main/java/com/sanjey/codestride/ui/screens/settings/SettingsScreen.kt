@@ -34,6 +34,7 @@ import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.UserViewModel
+import com.sanjey.codestride.viewmodel.SupportViewModel
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +44,7 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
         userViewModel.loadUserSettings()
     }
     val context = LocalContext.current
+    val supportViewModel: SupportViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 
     val accountDeleted by userViewModel.accountDeleted.observeAsState()
     LaunchedEffect(accountDeleted) {
@@ -65,8 +67,13 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    var showSupportDialog by remember { mutableStateOf(false) }
+    var issueText by remember { mutableStateOf("") }
+
+
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
+
 
 
     val settings by userViewModel.userSettings.observeAsState()
@@ -287,8 +294,12 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                             if (item == "Ask CodeBot") {
                                 navController.navigate("chatbot")
                             }
+                            if (item == "Contact Support") {
+                                showSupportDialog = true
+                            }
                         }
                     )
+
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -329,6 +340,61 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                 }
             }
         }
+
+        if (showSupportDialog) {
+            AlertDialog(
+                onDismissRequest = { showSupportDialog = false },
+                title = { Text("Report an Issue", fontFamily = PixelFont, fontSize = 16.sp) },
+                text = {
+                    Column {
+                        Text("Please describe your issue:", fontFamily = SoraFont)
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = issueText,
+                            onValueChange = { issueText = it },
+                            placeholder = { Text("Type your issue in detail...") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp), // ✅ fixed big box
+                            singleLine = false,
+                            maxLines = 10 // ✅ allow more typing
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (issueText.isBlank()) {
+                                Toast.makeText(
+                                    context,
+                                    "Please enter a message before sending.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                supportViewModel.sendIssueReport(issueText) { success ->
+                                    if (success) {
+                                        Toast.makeText(context, "✅ Your issue was sent!", Toast.LENGTH_SHORT).show()
+                                        issueText = ""   // clear field
+                                        showSupportDialog = false
+                                    } else {
+                                        Toast.makeText(context, "❌ Failed to send issue. Try again.", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Send", color = CustomBlue, fontFamily = PixelFont)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSupportDialog = false }) {
+                        Text("Cancel", fontFamily = PixelFont)
+                    }
+                },
+                containerColor = Color.White
+            )
+        }
+
 
         if (showDeleteDialog) {
             AlertDialog(
