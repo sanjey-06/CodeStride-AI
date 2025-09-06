@@ -73,6 +73,9 @@ dependencies {
 // OkHttp for interceptors (for Authorization header)
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
 
+    implementation("com.google.firebase:firebase-functions-ktx")
+
+
 
     implementation ("androidx.work:work-runtime-ktx:2.10.3")
     implementation("androidx.activity:activity-compose:1.9.0")
@@ -82,6 +85,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material3:material3:1.2.0-beta01")
     implementation("com.google.dagger:hilt-android:2.48")
+//    implementation(libs.firebase.functions.ktx)
     kapt("com.google.dagger:hilt-compiler:2.48")
     implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
     implementation("com.google.firebase:firebase-auth-ktx:22.1.2")

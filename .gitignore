@@ -1,16 +1,29 @@
-*.iml
+# Android/Gradle build outputs
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
 .gradle
-/local.properties
+.DS_Store
+
+# Local configuration (never commit these)
+local.properties
+gradle.properties
+google-services.json
+*.env
+*.keys
+*.json
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# Exclude specific IDE configs
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-gradle.properties
+/.idea/compiler.xml   # ✅ added to ignore compiler.xml
