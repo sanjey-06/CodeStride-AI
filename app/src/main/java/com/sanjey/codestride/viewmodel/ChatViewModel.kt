@@ -21,17 +21,24 @@ class ChatViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-
     fun sendMessage(userInput: String) {
         // 1️⃣ Add user’s message immediately
         val updated = _messages.value + Message(role = "user", content = userInput)
         _messages.value = updated
 
-        // 2️⃣ Call OpenAI API in background
+        // 2️⃣ Start loading
+        _isLoading.value = true
+
+        // 3️⃣ Call API in background
         viewModelScope.launch {
-            val reply = repo.sendMessage(updated)
-            if (reply != null) {
-                _messages.value += reply
+            try {
+                val reply = repo.sendMessage(updated)
+                if (reply != null) {
+                    _messages.value += reply
+                }
+            } finally {
+                // 4️⃣ Stop loading (always, even if error)
+                _isLoading.value = false
             }
         }
     }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -87,9 +88,11 @@ fun ChatbotScreen(
                 color = Color.Black
             )
         }
+        val listState = rememberLazyListState()
 
         // 🔹 Dynamic message list from ViewModel
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 16.dp)
@@ -105,11 +108,18 @@ fun ChatbotScreen(
 
             if (isLoading) {
                 item {
-                    BotMessage("thinking...")
+                    BotMessage("Thinking...")
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
+
+        LaunchedEffect(messages, isLoading) {
+            if (listState.layoutInfo.totalItemsCount > 0) {
+                listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
+            }
+        }
+
 
         // Input
         Row(
@@ -161,14 +171,14 @@ fun UserMessage(message: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 48.dp),
-        contentAlignment = Alignment.CenterStart
+            .padding(start = 48.dp), // push it away from left
+        contentAlignment = Alignment.CenterEnd // align to right
     ) {
         Text(
             text = message,
-            color = Color.Black,
+            color = Color.White,
             modifier = Modifier
-                .background(Color(0xFF57C5E0), RoundedCornerShape(8.dp))
+                .background(CustomBlue, RoundedCornerShape(8.dp))
                 .padding(12.dp)
         )
     }
@@ -179,8 +189,8 @@ fun BotMessage(message: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 48.dp),
-        contentAlignment = Alignment.CenterStart
+            .padding(end = 48.dp), // push it away from right
+        contentAlignment = Alignment.CenterStart // align to left
     ) {
         Text(
             text = message,
