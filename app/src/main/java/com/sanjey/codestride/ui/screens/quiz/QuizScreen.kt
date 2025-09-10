@@ -67,7 +67,7 @@ fun QuizScreen(
     }
     if (showInitialLoader) {
         val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-        val bannerHeight = screenHeight * 0.15f
+        val bannerHeight = screenHeight * 0.18f
 
         Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
             // 🔼 Top Banner
