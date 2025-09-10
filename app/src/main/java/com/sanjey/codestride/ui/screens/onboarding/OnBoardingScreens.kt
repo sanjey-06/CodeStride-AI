@@ -56,12 +56,12 @@ fun OnboardingScreen(navController: NavController) {
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Image(
                     painter = painterResource(id = pages[page].imageRes),
                     contentDescription = null,
-                    modifier = Modifier.size(240.dp)
+                    modifier = Modifier.sizeIn(maxHeight = 200.dp, maxWidth = 200.dp)
                 )
                 Text(
                     text = pages[page].title,
@@ -96,7 +96,7 @@ fun OnboardingScreen(navController: NavController) {
                         containerColor = Color.White,
                         contentColor = Color.Black
                     ),
-                    contentPadding = PaddingValues(horizontal = 32.dp, vertical = 12.dp)
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = if (page == pages.lastIndex) "Finish ➤" else "Next ➤",
