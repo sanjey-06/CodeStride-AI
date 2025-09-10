@@ -97,7 +97,6 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .verticalScroll(rememberScrollState())
     ) {
         // 🔷 Top Banner
         Box(
@@ -136,6 +135,8 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
         ) {
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -293,7 +294,7 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
                     }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(64.dp))
 
                 RoadmapReplaceDialog(
                     showDialog = showDialog && newRoadmapId != null,

@@ -226,6 +226,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                             }
                         }
                     )
+                    Spacer(modifier = Modifier.height(64.dp))
+
 
                     RoadmapReplaceDialog(
                         showDialog = showDialog && newRoadmapId != null,
@@ -266,6 +268,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 }
             }
         }
+
 
         UiState.Idle -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -455,7 +458,6 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Roa
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Explore Roadmaps",
@@ -477,19 +479,19 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Roa
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
+            horizontalArrangement = Arrangement.spacedBy(34.dp, Alignment.CenterHorizontally)
         ) {
             roadmaps.forEach { roadmap ->
                 val iconRes = getIconResource(roadmap.icon, roadmap.id)
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable {
-                        onRoadmapClick(roadmap.id) // ✅ Firestore-safe ID
-                    }
+                    modifier = Modifier.padding(4.dp) // optional small padding
                 ) {
                     Surface(
-                        modifier = Modifier.size(72.dp),
+                        modifier = Modifier
+                            .clickable { onRoadmapClick(roadmap.id) }
+                            .size(72.dp),
                         shape = RoundedCornerShape(16.dp),
                         color = Color.Black
                     ) {
