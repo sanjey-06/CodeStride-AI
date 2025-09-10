@@ -50,8 +50,9 @@ fun LearningContentScreen(navController: NavController, roadmapId: String, modul
     }
 
 
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val bannerHeight = screenHeight * 0.15f
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val bannerHeight = screenHeight * 0.15f // 🔹 Adjust % for better proportion on tall/short screens
 
 
 
