@@ -127,7 +127,7 @@ fun ForgotPasswordScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Back to Login",
+                text = "Back",
                 fontFamily = PixelFont,
                 fontSize = 14.sp,
                 color = Color.White,

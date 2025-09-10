@@ -102,7 +102,7 @@ fun ProfileScreen(
             Text(
                 text = "Profile",
                 fontFamily = PixelFont,
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Center)
             )
@@ -141,9 +141,7 @@ fun ProfileScreen(
                             painter = painterResource(id = getAvatarResourceId(currentAvatar)),
                             contentDescription = "User profile picture",
                             modifier = Modifier
-                                .size(100.dp)
-                                .clip(CircleShape)
-                        )
+                                .sizeIn(minWidth = 72.dp, minHeight = 72.dp, maxWidth = 100.dp, maxHeight = 100.dp)                        )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -314,7 +312,10 @@ fun ProfileScreen(
                 onDismissRequest = { showEditDialog = false },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
-                EditProfileCard(userViewModel = userViewModel)
+                EditProfileCard(
+                    userViewModel = userViewModel,
+                    onPasswordEditClick = { showPasswordDialog = true } // ✅ now works
+                )
             }
         }
 
@@ -373,6 +374,22 @@ fun ProfileScreen(
                         ) {
                             Text("Update", color = Color.White, fontFamily = PixelFont)
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        TextButton(
+                            onClick = {
+                                showPasswordDialog = false
+                                navController.navigate("forgot_password")
+                            }
+                        ) {
+                            Text(
+                                text = "Forgot your current password? Click here",
+                                fontFamily = PixelFont,
+                                fontSize = 12.sp,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -383,7 +400,8 @@ fun ProfileScreen(
 
 
 @Composable
-fun EditProfileCard(userViewModel: UserViewModel) {
+fun EditProfileCard(userViewModel: UserViewModel,
+                    onPasswordEditClick: () -> Unit) {
     val avatarOptions = listOf("avatar_1", "avatar_2")
     var showAvatarDialog by remember { mutableStateOf(false) }
     val selectedAvatar = userViewModel.avatar
@@ -404,8 +422,7 @@ fun EditProfileCard(userViewModel: UserViewModel) {
             painter = painterResource(id = getAvatarResourceId(selectedAvatar)),
             contentDescription = "Profile Image",
             modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
+                .sizeIn(minWidth = 72.dp, minHeight = 72.dp, maxWidth = 100.dp, maxHeight = 100.dp)                .clip(CircleShape)
                 .clickable { showAvatarDialog = true }
         )
 
@@ -413,21 +430,24 @@ fun EditProfileCard(userViewModel: UserViewModel) {
 
         val profileName = (userViewModel.profileState.collectAsState().value as? UiState.Success)?.data?.fullName ?: ""
 
-        EditProfileField("Name", profileName, onEditClick = {})
+        ReadOnlyProfileField(
+            label = "Name",
+            value = profileName
+        )
 
 
         // 📧 Email (wrapped properly)
-        EditProfileField(
+        ReadOnlyProfileField(
             label = "Email",
-            value = profileEmail,
-            onEditClick = {}
+            value = profileEmail
         )
+
 
         // 🔒 Password
         EditProfileField(
             label = "Password",
             value = "********",
-            onEditClick = {} // You already handled password dialog
+            onEditClick = onPasswordEditClick
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -530,5 +550,26 @@ fun EditProfileField(label: String, value: String, onEditClick: () -> Unit) {
                 tint = Color.White
             )
         }
+    }
+}
+@Composable
+fun ReadOnlyProfileField(label: String, value: String) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 16.dp, horizontal = 10.dp)) {
+        Text(
+            text = label,
+            fontFamily = SoraFont,
+            fontSize = 12.sp,
+            color = Color.Gray
+        )
+        Text(
+            text = value,
+            fontFamily = PixelFont,
+            fontSize = 12.sp,
+            color = Color.White,
+            lineHeight = 16.sp,
+            maxLines = 1
+        )
     }
 }
