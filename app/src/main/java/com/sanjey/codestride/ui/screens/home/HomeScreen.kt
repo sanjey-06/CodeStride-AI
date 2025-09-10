@@ -83,7 +83,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(imageHeight)
+                        .heightIn(min = 200.dp, max = imageHeight)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.homescreen_background),
@@ -200,7 +200,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     val (title, iconResId) = roadmapViewModel.getRoadmapTitleAndIcon(currentRoadmapId)
 
                     RoadmapCard(
@@ -208,7 +208,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         title = title,
                         progressPercent = data.currentRoadmap.progressPercent
                     )
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     BadgePreviewSection(data.badges)
 
@@ -293,7 +293,7 @@ fun RoadmapCard(iconResId: Int, title: String, progressPercent: Int, modifier: M
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp)
+                .heightIn(min = 120.dp, max = 160.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -403,14 +403,14 @@ fun BadgePreviewSection(badges: List<Badge>) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .width(100.dp)
+                            .width(80.dp)
                             .clickable { selectedBadge = badge }
                     ) {
                         AsyncImage(
                             model = badge.image,
                             contentDescription = null,
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(80.dp)
                                 .clip(RoundedCornerShape(8.dp))
                         )
 
@@ -489,7 +489,7 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Roa
                     }
                 ) {
                     Surface(
-                        modifier = Modifier.size(84.dp),
+                        modifier = Modifier.size(72.dp),
                         shape = RoundedCornerShape(16.dp),
                         color = Color.Black
                     ) {
@@ -497,7 +497,7 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Roa
                             Image(
                                 painter = painterResource(id = iconRes),
                                 contentDescription = roadmap.title,
-                                modifier = Modifier.size(80.dp)
+                                modifier = Modifier.size(72.dp)
                             )
                         }
                     }
