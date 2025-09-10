@@ -46,7 +46,7 @@ fun ChatbotScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(250.dp) // ✅ adjust this if needed
+                .heightIn(min = 180.dp, max = 240.dp)
                 .background(color = backgroundColor)
         ) {
             Image(
@@ -159,7 +159,7 @@ fun ChatbotScreen(
                 Text(
                     "Send",
                     fontFamily = PixelFont,
-                    fontSize = 12.sp
+                    fontSize = 14.sp
                 )
             }
         }
