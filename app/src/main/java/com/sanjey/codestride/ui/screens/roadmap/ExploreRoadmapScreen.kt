@@ -238,21 +238,21 @@ fun RoadmapIconCard(roadmap: Roadmap, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .width(160.dp)
+            .fillMaxWidth(0.45f) // ~2 cards per row with spacing
             .clickable { onClick() }
     ) {
         Surface(
-            modifier = Modifier.size(120.dp),
+            modifier = Modifier.fillMaxWidth().aspectRatio(1f), // square card
             shape = RoundedCornerShape(20.dp),
             color = Color.Black
-        ) {
+        ){
             Box(contentAlignment = Alignment.Center) {
                 val iconRes = getIconResource(roadmap.icon, roadmap.id)
 
                 Image(
                     painter = painterResource(id = iconRes),
                     contentDescription = roadmap.title,
-                    modifier = Modifier.size(100.dp)
+                    modifier = Modifier.fillMaxSize(0.75f) // icon fills 75% of card
                 )
             }
         }
