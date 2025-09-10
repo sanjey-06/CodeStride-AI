@@ -29,6 +29,7 @@ import com.sanjey.codestride.R
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Quiz
+import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
 import com.sanjey.codestride.viewmodel.HomeViewModel
@@ -54,6 +55,8 @@ fun QuizScreen(
     val score by quizViewModel.score.collectAsState()
     var showInitialLoader by remember { mutableStateOf(true) }
     val currentQuestion by quizViewModel.currentQuestion.collectAsState()
+
+
 
     LaunchedEffect(roadmapId, moduleId, quizId) {
         showInitialLoader = true
@@ -113,7 +116,7 @@ fun QuizScreen(
                 color = Color.White
             ) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color.Blue)
+                    CircularProgressIndicator(color = CustomBlue)
                 }
             }
         }
@@ -123,7 +126,7 @@ fun QuizScreen(
     when {
         questionsState is UiState.Loading || quizDetailsState is UiState.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color.Blue)
+                CircularProgressIndicator(color = CustomBlue)
             }
         }
 
@@ -214,7 +217,6 @@ fun QuizContentUI(
 ) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
-    val scrollState = rememberScrollState()
 
     Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         // 🔼 Top Banner
@@ -259,12 +261,12 @@ fun QuizContentUI(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                 .background(Color.White)
-                .verticalScroll(scrollState)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp)
             ) {
                 Text(
                     text = questionText,
