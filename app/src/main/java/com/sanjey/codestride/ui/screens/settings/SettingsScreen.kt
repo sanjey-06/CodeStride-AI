@@ -107,15 +107,13 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
             is24Hour = false
         )
 
-
-
         var showTimeInput by remember { mutableStateOf(false) }
 
+        // ✅ Outer column NO verticalScroll now
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .verticalScroll(rememberScrollState())
         ) {
             // 🔷 Top Banner
             Box(
@@ -148,14 +146,17 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
             // 🔷 Main White Container
             Surface(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(1f) // ✅ instead of fillMaxSize()
                     .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)),
                 color = Color.White
             ) {
+                // ✅ Only this Column scrolls
                 Column(
                     modifier = Modifier
-                        .padding(horizontal = 20.dp, vertical = 24.dp)
-                ) {
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                )  {
                     // Reminder Settings
                     Text(
                         text = "Reminder Settings",
@@ -284,7 +285,7 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Support Section
                     SettingsSection(
@@ -301,7 +302,7 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                     )
 
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Account Section
                     SettingsSection(
@@ -317,7 +318,7 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Logout Button
                     Button(
@@ -355,7 +356,7 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                             placeholder = { Text("Type your issue in detail...") },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp), // ✅ fixed big box
+                                .heightIn(min = 120.dp, max = 200.dp),
                             singleLine = false,
                             maxLines = 10 // ✅ allow more typing
                         )
