@@ -74,18 +74,18 @@ fun ForgotPasswordScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 64.dp),
+                .padding(horizontal = 24.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = titleText,
                 fontFamily = PixelFont,
-                fontSize = 34.sp,
+                fontSize = 26.sp,
                 textAlign = TextAlign.Center,
                 color = Color.White
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
                 value = email,
@@ -106,7 +106,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
@@ -124,7 +124,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                 Text("SEND RESET LINK", color = Color.Black, fontFamily = PixelFont, fontSize = 16.sp)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "Back to Login",

@@ -119,7 +119,7 @@ fun LoginScreen(navController: NavController){
             modifier = Modifier
                 .fillMaxWidth()
                 .offset { IntOffset(shakeOffset.value.roundToInt(), 0) }
-                .padding(horizontal = 32.dp, vertical = 64.dp),
+                .padding(horizontal = 24.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(64.dp))
@@ -127,12 +127,12 @@ fun LoginScreen(navController: NavController){
             Text(
                 text = titleText,
                 fontFamily = PixelFont,
-                fontSize = 42.sp,
+                fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             val emailInteraction = remember { MutableInteractionSource() }
             OutlinedTextField(
@@ -154,7 +154,7 @@ fun LoginScreen(navController: NavController){
                 textStyle = TextStyle(fontFamily = SoraFont, fontSize = 18.sp)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             val passwordInteraction = remember { MutableInteractionSource() }
 
@@ -186,7 +186,7 @@ fun LoginScreen(navController: NavController){
                 textStyle = TextStyle(fontFamily = SoraFont, fontSize = 18.sp)
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
@@ -224,7 +224,7 @@ fun LoginScreen(navController: NavController){
                 }
             )
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Don't have an account ?",

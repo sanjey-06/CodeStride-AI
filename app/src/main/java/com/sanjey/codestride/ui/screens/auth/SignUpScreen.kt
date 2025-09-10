@@ -108,7 +108,7 @@ fun SignupScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 64.dp)
+                .padding(horizontal = 24.dp, vertical = 24.dp)
                 .verticalScroll(scrollState)
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -116,12 +116,12 @@ fun SignupScreen(navController: NavController) {
             Text(
                 text = visibleText,
                 fontFamily = PixelFont,
-                fontSize = 42.sp,
+                fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             OutlinedTextField(
                 value = firstName,
@@ -225,7 +225,7 @@ fun SignupScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
