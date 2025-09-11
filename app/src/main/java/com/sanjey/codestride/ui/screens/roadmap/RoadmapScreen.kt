@@ -280,19 +280,45 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                ExploreOtherRoadmapsSection(
-                    navController = appNavController,
-                    roadmaps = exploreRoadmaps, // ✅ Now a List<Roadmap>
-                    onRoadmapClick = { selectedRoadmapId ->
-                        if (roadmapViewModel.hasActiveRoadmap()) {
-                            newRoadmapId = selectedRoadmapId
-                            showDialog = true
-                        } else {
-                            roadmapViewModel.startRoadmap(selectedRoadmapId)
-                            appNavController.navigate("learning/$selectedRoadmapId") // ✅ Add this if missing
-                        }
+                when (homeState) {
+                    is UiState.Loading -> {
+                        Text(
+                            text = "Loading roadmaps…",
+                            fontFamily = PixelFont,
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
                     }
-                )
+
+                    is UiState.Empty -> {
+                        Text(
+                            text = "No roadmaps available",
+                            fontFamily = SoraFont,
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+
+                    is UiState.Success -> {
+                        ExploreOtherRoadmapsSection(
+                            navController = appNavController,
+                            roadmaps = exploreRoadmaps, // ✅ Now a List<Roadmap>
+                            onRoadmapClick = { selectedRoadmapId ->
+                                if (roadmapViewModel.hasActiveRoadmap()) {
+                                    newRoadmapId = selectedRoadmapId
+                                    showDialog = true
+                                } else {
+                                    roadmapViewModel.startRoadmap(selectedRoadmapId)
+                                    appNavController.navigate("learning/$selectedRoadmapId")
+                                }
+                            }
+                        )
+                    }
+
+                    else -> {}
+                }
 
                 Spacer(modifier = Modifier.height(64.dp))
 
