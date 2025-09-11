@@ -133,7 +133,12 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                 is UiState.Success -> {
                     val moduleList = (modulesState as UiState.Success<List<Module>>).data
 
-                    Box {
+                    BoxWithConstraints(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val imageWidth = maxWidth
+                        val imageHeight = imageWidth * (3500f / 1080f) // maintain aspect ratio
+
                         Image(
                             painter = painterResource(id = R.drawable.roadmap_bg),
                             contentDescription = "Roadmap Background",
@@ -168,66 +173,39 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                             modifier = Modifier.padding(24.dp),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            Text(
-                                                text = module.title,
-                                                fontFamily = PixelFont,
-                                                color = Color.White
-                                            )
+                                            Text(module.title, fontFamily = PixelFont, color = Color.White)
                                             Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                text = module.description,
-                                                fontFamily = SoraFont,
-                                                color = Color.White
-                                            )
+                                            Text(module.description, fontFamily = SoraFont, color = Color.White)
                                             Spacer(modifier = Modifier.height(20.dp))
 
                                             Button(
                                                 onClick = {
-
                                                     roadmapViewModel.updateStreak(roadmapId)
-
-
                                                     navController.navigate("learning_content/$roadmapId/${module.id}")
-                                                    Log.d("QUIZ_DEBUG", "Start Learning clicked → roadmapId=$roadmapId, moduleId=${module.id}")
-
+                                                    Log.d("QUIZ_DEBUG", "Start Learning → roadmapId=$roadmapId, moduleId=${module.id}")
                                                 },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                                                 shape = RoundedCornerShape(12.dp)
                                             ) {
-                                                Text(
-                                                    "Start Learn ➤",
-                                                    fontFamily = PixelFont,
-                                                    color = Color.White
-                                                )
+                                                Text("Start Learn ➤", fontFamily = PixelFont, color = Color.White)
                                             }
 
                                             Spacer(modifier = Modifier.height(10.dp))
                                             val context = LocalContext.current
 
-
                                             if (module.ytUrl.isNotBlank()) {
                                                 Button(
                                                     onClick = {
                                                         roadmapViewModel.updateStreak(roadmapId)
-                                                        val intent = Intent(
-                                                            Intent.ACTION_VIEW,
-                                                            module.ytUrl.toUri()
-                                                        )
+                                                        val intent = Intent(Intent.ACTION_VIEW, module.ytUrl.toUri())
                                                         context.startActivity(intent)
                                                     },
                                                     modifier = Modifier.fillMaxWidth(),
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Color.Red
-                                                    ),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                                                     shape = RoundedCornerShape(12.dp)
                                                 ) {
-                                                    Text(
-                                                        "Watch on YouTube",
-                                                        fontFamily = PixelFont,
-                                                        fontSize = 12.sp,
-                                                        color = Color.White
-                                                    )
+                                                    Text("Watch on YouTube", fontFamily = PixelFont, fontSize = 12.sp, color = Color.White)
                                                 }
                                             }
 
@@ -235,10 +213,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                             Button(
                                                 onClick = {
-                                                    Log.d("QUIZ_DEBUG", "📌 Take Quiz button clicked → roadmapId=$roadmapId, moduleId=${module.id}, quizId=${module.quizId}")
-
                                                     val route = "${Constants.Routes.QUIZ_SCREEN}/$roadmapId/${module.id}/${module.quizId}"
-                                                    Log.d("QUIZ_NAV", "Navigating to: $route")
                                                     navController.navigate(route)
                                                     roadmapViewModel.updateStreak(roadmapId)
                                                 },
@@ -246,11 +221,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                                                 shape = RoundedCornerShape(12.dp)
                                             ) {
-                                                Text(
-                                                    "Take Quiz",
-                                                    fontFamily = PixelFont,
-                                                    color = Color.White
-                                                )
+                                                Text("Take Quiz", fontFamily = PixelFont, color = Color.White)
                                             }
 
                                             Spacer(modifier = Modifier.height(10.dp))
@@ -261,42 +232,34 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                                                 shape = RoundedCornerShape(12.dp)
                                             ) {
-                                                Text(
-                                                    "CodeBot",
-                                                    fontFamily = PixelFont,
-                                                    color = Color.White
-                                                )
+                                                Text("CodeBot", fontFamily = PixelFont, color = Color.White)
                                             }
                                         }
                                     }
                                 }
                             }
 
-                            // ✅ Module Position + Locking
+                            val yOffset = when (index) {
+                                0 -> imageHeight * 0.020f  // 120px
+                                1 -> imageHeight * 0.100f  // 480px
+                                2 -> imageHeight * 0.175f  // 800px
+                                3 -> imageHeight * 0.245f  // 1180px
+                                4 -> imageHeight * 0.320f  // 1550px
+                                5 -> imageHeight * 0.420f  // 1950px
+                                6 -> imageHeight * 0.520f  // 2300px
+                                7 -> imageHeight * 0.593f  // 2700px
+                                8 -> imageHeight * 0.665f  // 3050px
+                                9 -> imageHeight * 0.740f  // 3350px
+                                else -> imageHeight * 0.99f
+                            }
+
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .offset(
-                                        y = when (index) {
-                                            0 -> 25.dp
-                                            1 -> 125.dp
-                                            2 -> 215.dp
-                                            3 -> 308.dp
-                                            4 -> 400.dp
-                                            5 -> 515.dp
-                                            6 -> 645.dp
-                                            7 -> 737.dp
-                                            8 -> 830.dp
-                                            9 -> 920.dp
-                                            else -> 1000.dp
-                                        }
-                                    )
+                                    .offset(y = yOffset) // 👈 dynamic offset
                                     .padding(horizontal = 24.dp)
-                                    .clickable(enabled = isUnlocked) {
-                                        if (isUnlocked) {
-                                            showDialog = true
-                                        }
-                                    }
+                                    .clickable(enabled = isUnlocked) { if (isUnlocked) showDialog = true }
                             ) {
                                 val backgroundColor = if (isUnlocked) Color(0xFF4CAF50) else Color(0xFFBDBDBD)
 
@@ -324,11 +287,12 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                         val isCompletedAll = progressState is UiState.Success &&
                                 (progressState as UiState.Success<ProgressState>).data.currentModuleId == "completed_all"
 
-                        // 🎉 Final Congratulations button
+
+                    // 🎉 Final Congratulations button
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .offset(y = 1150.dp)
+                                .offset(y = imageHeight * 0.92f)
                                 .padding(horizontal = 32.dp)
                         ) {
                             Button(
