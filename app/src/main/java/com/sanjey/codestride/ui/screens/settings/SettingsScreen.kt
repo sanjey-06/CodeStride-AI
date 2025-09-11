@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.sanjey.codestride.ui.screens.settings
 
 import android.annotation.SuppressLint
@@ -345,25 +347,46 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
         if (showSupportDialog) {
             AlertDialog(
                 onDismissRequest = { showSupportDialog = false },
-                title = { Text("Report an Issue", fontFamily = PixelFont, fontSize = 16.sp) },
+                title = {
+                    Text(
+                        "Report an Issue",
+                        fontFamily = PixelFont,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                },
                 text = {
                     Column {
-                        Text("Please describe your issue:", fontFamily = SoraFont)
+                        Text(
+                            "Please describe your issue:",
+                            fontFamily = SoraFont,
+                            color = Color.White
+                        )
                         Spacer(Modifier.height(8.dp))
                         OutlinedTextField(
                             value = issueText,
                             onValueChange = { issueText = it },
-                            placeholder = { Text("Type your issue in detail...") },
+                            placeholder = { Text("Type your issue in detail...", color = Color.Gray) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 120.dp, max = 200.dp),
                             singleLine = false,
-                            maxLines = 10 // ✅ allow more typing
+                            maxLines = 10,
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                focusedBorderColor = CustomBlue,
+                                unfocusedBorderColor = Color.Gray,
+                                cursorColor = Color.White,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedPlaceholderColor = Color.Gray,
+                                unfocusedPlaceholderColor = Color.Gray,
+                                containerColor = Color.Black
+                            )
                         )
                     }
                 },
                 confirmButton = {
-                    TextButton(
+                    Button(
                         onClick = {
                             if (issueText.isBlank()) {
                                 Toast.makeText(
@@ -382,69 +405,114 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                                     }
                                 }
                             }
-                        }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                        shape = RoundedCornerShape(50.dp)
                     ) {
-                        Text("Send", color = CustomBlue, fontFamily = PixelFont)
+                        Text("Send", fontFamily = PixelFont, color = Color.White)
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showSupportDialog = false }) {
-                        Text("Cancel", fontFamily = PixelFont)
+                    Button(
+                        onClick = { showSupportDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                        shape = RoundedCornerShape(50.dp)
+                    ) {
+                        Text("Cancel", fontFamily = PixelFont, color = Color.White)
                     }
                 },
-                containerColor = Color.White
+                containerColor = Color.Black,
+                shape = RoundedCornerShape(20.dp)
             )
         }
-
 
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Delete Account?", fontFamily = PixelFont) },
+                title = {
+                    Text(
+                        "Delete Account?",
+                        fontFamily = PixelFont,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                },
                 text = {
                     Text(
                         "Are you sure you want to permanently delete your account?",
-                        fontFamily = SoraFont
+                        fontFamily = SoraFont,
+                        color = Color.White
                     )
                 },
                 confirmButton = {
-                    TextButton(onClick = {
-                        showDeleteDialog = false
-                        userViewModel.deleteUserAccount()
-                    }) {
-                        Text("Yes", color = Color.Red, fontFamily = PixelFont)
+                    Button(
+                        onClick = {
+                            showDeleteDialog = false
+                            userViewModel.deleteUserAccount()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                        shape = RoundedCornerShape(50.dp)
+                    ) {
+                        Text("Yes", fontFamily = PixelFont, color = Color.White)
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteDialog = false }) {
-                        Text("Cancel", fontFamily = PixelFont)
+                    Button(
+                        onClick = { showDeleteDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                        shape = RoundedCornerShape(50.dp)
+                    ) {
+                        Text("Cancel", fontFamily = PixelFont, color = Color.White)
                     }
                 },
-                containerColor = Color.White
+                containerColor = Color.Black,
+                shape = RoundedCornerShape(20.dp)
             )
         }
-
         if (showLogoutDialog) {
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
-                title = { Text("Logout?", fontFamily = PixelFont) },
-                text = { Text("Are you sure you want to logout?", fontFamily = SoraFont) },
+                title = {
+                    Text(
+                        "Logout?",
+                        fontFamily = PixelFont,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                },
+                text = {
+                    Text(
+                        "Are you sure you want to logout?",
+                        fontFamily = SoraFont,
+                        color = Color.White
+                    )
+                },
                 confirmButton = {
-                    TextButton(onClick = {
-                        showLogoutDialog = false
-                        userViewModel.logout()
-                    }) {
-                        Text("Yes", color = CustomBlue, fontFamily = PixelFont)
+                    Button(
+                        onClick = {
+                            showLogoutDialog = false
+                            userViewModel.logout()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                        shape = RoundedCornerShape(50.dp)
+                    ) {
+                        Text("Yes", fontFamily = PixelFont, color = Color.White)
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showLogoutDialog = false }) {
-                        Text("Cancel", fontFamily = PixelFont)
+                    Button(
+                        onClick = { showLogoutDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                        shape = RoundedCornerShape(50.dp)
+                    ) {
+                        Text("Cancel", fontFamily = PixelFont, color = Color.White)
                     }
                 },
-                containerColor = Color.White
+                containerColor = Color.Black,
+                shape = RoundedCornerShape(20.dp)
             )
         }
+
     }
 
 }
