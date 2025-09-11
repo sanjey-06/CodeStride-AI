@@ -143,6 +143,19 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                             }
                         }
 
+                        item(span = { GridItemSpan(2) }) {
+                            Text(
+                                text = "More Roadmaps coming soon.....😊",
+                                fontFamily = PixelFont,
+                                fontSize = 16.sp,
+                                color = Color.Black,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+
                         // ✅ Full-width item for the AI Generator
                         item(span = { GridItemSpan(2) }) {
                             AiGeneratorSection { topic ->
