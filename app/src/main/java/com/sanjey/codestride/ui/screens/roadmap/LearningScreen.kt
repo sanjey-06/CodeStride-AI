@@ -93,6 +93,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = 12.dp, top = 12.dp)
+                    .statusBarsPadding()
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -292,7 +293,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .offset(y = imageHeight * 0.92f)
+                                    .offset(y = imageHeight * 0.92f)
                                 .padding(horizontal = 32.dp)
                         ) {
                             Button(
@@ -313,7 +314,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                             ) {
                                 Text(
                                     text = "Congratulations!",
-                                    fontSize = 14.sp,
+                                    fontSize = 12.sp,
                                     fontFamily = PixelFont,
                                     color = Color.White
                                 )

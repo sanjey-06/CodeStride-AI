@@ -84,6 +84,7 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                 tint = Color.White,
                 modifier = Modifier
                     .padding(16.dp)
+                    .statusBarsPadding()
                     .size(24.dp)
                     .align(Alignment.TopStart)
                     .clickable { navController.popBackStack() }

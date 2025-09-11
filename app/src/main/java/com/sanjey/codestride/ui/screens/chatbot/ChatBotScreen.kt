@@ -62,13 +62,15 @@ fun ChatbotScreen(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier
                     .padding(start = 12.dp, top = 12.dp)
+                    .statusBarsPadding()
                     .size(32.dp)
                     .align(Alignment.TopStart)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = Color.White
+                    tint = Color.White,
+
                 )
             }
         }

@@ -330,8 +330,10 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
                         shape = RoundedCornerShape(50.dp),
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        interactionSource = remember { MutableInteractionSource() }
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                                .navigationBarsPadding()
+                                 .padding(top = 16.dp),
+                                interactionSource = remember { MutableInteractionSource() }
                     ) {
                         Text(
                             text = "Logout",
@@ -340,6 +342,7 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                             color = Color.White
                         )
                     }
+                    Spacer(modifier = Modifier.height(72.dp))
                 }
             }
         }

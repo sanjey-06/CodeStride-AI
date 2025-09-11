@@ -194,9 +194,13 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         Text(
                             text = "Go to your Roadmap",
                             fontFamily = PixelFont,
-                            fontSize = 14.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
@@ -477,29 +481,30 @@ fun ExploreOtherRoadmapsSection(navController: NavController, roadmaps: List<Roa
             )
         }
 
-        Row(
+        LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(34.dp, Alignment.CenterHorizontally)
+            horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally)
         ) {
-            roadmaps.forEach { roadmap ->
+            items(roadmaps) { roadmap ->   // ✅ correct way
                 val iconRes = getIconResource(roadmap.icon, roadmap.id)
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(4.dp) // optional small padding
+                    modifier = Modifier.padding(2.dp) // optional small padding
                 ) {
                     Surface(
                         modifier = Modifier
                             .clickable { onRoadmapClick(roadmap.id) }
                             .size(72.dp),
-                        shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(16.dp),
                         color = Color.Black
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Image(
                                 painter = painterResource(id = iconRes),
                                 contentDescription = roadmap.title,
-                                modifier = Modifier.size(72.dp)
+                                modifier = Modifier.size(60.dp),
+                                contentScale = ContentScale.Fit
                             )
                         }
                     }

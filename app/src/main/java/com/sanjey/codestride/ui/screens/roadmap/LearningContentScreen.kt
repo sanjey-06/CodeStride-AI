@@ -86,6 +86,7 @@ fun LearningContentScreen(navController: NavController, roadmapId: String, modul
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(12.dp)
+                    .statusBarsPadding()
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,

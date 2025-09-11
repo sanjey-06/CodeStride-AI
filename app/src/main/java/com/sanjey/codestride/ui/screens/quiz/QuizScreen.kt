@@ -96,7 +96,9 @@ fun QuizScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier
+                            .statusBarsPadding()
                     )
                 }
                 Text(
@@ -241,6 +243,7 @@ fun QuizContentUI(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = 12.dp, top = 12.dp)
+                    .statusBarsPadding()
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -490,7 +493,7 @@ fun ResultUI(
                                     .weight(1f)
                                     .padding(end = 8.dp)
                             ) {
-                                Text("Retry", fontFamily = PixelFont, color = Color.Black, fontSize = 12.sp)
+                                Text("Retry", fontFamily = PixelFont, color = Color.Black, fontSize = 10.sp)
                             }
 
                             Button(
@@ -507,7 +510,7 @@ fun ResultUI(
                                     text = if (isPassed) "Next" else "Back",
                                     fontFamily = PixelFont,
                                     color = Color.White,
-                                    fontSize = 14.sp
+                                    fontSize = 12.sp
                                 )
                             }
                         }

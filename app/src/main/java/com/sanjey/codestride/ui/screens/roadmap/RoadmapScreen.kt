@@ -320,7 +320,7 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
                     else -> {}
                 }
 
-                Spacer(modifier = Modifier.height(64.dp))
+                Spacer(modifier = Modifier.height(120.dp))
 
                 RoadmapReplaceDialog(
                     showDialog = showDialog && newRoadmapId != null,

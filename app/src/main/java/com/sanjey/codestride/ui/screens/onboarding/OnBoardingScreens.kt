@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import com.sanjey.codestride.data.prefs.OnboardingPreferences
 import com.sanjey.codestride.ui.theme.PixelFont
 
@@ -71,13 +72,16 @@ fun OnboardingScreen(navController: NavController) {
                         color = Color.White
                     )
                 )
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = pages[page].description,
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontFamily = PixelFont,
-                        color = Color.White
-                    )
+                        color = Color.White,
+                        lineHeight = 18.sp
+                    ),modifier = Modifier.padding(horizontal = 16.dp),
+                    textAlign = TextAlign.Center
                 )
                 Button(
                     onClick = {
