@@ -11,11 +11,19 @@ import com.google.firebase.FirebaseApp
 import com.sanjey.codestride.workers.ReminderScheduler
 import dagger.hilt.android.AndroidEntryPoint
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.sanjey.codestride.data.prefs.OnboardingPreferences
+import com.sanjey.codestride.ui.screens.onboarding.ConsentScreen
+import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 
 @AndroidEntryPoint
@@ -71,9 +79,40 @@ class MainActivity : ComponentActivity() {
             ReminderScheduler.scheduleDailyReminder(this, hour, minute)
         }
         setContent {
+            val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+
+            val termsAcceptedState = OnboardingPreferences.readTermsAccepted(context)
+                .collectAsState(initial = null) // null = still loading
+
             CodeStrideTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    AppNavigator()
+                    when (termsAcceptedState.value) {
+                        null -> {
+                            // Still loading → show nothing or a splash placeholder
+                            // (prevents flash of ConsentScreen)
+                        }
+                        false -> {
+                            ConsentScreen(
+                                onAgree = {
+                                    scope.launch {
+                                        OnboardingPreferences.setTermsAccepted(context, true)
+                                    }
+                                },
+                                onPrivacyClick = {
+                                    val url = "https://codestride.vercel.app/privacy-policy"
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                },
+                                onTermsClick = {
+                                    val url = "https://codestride.vercel.app/terms-and-conditions"
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                }
+                            )
+                        }
+                        true -> {
+                            AppNavigator() // ✅ Launch normal app flow once accepted
+                        }
+                    }
                 }
             }
         }

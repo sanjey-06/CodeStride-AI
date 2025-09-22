@@ -14,6 +14,7 @@ val Context.dataStore by preferencesDataStore(name = PREF_NAME)
 
 object OnboardingPreferences {
     private val ONBOARDING_KEY = booleanPreferencesKey("has_seen_onboarding")
+    private val TERMS_KEY = booleanPreferencesKey("has_accepted_terms")
 
     fun readOnboardingSeen(context: Context): Flow<Boolean> {
         return context.dataStore.data.map { prefs ->
@@ -24,6 +25,17 @@ object OnboardingPreferences {
     suspend fun setOnboardingSeen(context: Context, seen: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[ONBOARDING_KEY] = seen
+        }
+    }
+
+    fun readTermsAccepted(context: Context): Flow<Boolean> {
+        return context.dataStore.data.map { prefs ->
+            prefs[TERMS_KEY] ?: false
+        }
+    }
+    suspend fun setTermsAccepted(context: Context, accepted: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[TERMS_KEY] = accepted
         }
     }
 }
