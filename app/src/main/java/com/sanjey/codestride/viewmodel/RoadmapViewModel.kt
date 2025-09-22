@@ -14,6 +14,7 @@ import com.sanjey.codestride.common.getIconResource
 import com.sanjey.codestride.data.model.ProgressState
 import com.sanjey.codestride.data.model.Roadmap
 import com.sanjey.codestride.data.repository.AiGenerationRepository
+import com.sanjey.codestride.data.repository.ModerationRepository
 import com.sanjey.codestride.data.repository.RoadmapRepository
 import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +31,8 @@ import javax.inject.Inject
 class RoadmapViewModel @Inject constructor(
     private val repository: RoadmapRepository,
     private val userRepository: UserRepository,
-    private val aiGenerationRepository: AiGenerationRepository
+    private val aiGenerationRepository: AiGenerationRepository,
+    private val moderationRepository: ModerationRepository
 ) : ViewModel() {
 
     private val _roadmapsState = MutableStateFlow<UiState<List<Roadmap>>>(UiState.Idle)
@@ -155,6 +157,16 @@ class RoadmapViewModel @Inject constructor(
 
     suspend fun generateAiRoadmapAndReturnId(topic: String): String? = withContext(Dispatchers.IO) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@withContext null
+
+        // ✅ Moderation check before creating roadmap
+        val safe = moderationRepository.isContentSafe(topic)
+        if (!safe) {
+            if (BuildConfig.DEBUG) {
+                Log.e("ROADMAP_AI", "❌ Inappropriate topic entered: $topic")
+            }
+            return@withContext null
+        }
+
         val roadmapId = "ai_" + topic.lowercase().replace(" ", "_")
 
         val roadmapData = mapOf(

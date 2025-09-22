@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sanjey.codestride.data.model.ai.Message
 import com.sanjey.codestride.data.repository.ChatRepository
+import com.sanjey.codestride.data.repository.ModerationRepository // ✅ NEW import
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val repo: ChatRepository
+    private val repo: ChatRepository,
+    private val moderationRepo: ModerationRepository // ✅ NEW
 ) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
@@ -29,12 +31,22 @@ class ChatViewModel @Inject constructor(
         // 2️⃣ Start loading
         _isLoading.value = true
 
-        // 3️⃣ Call API in background
+        // 3️⃣ Call Moderation + API in background
         viewModelScope.launch {
             try {
-                val reply = repo.sendMessage(updated)
-                if (reply != null) {
-                    _messages.value += reply
+                val safe = moderationRepo.isContentSafe(userInput) // ✅ moderation check
+                if (!safe) {
+                    // Show a warning instead of sending to Chat API
+                    _messages.value += Message(
+                        role = "assistant",
+                        content = "⚠️ Your message was blocked because it may contain inappropriate content."
+                    )
+                } else {
+                    // proceed to normal flow
+                    val reply = repo.sendMessage(updated)
+                    if (reply != null) {
+                        _messages.value += reply
+                    }
                 }
             } finally {
                 // 4️⃣ Stop loading (always, even if error)
