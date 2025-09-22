@@ -16,6 +16,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -374,6 +375,14 @@ fun LoadingCard(message: String) {
                     fontFamily = PixelFont,
                     fontSize = 16.sp,
                     color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "⚠️ This roadmap is AI-generated and may not be fully accurate.",
+                    fontSize = 12.sp,
+                    fontFamily = SoraFont,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
                 )
             }
         }
