@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -82,7 +81,6 @@ class ReminderWorker(
             .build()
 
         NotificationManagerCompat.from(applicationContext).notify(1, notification)
-        Log.d("WORKER_DEBUG", "ReminderWorker triggered")
 
     }
 

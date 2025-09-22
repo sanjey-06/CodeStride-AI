@@ -1,6 +1,5 @@
 package com.sanjey.codestride.ui.screens.home
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import com.sanjey.codestride.common.FireProgressBar
 import androidx.compose.foundation.background
@@ -53,10 +52,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
     val imageHeight = screenHeight * 0.75f
 
     val currentRoadmapId by roadmapViewModel.currentRoadmapId.collectAsState()
-    Log.d("HOME_DEBUG", "HomeScreen currentRoadmapId=$currentRoadmapId")
 
     LaunchedEffect(homeState) {
-        Log.d("HOME_UI_DEBUG", "HomeScreen recomposed → homeState=$homeState, currentRoadmapId=$currentRoadmapId")
     }
     var showDialog by remember { mutableStateOf(false) }
     var newRoadmapId by remember { mutableStateOf<String?>(null) }

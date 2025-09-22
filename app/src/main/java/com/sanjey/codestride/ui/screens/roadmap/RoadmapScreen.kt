@@ -1,6 +1,5 @@
 package com.sanjey.codestride.ui.screens.roadmap
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -62,7 +61,6 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
             if (data.currentModuleTitle.isNotBlank()) {
                 currentModule = data.currentModuleTitle
             }
-            Log.d("ROADMAP_UI_DEBUG", "Updated currentModule → $currentModule")
         }
     }
 
@@ -71,7 +69,6 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
 
     LaunchedEffect(progressState) {
-        Log.d("ROADMAP_UI_DEBUG", "RoadmapScreen recomposed → progressState=$progressState")
     }
 
 
@@ -193,8 +190,6 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 Button(
                     onClick = {
-                        Log.d("ROADMAP_DEBUG", "Start Learning clicked")
-
                         val roadmapId = currentRoadmapId
 //                        val completedModules = if (progressState is UiState.Success) {
 //                            (progressState as UiState.Success).data.completedModules

@@ -1,7 +1,6 @@
 package com.sanjey.codestride.workers
 
 import android.content.Context
-import android.util.Log
 import androidx.work.*
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -34,8 +33,6 @@ object ReminderScheduler {
             ExistingPeriodicWorkPolicy.UPDATE, // Just in case cancel fails
             request
         )
-
-        Log.d("REMINDER_DEBUG", "Scheduled daily reminder at $hour:$minute")
     }
 
 

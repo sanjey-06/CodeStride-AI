@@ -1,7 +1,6 @@
 package com.sanjey.codestride.ui.screens.roadmap
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -62,7 +61,6 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
     }
 
     LaunchedEffect(modulesState) {
-        Log.d("MODULES_STATE", "Current state: $modulesState")
     }
 
 
@@ -183,7 +181,6 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                                 onClick = {
                                                     roadmapViewModel.updateStreak(roadmapId)
                                                     navController.navigate("learning_content/$roadmapId/${module.id}")
-                                                    Log.d("QUIZ_DEBUG", "Start Learning → roadmapId=$roadmapId, moduleId=${module.id}")
                                                 },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),

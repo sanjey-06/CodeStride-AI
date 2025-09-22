@@ -1,6 +1,5 @@
 package com.sanjey.codestride.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sanjey.codestride.common.UiState
@@ -49,8 +48,6 @@ class ModuleViewModel @Inject constructor(
                 val fetchedModules = repository.getModulesForRoadmap(roadmapId)
                 if (fetchedModules.isNotEmpty()) {
                     _modulesState.value = UiState.Success(fetchedModules)
-                    Log.d("MODULES_FETCH", "Loading modules for: $roadmapId")
-
                 } else {
                     _modulesState.value = UiState.Empty
                 }

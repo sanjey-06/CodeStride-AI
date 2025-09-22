@@ -3,6 +3,7 @@
     import android.util.Log
     import androidx.lifecycle.ViewModel
     import androidx.lifecycle.viewModelScope
+    import com.sanjey.codestride.BuildConfig
     import com.sanjey.codestride.common.UiState
     import com.sanjey.codestride.data.model.AIBadge
     import com.sanjey.codestride.data.model.Badge
@@ -97,19 +98,15 @@
                 _currentIndex.value += 1
                 (currentQuestion as MutableStateFlow).value = questions[_currentIndex.value]
                 _selectedOption.value = null
-                Log.d("QUIZ_DEBUG", "Next Question → index=${_currentIndex.value}, score=${_score.value}")
             } else {
                 // ✅ Final Question Completed
                 if (_score.value >= passingScore) {
                     _quizResultState.value = QuizResultState.Passed
-                    Log.d("QUIZ_DEBUG", "Quiz Passed → score=${_score.value}, passingScore=$passingScore")
 
                     // ✅ Unlock next module (Update Firestore Progress)
                     roadmapViewModel.updateProgress(roadmapId, moduleId)
-                    Log.d("QUIZ_DEBUG", "updateProgress() called → roadmapId=$roadmapId, moduleId=$moduleId")
                 } else {
                     _quizResultState.value = QuizResultState.Failed
-                    Log.d("QUIZ_DEBUG", "Quiz Failed → score=${_score.value}, passingScore=$passingScore")
                 }
             }
         }
@@ -127,7 +124,9 @@
                 try {
                     firebaseRepository.saveBadge(userId, title, image, roadmapId, moduleId)
                 } catch (e: Exception) {
-                    Log.e("BADGE_DEBUG", "Failed to save badge: ${e.message}")
+                    if (BuildConfig.DEBUG) {
+                        Log.e("BADGE_DEBUG", "Failed to save badge: ${e.message}")
+                    }
                 }
             }
         }
@@ -135,13 +134,9 @@
 
         suspend fun generateQuizIfNeeded(roadmapId: String, moduleId: String, quizId: String) {
             try {
-                Log.d("QUIZ_DEBUG", "=== generateQuizIfNeeded START ===")
-                Log.d("QUIZ_DEBUG", "roadmapId=$roadmapId, moduleId=$moduleId, quizId=$quizId")
-
                 val quizDetails = firebaseRepository.getQuizDetails(roadmapId, moduleId, quizId)
                 val questions = firebaseRepository.getQuestionsByQuiz(roadmapId, moduleId, quizId)
 
-                Log.d("QUIZ_DEBUG", "Existing quizDetails=$quizDetails, questionsCount=${questions.size}")
 
                 // Determine badge details
                 val isAiRoadmap = roadmapId.startsWith("ai_")
@@ -152,7 +147,6 @@
                 if (isAiRoadmap) {
                     val index = moduleId.removePrefix("module").toIntOrNull() ?: 1
                     val aiBadge: AIBadge? = firebaseRepository.getAiBadgeByIndex(index)
-                    Log.d("BADGE_DEBUG", "AI badge fetched for index=$index → $aiBadge")
 
                     badgeImage = aiBadge?.imageUrl ?: ""
                     badgeTitle = aiBadge?.title ?: ""
@@ -160,7 +154,6 @@
                 } else {
                     val badgeId = "quiz${moduleId.removePrefix("module")}"
                     val staticBadge: Badge? = firebaseRepository.getBadgeById(badgeId)
-                    Log.d("BADGE_DEBUG", "Static badge fetched for badgeId=$badgeId → $staticBadge")
 
                     badgeImage = staticBadge?.image ?: ""
                     badgeTitle = staticBadge?.title ?: ""
@@ -170,16 +163,13 @@
                 // If quiz doesn't exist yet, generate it
                 if (quizDetails == null || questions.isEmpty()) {
                     val module = moduleRepository.getModuleById(roadmapId, moduleId)
-                    Log.d("QUIZ_DEBUG", "Module fetched for quiz generation → $module")
 
                     val generated = aiGenerationRepository.generateQuiz(
                         roadmapId,
                         module?.title ?: "Learning"
                     )
-                    Log.d("QUIZ_DEBUG", "Generated ${generated.size} questions for module '${module?.title}'")
 
                     if (generated.isNotEmpty()) {
-                        Log.d("BADGE_DEBUG", "Saving quiz with badgeTitle='$badgeTitle', badgeImage='$badgeImage', badgeDescription='$badgeDescription'")
 
                         val aiQuiz = Quiz(
                             id = quizId,
@@ -191,15 +181,20 @@
                         )
 
                         firebaseRepository.saveAIQuiz(roadmapId, moduleId, quizId, aiQuiz, generated)
-                        Log.d("QUIZ_DEBUG", "Quiz saved successfully")
                     } else {
-                        Log.w("QUIZ_DEBUG", "No questions generated, quiz not saved")
+                        if (BuildConfig.DEBUG) {
+                            Log.w("QUIZ_DEBUG", "No questions generated, quiz not saved")
+                        }
                     }
                 } else {
-                    Log.d("QUIZ_DEBUG", "Quiz already exists, skipping generation")
+                    if (BuildConfig.DEBUG) {
+                        Log.d("QUIZ_DEBUG", "Quiz already exists, skipping generation")
+                    }
                 }
             } catch (e: Exception) {
-                Log.e("QUIZ_DEBUG", "generateQuizIfNeeded error: ${e.message}", e)
+                if (BuildConfig.DEBUG) {
+                    Log.e("QUIZ_DEBUG", "generateQuizIfNeeded error: ${e.message}", e)
+                }
             }
         }
 

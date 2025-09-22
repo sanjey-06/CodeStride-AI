@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.gson.Gson
+import com.sanjey.codestride.BuildConfig
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.Question
 import com.sanjey.codestride.data.model.RoadmapItem
@@ -50,15 +51,18 @@ Important:
 - Format response as a pure JSON array with 10 items only (no markdown wrapping)
 """.trimIndent()
 
-
-        Log.d("AI_DEBUG", "🟡 Starting AI roadmap generation for topic: $topic")
-        Log.d("AI_DEBUG", "📝 Prompt size = ${prompt.length} characters")
+        if (BuildConfig.DEBUG) {
+            Log.d("AI_DEBUG", "🟡 Starting AI roadmap generation for topic: $topic")
+            Log.d("AI_DEBUG", "📝 Prompt size = ${prompt.length} characters")
+        }
 
         val startTime = System.currentTimeMillis()
 
         return try {
-            Log.d("AI_PROMPT_USED", "Prompt:\n$prompt")
-            Log.d("AI_PARAMS", "Tokens: 2000, Temp: 0.7, Model: gpt-3.5-turbo")
+            if (BuildConfig.DEBUG) {
+                Log.d("AI_PROMPT_USED", "Prompt:\n$prompt")
+                Log.d("AI_PARAMS", "Tokens: 2000, Temp: 0.7, Model: gpt-3.5-turbo")
+            }
 
             val response = api.getAiRoadmap(
                 AiRequest(
@@ -70,33 +74,39 @@ Important:
             )
 
             val duration = System.currentTimeMillis() - startTime
-            Log.d("AI_DEBUG", "✅ OpenAI response received in ${duration}ms")
-
+            if (BuildConfig.DEBUG) {
+                Log.d("AI_DEBUG", "✅ OpenAI response received in ${duration}ms")
+            }
             val innerJson = response.choices.firstOrNull()?.message?.content
 
             if (innerJson == null) {
-                Log.e("AI_DEBUG", "❌ AI returned null content")
+                if (BuildConfig.DEBUG) {
+                    Log.e("AI_DEBUG", "❌ AI returned null content")}
                 return emptyList()
             }
-
-            Log.d("AI_RAW_JSON", "🔥 Raw AI response:\n$innerJson")
+            if (BuildConfig.DEBUG) {
+            Log.d("AI_RAW_JSON", "🔥 Raw AI response:\n$innerJson")}
 
             // 🔹 Clean and parse JSON
             val cleanedJson = sanitizeAiJson(innerJson)
-            Log.d("AI_RAW_JSON", "✅ Cleaned JSON:\n$cleanedJson")
+            if (BuildConfig.DEBUG) {
+                Log.d("AI_RAW_JSON", "✅ Cleaned JSON:\n$cleanedJson")
+                }
 
             val parsed = Gson().fromJson(cleanedJson, Array<RoadmapItem>::class.java).toList()
 
             if (parsed.size != 10) {
-                Log.w("AI_DEBUG", "⚠️ Expected 10 modules, got ${parsed.size}.")
+                if (BuildConfig.DEBUG) {
+                    Log.w("AI_DEBUG", "⚠️ Expected 10 modules, got ${parsed.size}.")}
             }
-
-            Log.d("AI_DEBUG", "✅ Parsed ${parsed.size} modules successfully")
+            if (BuildConfig.DEBUG) {
+            Log.d("AI_DEBUG", "✅ Parsed ${parsed.size} modules successfully")}
             parsed
 
         } catch (e: Exception) {
             val duration = System.currentTimeMillis() - startTime
-            Log.e("AI_ERROR", "❌ Failed to generate roadmap: ${e.message} (after ${duration}ms)")
+            if (BuildConfig.DEBUG) {
+                Log.e("AI_ERROR", "❌ Failed to generate roadmap: ${e.message} (after ${duration}ms)")}
             emptyList()
         }
     }
@@ -161,7 +171,6 @@ Format the output as a single HTML string (no JSON, no markdown).
             )
             response.choices.firstOrNull()?.message?.content?.trim().orEmpty()
         } catch (e: Exception) {
-            Log.e("AI_SINGLE_MODULE", "❌ Error generating content for $moduleTitle: ${e.message}")
             ""
         }
     }
@@ -175,12 +184,14 @@ Format the output as a single HTML string (no JSON, no markdown).
         roadmapId: String,
         onComplete: (Boolean) -> Unit
     ) {
-        Log.d("AI_MODULE_UPLOAD", "🚀 Generating roadmap for topic: $topic")
+        if (BuildConfig.DEBUG) {
+            Log.d("AI_MODULE_UPLOAD", "🚀 Generating roadmap for topic: $topic")}
 
         val modules = generateRoadmap(topic)
 
         if (modules.isEmpty()) {
-            Log.e("AI_MODULE_UPLOAD", "❌ No modules generated for topic: $topic")
+            if (BuildConfig.DEBUG) {
+                Log.e("AI_MODULE_UPLOAD", "❌ No modules generated for topic: $topic")}
             onComplete(false)
             return
         }
@@ -192,25 +203,39 @@ Format the output as a single HTML string (no JSON, no markdown).
             val title = module.title
             val description = module.description
             val placeholder = "https://www.youtube.com/watch?v=xxxxx"
-
-            Log.d("AI_MODULE_UPLOAD", "🔹 Processing $moduleId → $title")
+            if (BuildConfig.DEBUG) {
+                Log.d("AI_MODULE_UPLOAD", "🔹 Processing $moduleId → $title")
+            }
 
             val finalUrl = try {
                 if (module.link == placeholder) {
                     val query = "$topic $title"
-                    Log.d("YOUTUBE_FETCH", "🔍 Searching YouTube with query: $query")
+                    if (BuildConfig.DEBUG) {
+                        Log.d("YOUTUBE_FETCH", "🔍 Searching YouTube with query: $query")
+                    }
 
                     fetchYouTubeUrlSuspend(query)
                         ?: "https://www.youtube.com/results?search_query=${query.replace(" ", "+")}".also {
-                            Log.w("YOUTUBE_FETCH", "⚠️ Fallback YouTube search URL used for $query")
+                            if (BuildConfig.DEBUG) {
+                                Log.w(
+                                    "YOUTUBE_FETCH",
+                                    "⚠️ Fallback YouTube search URL used for $query"
+                                )
+                            }
                         }
                 } else {
-                    Log.d("YOUTUBE_FETCH", "✅ Using provided link for $title: ${module.link}")
                     module.link
                 }
             } catch (e: Exception) {
-                Log.e("YOUTUBE_FETCH", "❌ Error fetching YouTube link for $title: ${e.message}")
-                "https://www.youtube.com/results?search_query=${("$topic $title").replace(" ", "+")}"
+                if (BuildConfig.DEBUG) {
+                    Log.e("YOUTUBE_FETCH", "❌ Error fetching YouTube link for $title: ${e.message}")
+                }
+                    "https://www.youtube.com/results?search_query=${
+                        ("$topic $title").replace(
+                            " ",
+                            "+"
+                        )
+                    }"
             }
 
             val moduleData = hashMapOf(
@@ -230,13 +255,17 @@ Format the output as a single HTML string (no JSON, no markdown).
                     .set(moduleData)
                     .await()
 
-                Log.d("AI_MODULE_UPLOAD", "✅ Uploaded $moduleId → $title")
-            } catch (e: Exception) {
-                Log.e("AI_MODULE_UPLOAD", "❌ Failed to upload $moduleId: ${e.message}")
+                if (BuildConfig.DEBUG) {
+                    Log.d("AI_MODULE_UPLOAD", "✅ Uploaded $moduleId → $title")
+                }
+            }
+            catch (e: Exception) {
+                if (BuildConfig.DEBUG) {
+                    Log.e("AI_MODULE_UPLOAD", "❌ Failed to upload $moduleId: ${e.message}")
+                }
             }
         }
 
-        Log.d("AI_MODULE_UPLOAD", "🎉 Finished uploading all modules for $roadmapId")
         onComplete(true)
     }
 
@@ -246,21 +275,15 @@ Format the output as a single HTML string (no JSON, no markdown).
     private suspend fun fetchYouTubeUrlSuspend(query: String): String? =
         suspendCancellableCoroutine { cont ->
 
-            Log.d("YOUTUBE_FETCH", "🚀 fetchYouTubeUrlSuspend CALLED with query=$query, key=${Constants.YOUTUBE_API_KEY.take(6)}***")
 
             val call = YouTubeApiClient.retrofit.searchVideos(
                 query = "$query tutorial",
                 apiKey = Constants.YOUTUBE_API_KEY
             )
 
-            Log.d("YOUTUBE_FETCH", "📡 Executing YouTube API call → ${call.request().url}")
-
             call.enqueue(object : retrofit2.Callback<YouTubeResponse> {
                 override fun onResponse(call: Call<YouTubeResponse>, response: retrofit2.Response<YouTubeResponse>) {
                     val videoId = response.body()?.items?.firstOrNull()?.id?.videoId
-                    Log.d("YOUTUBE_FETCH", "✅ Response code: ${response.code()}")
-                    Log.d("YOUTUBE_FETCH", "✅ Response body: ${response.body()}")
-                    Log.d("YOUTUBE_FETCH", "🎥 Video ID: ${videoId ?: "NULL"}")
 
                     cont.resume(
                         videoId?.let { "https://www.youtube.com/watch?v=$it" },
@@ -269,7 +292,6 @@ Format the output as a single HTML string (no JSON, no markdown).
                 }
 
                 override fun onFailure(call: Call<YouTubeResponse>, t: Throwable) {
-                    Log.e("YOUTUBE_FETCH", "❌ API call failed: ${t.message}", t)
                     cont.resume(null, null)
                 }
             })
@@ -277,7 +299,12 @@ Format the output as a single HTML string (no JSON, no markdown).
 
 
     suspend fun generateQuiz(topic: String, moduleTitle: String): List<Question> {
-        Log.d("QUIZ_DEBUG", "🚀 Starting AI quiz generation → topic=$topic, moduleTitle=$moduleTitle")
+        if (BuildConfig.DEBUG) {
+            Log.d(
+                "QUIZ_DEBUG",
+                "🚀 Starting AI quiz generation → topic=$topic, moduleTitle=$moduleTitle"
+            )
+        }
 
         val prompt = """
 You are an expert quiz maker.
@@ -297,7 +324,9 @@ Requirements:
 
 
         return try {
-            Log.d("QUIZ_DEBUG", "📡 Sending prompt to AI (${prompt.length} chars)")
+            if (BuildConfig.DEBUG) {
+                Log.d("QUIZ_DEBUG", "📡 Sending prompt to AI (${prompt.length} chars)")
+            }
 
             val response = api.getAiRoadmap(
                 AiRequest(
@@ -310,7 +339,9 @@ Requirements:
 
 
             val innerJson = response.choices.firstOrNull()?.message?.content?.trim().orEmpty()
-            Log.d("QUIZ_DEBUG", "🔥 Raw AI output: $innerJson")
+            if (BuildConfig.DEBUG) {
+                Log.d("QUIZ_DEBUG", "🔥 Raw AI output: $innerJson")
+            }
 
 
             var cleanedJson = innerJson
@@ -320,12 +351,10 @@ Requirements:
             if (cleanedJson.endsWith("```")) {
                 cleanedJson = cleanedJson.removeSuffix("```").trim()
             }
-            Log.d("QUIZ_DEBUG", "✅ Cleaned JSON: $cleanedJson")
 
             return Gson().fromJson(cleanedJson, Array<Question>::class.java).toList()
 
         } catch (e: Exception) {
-            Log.e("QUIZ_DEBUG", "❌ Error generating quiz for $moduleTitle: ${e.message}")
             emptyList()
         }
     }

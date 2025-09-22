@@ -3,6 +3,7 @@ package com.sanjey.codestride.data.repository
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.sanjey.codestride.BuildConfig
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.AIBadge
 import com.sanjey.codestride.data.model.Badge
@@ -211,7 +212,9 @@ class FirebaseRepository @Inject constructor(
                 .await()
             snapshot.toObject(AIBadge::class.java)
         } catch (e: Exception) {
-            Log.e("FIREBASE_REPO", "❌ Failed to fetch AI badge: ${e.message}")
+            if (BuildConfig.DEBUG) {
+                Log.e("FIREBASE_REPO", "❌ Failed to fetch AI badge: ${e.message}")
+            }
             null
         }
     }
@@ -227,7 +230,9 @@ class FirebaseRepository @Inject constructor(
                 .await()
             snapshot.toObject(Badge::class.java)
         } catch (e: Exception) {
-            Log.e("FIREBASE_REPO", "❌ Failed to fetch static badge: ${e.message}")
+            if (BuildConfig.DEBUG) {
+                Log.e("FIREBASE_REPO", "❌ Failed to fetch static badge: ${e.message}")
+            }
             null
         }
     }

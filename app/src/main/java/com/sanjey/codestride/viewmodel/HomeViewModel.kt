@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.sanjey.codestride.BuildConfig
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.common.getIconResource
@@ -89,8 +90,10 @@ class HomeViewModel @Inject constructor(
                         val progressPercent = if (totalModules > 0) {
                             ((completedModules.size.toFloat() / totalModules.toFloat()) * 100).toInt()
                         } else 0
+                        if (BuildConfig.DEBUG) {
 
-                        Log.d("HOMIES_DEBUG", """
+                            Log.d(
+                                "HOMIES_DEBUG", """
 --- HOME DATA CALCULATION ---
 Current Roadmap ID: $currentRoadmapId
 Roadmap Title: ${roadmap?.title ?: "N/A"}
@@ -98,7 +101,9 @@ Total Modules: $totalModules
 Completed Modules: ${completedModules.size} → $completedModules
 Calculated Progress: $progressPercent%
 ------------------------------
-""".trimIndent())
+""".trimIndent()
+                            )
+                        }
 
                         _homeUiState.value = UiState.Success(
                             HomeScreenData(
@@ -125,7 +130,6 @@ Calculated Progress: $progressPercent%
                         )
                     }
             } catch (e: Exception) {
-                Log.e("HOME_DEBUG", "Error in observeHomeData: ${e.message}", e)
                 _homeUiState.value = UiState.Error(e.message ?: "Failed to load home data")
             }
         }
@@ -143,7 +147,9 @@ Calculated Progress: $progressPercent%
                     )
                 }
             } catch (e: Exception) {
-                Log.e("HOME_DEBUG", "Failed to refresh badges: ${e.message}")
+                if (BuildConfig.DEBUG) {
+                    Log.e("HOME_DEBUG", "Failed to refresh badges: ${e.message}")
+                }
             }
         }
     }

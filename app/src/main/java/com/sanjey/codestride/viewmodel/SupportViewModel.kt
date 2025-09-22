@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.sanjey.codestride.BuildConfig
 import kotlinx.coroutines.launch
 
 class SupportViewModel : ViewModel() {
@@ -24,16 +25,22 @@ class SupportViewModel : ViewModel() {
                 db.collection("support_issues")
                     .add(issueData)
                     .addOnSuccessListener {
-                        Log.d("SUPPORT_VM", "Issue saved: ${it.id}")
+                        if (BuildConfig.DEBUG) {
+                            Log.d("SUPPORT_VM", "Issue saved: ${it.id}")
+                        }
                         onResult(true)
                     }
                     .addOnFailureListener { e ->
-                        Log.e("SUPPORT_VM", "Failed to save issue", e)
+                        if (BuildConfig.DEBUG) {
+                            Log.e("SUPPORT_VM", "Failed to save issue", e)
+                        }
                         onResult(false)
                     }
 
             } catch (e: Exception) {
-                Log.e("SUPPORT_VM", "Exception: ", e)
+                if (BuildConfig.DEBUG) {
+                    Log.e("SUPPORT_VM", "Exception: ", e)
+                }
                 onResult(false)
             }
         }

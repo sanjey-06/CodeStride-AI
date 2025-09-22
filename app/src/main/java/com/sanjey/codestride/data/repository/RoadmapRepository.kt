@@ -1,6 +1,5 @@
 package com.sanjey.codestride.data.repository
 
-import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.sanjey.codestride.common.Constants
@@ -63,7 +62,6 @@ class RoadmapRepository @Inject constructor(
                 return@addSnapshotListener
             }
             val currentRoadmap = snapshot?.getString("currentRoadmapId")
-            Log.d("ROADMAP_DEBUG", "observeCurrentRoadmap → snapshot currentRoadmapId=$currentRoadmap")
             trySend(currentRoadmap)
         }
         awaitClose { listener.remove() }
@@ -155,7 +153,6 @@ class RoadmapRepository @Inject constructor(
 
 
     suspend fun updateProgress(userId: String, roadmapId: String, moduleId: String) {
-        Log.d("QUIZ_DEBUG", "updateProgress() START → userId=$userId, roadmapId=$roadmapId, moduleId=$moduleId")
 
         val docRef = firestore.collection("users")
             .document(userId)
@@ -203,12 +200,9 @@ class RoadmapRepository @Inject constructor(
                 )
             ).await()
 
-            Log.d("PROGRESS_DEBUG", "Updated progress: completed=$completed, allModules=$allModules, newCurrent=$newCurrent")
-        } catch (e: Exception) {
-            Log.e("QUIZ_DEBUG", "updateProgress() ERROR: ${e.message}", e)
+        } catch (_: Exception) {
         }
 
-        Log.d("QUIZ_DEBUG", "updateProgress() END for moduleId=$moduleId")
     }
 
 

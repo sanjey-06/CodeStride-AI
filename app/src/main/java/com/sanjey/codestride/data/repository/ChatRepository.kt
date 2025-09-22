@@ -1,6 +1,5 @@
 package com.sanjey.codestride.data.repository
 
-import android.util.Log
 import com.sanjey.codestride.data.model.ai.AiRequest
 import com.sanjey.codestride.data.model.ai.Message
 import com.sanjey.codestride.data.remote.AiApiService
@@ -30,7 +29,6 @@ class ChatRepository @Inject constructor(
             }
 
         } catch (e: Exception) {
-            Log.e("CHAT_REPO", "❌ Chat error: ${e.message}")
             Message(role = "assistant", content = "⚠️ Error: ${e.message}")
         }
     }

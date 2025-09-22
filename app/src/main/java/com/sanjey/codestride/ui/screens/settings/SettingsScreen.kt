@@ -3,7 +3,6 @@
 package com.sanjey.codestride.ui.screens.settings
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -79,12 +78,10 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
 
 
     val settings by userViewModel.userSettings.observeAsState()
-    Log.d("UI_SETTINGS_DEBUG", "Settings received in UI: $settings")
 
     LaunchedEffect(settings) {
         settings?.let {
             if (it.reminderEnabled) {
-                Log.d("REMINDER_DEBUG", "Re-scheduling reminder for ${it.reminderHour}:${it.reminderMinute}")
                 ReminderScheduler.scheduleDailyReminder(
                     context = context,
                     hour = it.reminderHour,

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.sanjey.codestride.BuildConfig
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.common.getIconResource
@@ -88,11 +89,11 @@ class RoadmapViewModel @Inject constructor(
     suspend fun replaceRoadmap(newRoadmapId: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         try {
-            Log.d("ROADMAP_DEBUG", "replaceRoadmap() started for $newRoadmapId")
             userRepository.replaceUserRoadmap(userId, newRoadmapId)
-            Log.d("ROADMAP_DEBUG", "replaceRoadmap() complete → $newRoadmapId")
         } catch (e: Exception) {
-            Log.e("ROADMAP_DEBUG", "replaceRoadmap ERROR: ${e.message}")
+            if (BuildConfig.DEBUG) {
+                Log.e("ROADMAP_DEBUG", "replaceRoadmap ERROR: ${e.message}")
+            }
         }
     }
 
@@ -103,10 +104,8 @@ class RoadmapViewModel @Inject constructor(
     fun observeCurrentRoadmap() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
-            Log.d("ROADMAP_DEBUG", "observeCurrentRoadmap() started for user=$userId")
 
             repository.observeCurrentRoadmap(userId).collectLatest { roadmapId ->
-                Log.d("ROADMAP_DEBUG", "Firestore emitted roadmapId=$roadmapId")
 
                 _currentRoadmapId.value = roadmapId
                 if (roadmapId != null) observeProgress(userId, roadmapId)
@@ -133,8 +132,6 @@ class RoadmapViewModel @Inject constructor(
                     )
 
                 )
-                Log.d("ROADMAP_DEBUG", "observeProgress() → currentModuleId=$currentModuleId, title=$moduleTitle, completed=$completedModules")
-
             }
         }
     }
@@ -144,10 +141,13 @@ class RoadmapViewModel @Inject constructor(
             try {
                 val stats = userRepository.updateStreakOnLearning(userId)
                 userRepository.markLearnedToday(userId, roadmapId)
-
-                Log.d("STREAK_DEBUG", "✅ New streak = ${stats.streak}, progress = ${stats.progressPercent}")
-            } catch (e: Exception) {
-                Log.e("STREAK_DEBUG", "❌ Failed to update streak: ${e.message}")
+                if (BuildConfig.DEBUG) {
+                    Log.d("STREAK_DEBUG", "✅ New streak = ${stats.streak}, progress = ${stats.progressPercent}")
+            } }
+            catch (e: Exception) {
+                if (BuildConfig.DEBUG) {
+                    Log.e("STREAK_DEBUG", "❌ Failed to update streak: ${e.message}")
+                }
             }
         }
     }
@@ -173,12 +173,16 @@ class RoadmapViewModel @Inject constructor(
             roadmapRef.set(roadmapData).await()
 
             aiGenerationRepository.generateAndStoreRoadmap(topic, roadmapId) {
-                Log.d("ROADMAP_AI", "All AI modules uploaded for $roadmapId")
+                if (BuildConfig.DEBUG) {
+                    Log.d("ROADMAP_AI", "All AI modules uploaded for $roadmapId")
+                }
             }
 
             return@withContext roadmapId
         } catch (e: Exception) {
-            Log.e("ROADMAP_AI", "Error creating AI roadmap: ${e.message}")
+            if (BuildConfig.DEBUG) {
+                Log.e("ROADMAP_AI", "Error creating AI roadmap: ${e.message}")
+            }
             return@withContext null
         } finally {
             _isGeneratingAiRoadmap.value = false   // ✅ stop loading
@@ -192,13 +196,13 @@ class RoadmapViewModel @Inject constructor(
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
             try {
-                Log.d("ROADMAP_DEBUG", "updateProgress() START → roadmapId=$roadmapId, moduleId=$moduleId")
                 repository.updateProgress(userId, roadmapId, moduleId)
-                Log.d("ROADMAP_DEBUG", "updateProgress() Firestore update COMPLETE")
                 // ❌ No need to manually update _progressState
                 // observeProgress() will push the fresh data from Firestore
             } catch (e: Exception) {
-                Log.e("ROADMAP_DEBUG", "updateProgress() ERROR: ${e.message}")
+                if (BuildConfig.DEBUG) {
+                    Log.e("ROADMAP_DEBUG", "updateProgress() ERROR: ${e.message}")
+                }
             }
         }
     }
@@ -215,7 +219,6 @@ class RoadmapViewModel @Inject constructor(
 
     fun getRoadmapTitleAndIcon(roadmapId: String?): Pair<String, Int> {
         val normalizedId = roadmapId?.trim()?.lowercase() ?: ""
-        Log.d("DEBUG_ICON", "normalizedId = $normalizedId")
 
         return when {
             normalizedId.startsWith("ai_") -> {

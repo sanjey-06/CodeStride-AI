@@ -1,6 +1,5 @@
 package com.sanjey.codestride.ui.screens.quiz
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -60,7 +59,6 @@ fun QuizScreen(
 
     LaunchedEffect(roadmapId, moduleId, quizId) {
         showInitialLoader = true
-        Log.d("QUIZ_DEBUG", "🔸 sequential prepare → gen then load")
         quizViewModel.generateQuizIfNeeded(roadmapId, moduleId, quizId)
         quizViewModel.loadQuizData(roadmapId, moduleId, quizId)
         showInitialLoader = false
