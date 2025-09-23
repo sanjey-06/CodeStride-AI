@@ -1,4 +1,6 @@
+# =========================
 # Android/Gradle build outputs
+# =========================
 /build
 /app/build
 /captures
@@ -7,15 +9,22 @@
 .gradle
 .DS_Store
 
+# =========================
 # Local configuration (never commit these)
+# =========================
 local.properties
 gradle.properties
 google-services.json
 *.env
 *.keys
-*.json
 
+# ⚠️ Allow only structured JSONs (e.g. Firestore exports), block misc
+*.json
+!app/src/main/res/**/*.json
+
+# =========================
 # IntelliJ / Android Studio
+# =========================
 .idea/
 *.iml
 
@@ -26,4 +35,37 @@ google-services.json
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-/.idea/compiler.xml   # ✅ added to ignore compiler.xml
+/.idea/compiler.xml
+/.idea/deploymentTargetSelector.xml
+
+# =========================
+# Kotlin error logs
+# =========================
+.kotlin/
+.kotlin/errors/
+
+# =========================
+# Firebase CLI config
+# =========================
+.firebasearc
+
+# =========================
+# Backup / temp files
+# =========================
+*backup*.kt
+*Backup*.kt
+*.tmp
+*.log
+replace.txt
+tash push m*
+
+# =========================
+# Git filter repo tools
+# =========================
+git-filter-repo.py
+git-filter-repo/
+
+# =========================
+# OS-specific
+# =========================
+Thumbs.db
