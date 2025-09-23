@@ -3,6 +3,7 @@
 package com.sanjey.codestride.ui.screens.settings
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,12 +29,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import com.sanjey.codestride.workers.ReminderScheduler
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.sanjey.codestride.R
 import com.sanjey.codestride.data.model.UserSettings
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.viewmodel.SettingsViewModel
 import com.sanjey.codestride.viewmodel.UserViewModel
 import com.sanjey.codestride.viewmodel.SupportViewModel
 
@@ -46,6 +49,8 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
     }
     val context = LocalContext.current
     val supportViewModel: SupportViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val settingsViewModel: SettingsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+
 
     val accountDeleted by userViewModel.accountDeleted.observeAsState()
     LaunchedEffect(accountDeleted) {
@@ -61,6 +66,13 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
             navController.navigate("login") {
                 popUpTo("main") { inclusive = true }
             }
+        }
+    }
+
+    // Collect URL events and open browser
+    LaunchedEffect(Unit) {
+        settingsViewModel.openUrl.collect { url ->
+            context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
         }
     }
 
@@ -300,6 +312,16 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                         }
                     )
 
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Settings Section
+
+                    SettingsSection(
+                        title = "Legal",
+                        items = listOf("Privacy Policy", "Terms & Conditions"),
+                        onItemClick = { item -> settingsViewModel.onLegalClick(item) }
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
