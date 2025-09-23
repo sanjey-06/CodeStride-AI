@@ -1,7 +1,7 @@
 
-# CodeStride 📚⚡
+# CodeStride AI 📚⚡
 
-CodeStride is an **AI-powered gamified self-learning app** built with Kotlin + Jetpack Compose + Firebase.
+CodeStride AI is an **AI-powered gamified self-learning app** built with Kotlin + Jetpack Compose + Firebase.
 It helps learners stay consistent by providing roadmaps, quizzes, streaks, and an AI chatbot assistant.
 
 ---
@@ -32,8 +32,8 @@ It helps learners stay consistent by providing roadmaps, quizzes, streaks, and a
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/<your-username>/CodeStride.git
-cd CodeStride
+git clone https://github.com/<your-username>/CodeStride-AI.git
+cd CodeStride-AI
 ```
 
 ### 2. Add API Keys (⚠️ Required)
