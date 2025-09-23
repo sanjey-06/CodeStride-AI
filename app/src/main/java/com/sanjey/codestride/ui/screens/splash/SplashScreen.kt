@@ -8,6 +8,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -28,7 +29,16 @@ fun SplashScreen(
     val splashTarget by userViewModel.splashNavigationState.observeAsState()
 
     var visibleText by remember { mutableStateOf("") }
-    val fullText = "CodeStride"
+    val fullText = "CodeStride AI"
+
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+
+    val fontSize = when {
+        screenWidth < 360 -> 18.sp
+        screenWidth < 400 -> 24.sp
+        else -> 32.sp
+    }
 
 
     LaunchedEffect(Unit) {
@@ -59,7 +69,7 @@ fun SplashScreen(
             text = visibleText,
             style = TextStyle(
                 fontFamily = PixelFont,
-                fontSize = 32.sp,
+                fontSize = fontSize,
                 color = Color.White
             )
         )
