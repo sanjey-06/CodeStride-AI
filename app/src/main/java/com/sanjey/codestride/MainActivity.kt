@@ -100,11 +100,11 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onPrivacyClick = {
-                                    val url = "https://codestride.vercel.app/privacy-policy"
+                                    val url = "https://codestrideai.vercel.app/privacy-policy"
                                     context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                                 },
                                 onTermsClick = {
-                                    val url = "https://codestride.vercel.app/terms-and-conditions"
+                                    val url = "https://codestrideai.vercel.app/terms-and-conditions"
                                     context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                                 }
                             )

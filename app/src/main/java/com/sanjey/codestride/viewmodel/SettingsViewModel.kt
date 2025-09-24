@@ -16,8 +16,8 @@ class SettingsViewModel @Inject constructor() : ViewModel() {
 
     fun onLegalClick(item: String) {
         val url = when (item) {
-            "Privacy Policy" -> "https://codestride.vercel.app/privacy-policy"
-            "Terms & Conditions" -> "https://codestride.vercel.app/terms-and-conditions"
+            "Privacy Policy" -> "https://codestrideai.vercel.app/privacy-policy"
+            "Terms & Conditions" -> "https://codestrideai.vercel.app/terms-and-conditions"
             else -> return
         }
         viewModelScope.launch {
