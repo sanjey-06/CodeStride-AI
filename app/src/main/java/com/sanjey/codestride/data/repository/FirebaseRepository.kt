@@ -45,7 +45,7 @@ class FirebaseRepository @Inject constructor(
         password: String,
         firstName: String,
         lastName: String,
-        mobile: String
+
     ) {
         val result = auth.createUserWithEmailAndPassword(email, password).await()
         val uid = result.user?.uid ?: throw Exception("User ID is null")
@@ -53,7 +53,6 @@ class FirebaseRepository @Inject constructor(
         val userMap = hashMapOf(
             "firstName" to firstName,
             "lastName" to lastName,
-            "mobile" to mobile,
             "email" to email
         )
 

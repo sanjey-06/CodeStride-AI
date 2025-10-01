@@ -18,11 +18,11 @@ class SignupViewModel @Inject constructor(
     private val _signupState = MutableLiveData<UiState<Unit>>()
     val signupState: LiveData<UiState<Unit>> = _signupState
 
-    fun signupUser(email: String, password: String, firstName: String, lastName: String, mobile: String) {
+    fun signupUser(email: String, password: String, firstName: String, lastName: String) {
         viewModelScope.launch {
             _signupState.value = UiState.Loading
             try {
-                firebaseRepository.signupUser(email, password, firstName, lastName, mobile)
+                firebaseRepository.signupUser(email, password, firstName, lastName)
                 _signupState.value = UiState.Success(Unit)
             } catch (e: Exception) {
                 _signupState.value = UiState.Error(e.message ?: "Signup failed")

@@ -45,7 +45,6 @@ fun SignupScreen(navController: NavController) {
 
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
-    var mobile by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -55,11 +54,9 @@ fun SignupScreen(navController: NavController) {
     val fullText = "SIGN UP"
     var visibleText by remember { mutableStateOf("") }
     var showValidationErrors by remember { mutableStateOf(false) }
-    val mobileRegex = Regex("^\\+?[0-9\\s-]{7,}$")
 
     val firstNameError = showValidationErrors && firstName.isBlank()
     val lastNameError = showValidationErrors && lastName.isBlank()
-    val mobileError = showValidationErrors && !mobile.matches(mobileRegex)
     val emailError = showValidationErrors && !Patterns.EMAIL_ADDRESS.matcher(email).matches()
     val passwordError = showValidationErrors && password.length < 6
     val confirmPasswordError = showValidationErrors && password != confirmPassword
@@ -154,21 +151,6 @@ fun SignupScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = mobile,
-                onValueChange = { mobile = it },
-                label = { Text("Mobile Number", fontFamily = PixelFont, fontSize = 15.sp, color = Color.White) },
-                isError = mobileError,
-                supportingText = {
-                    if (mobileError) Text("Enter valid phone number", color = Color.Red, fontSize = 12.sp) },
-                singleLine = true,
-                textStyle = TextStyle(fontFamily = SoraFont, fontSize = 18.sp),
-                colors = inputColors(),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email", fontFamily = PixelFont, fontSize = 15.sp, color = Color.White) },
@@ -231,9 +213,9 @@ fun SignupScreen(navController: NavController) {
                 onClick = {
                     showValidationErrors = true
 
-                    if (!firstNameError && !lastNameError && !mobileError && !emailError && !passwordError && !confirmPasswordError) {
+                    if (!firstNameError && !lastNameError && !emailError && !passwordError && !confirmPasswordError) {
                         errorMessage = ""
-                        viewModel.signupUser(email, password, firstName, lastName, mobile)
+                        viewModel.signupUser(email, password, firstName, lastName)
                     } else {
                         errorMessage = "Please fix the above errors"
                     }
