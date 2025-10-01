@@ -301,12 +301,12 @@ fun SettingsScreen(navController: NavController, userViewModel: UserViewModel){
                     // Support Section
                     SettingsSection(
                         title = "Support",
-                        items = listOf("Ask CodeBot", "Contact Support"),
+                        items = listOf("Ask CodeBot", "Report an issue"),
                         onItemClick = { item ->
                             if (item == "Ask CodeBot") {
                                 navController.navigate("chatbot")
                             }
-                            if (item == "Contact Support") {
+                            if (item == "Report an issue") {
                                 showSupportDialog = true
                             }
                         }

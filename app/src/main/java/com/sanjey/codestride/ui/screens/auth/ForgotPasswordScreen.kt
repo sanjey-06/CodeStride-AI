@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -122,6 +123,27 @@ fun ForgotPasswordScreen(navController: NavController) {
                     .height(56.dp)
             ) {
                 Text("SEND RESET LINK", color = Color.Black, fontFamily = PixelFont, fontSize = 16.sp)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ⚠️ Warning Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3CD)), // light yellow
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Text(
+                    text = "⚠️ Please check your Spam/Junk folder if you don’t see the email in your inbox.",
+                    fontFamily = SoraFont,
+                    fontSize = 13.sp,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(12.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
