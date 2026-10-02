@@ -60,9 +60,11 @@ Important:
 
         return try {
             if (BuildConfig.DEBUG) {
-                Log.d("AI_PROMPT_USED", "Prompt:\n$prompt")
+            Log.d("AI_TRACE", "1️⃣ About to call getAiRoadmap()")
+            Log.d("AI_STEP", "🚀 Calling getAiRoadmap on Retrofit...")
+            Log.d("AI_PROMPT_USED", "Prompt:\n$prompt")
                 Log.d("AI_PARAMS", "Tokens: 2000, Temp: 0.7, Model: gpt-3.5-turbo")
-            }
+           }
 
             val response = api.getAiRoadmap(
                 AiRequest(
@@ -73,19 +75,29 @@ Important:
                 )
             )
 
-            val duration = System.currentTimeMillis() - startTime
             if (BuildConfig.DEBUG) {
+                Log.d("AI_STEP", "✅ Retrofit returned response object")
+                Log.d("AI_TRACE", "2️⃣ Retrofit call returned successfully")
+            }
+
+
+            val duration = System.currentTimeMillis() - startTime
+           if (BuildConfig.DEBUG) {
                 Log.d("AI_DEBUG", "✅ OpenAI response received in ${duration}ms")
             }
             val innerJson = response.choices.firstOrNull()?.message?.content
+            Log.d("AI_STEP", "📝 Extracted innerJson = ${innerJson?.take(200)}") // limit to 200 chars
+
 
             if (innerJson == null) {
-                if (BuildConfig.DEBUG) {
-                    Log.e("AI_DEBUG", "❌ AI returned null content")}
+               if (BuildConfig.DEBUG) {
+                    Log.e("AI_DEBUG", "❌ AI returned null content")
+                }
                 return emptyList()
             }
             if (BuildConfig.DEBUG) {
-            Log.d("AI_RAW_JSON", "🔥 Raw AI response:\n$innerJson")}
+            Log.d("AI_RAW_JSON", "🔥 Raw AI response:\n$innerJson")
+            }
 
             // 🔹 Clean and parse JSON
             val cleanedJson = sanitizeAiJson(innerJson)
@@ -93,20 +105,25 @@ Important:
                 Log.d("AI_RAW_JSON", "✅ Cleaned JSON:\n$cleanedJson")
                 }
 
-            val parsed = Gson().fromJson(cleanedJson, Array<RoadmapItem>::class.java).toList()
+            val parsedArray: Array<RoadmapItem> = Gson().fromJson(cleanedJson, Array<RoadmapItem>::class.java)
+            val parsed = parsedArray.toList()
 
             if (parsed.size != 10) {
-                if (BuildConfig.DEBUG) {
+               if (BuildConfig.DEBUG) {
                     Log.w("AI_DEBUG", "⚠️ Expected 10 modules, got ${parsed.size}.")}
             }
-            if (BuildConfig.DEBUG) {
-            Log.d("AI_DEBUG", "✅ Parsed ${parsed.size} modules successfully")}
+           if (BuildConfig.DEBUG) {
+            Log.d("AI_DEBUG", "✅ Parsed ${parsed.size} modules successfully")
+        }
             parsed
 
         } catch (e: Exception) {
             val duration = System.currentTimeMillis() - startTime
-            if (BuildConfig.DEBUG) {
-                Log.e("AI_ERROR", "❌ Failed to generate roadmap: ${e.message} (after ${duration}ms)")}
+           if (BuildConfig.DEBUG) {
+            Log.e("AI_TRACE", "🔥 Exception in generateRoadmap()", e)
+            Log.e("AI_STEP", "🔥 Exception before/after Retrofit: ${e::class.java} → ${e.message}", e)
+            Log.e("AI_ERROR", "❌ Failed to generate roadmap: ${e.message} (after ${duration}ms)")
+        }
             emptyList()
         }
     }
@@ -181,19 +198,19 @@ Format the output as a single HTML string (no JSON, no markdown).
 
     suspend fun generateAndStoreRoadmap(
         topic: String,
-        roadmapId: String,
-        onComplete: (Boolean) -> Unit
-    ) {
+        roadmapId: String
+    ): Boolean {
         if (BuildConfig.DEBUG) {
-            Log.d("AI_MODULE_UPLOAD", "🚀 Generating roadmap for topic: $topic")}
+            Log.d("AI_MODULE_UPLOAD", "🚀 Generating roadmap for topic: $topic")
+        }
 
         val modules = generateRoadmap(topic)
 
         if (modules.isEmpty()) {
-            if (BuildConfig.DEBUG) {
-                Log.e("AI_MODULE_UPLOAD", "❌ No modules generated for topic: $topic")}
-            onComplete(false)
-            return
+           if (BuildConfig.DEBUG) {
+                Log.e("AI_MODULE_UPLOAD", "❌ No modules generated for topic: $topic")
+           }
+            return false
         }
 
         val firestore = Firebase.firestore
@@ -203,7 +220,8 @@ Format the output as a single HTML string (no JSON, no markdown).
             val title = module.title
             val description = module.description
             val placeholder = "https://www.youtube.com/watch?v=xxxxx"
-            if (BuildConfig.DEBUG) {
+
+           if (BuildConfig.DEBUG) {
                 Log.d("AI_MODULE_UPLOAD", "🔹 Processing $moduleId → $title")
             }
 
@@ -217,10 +235,7 @@ Format the output as a single HTML string (no JSON, no markdown).
                     fetchYouTubeUrlSuspend(query)
                         ?: "https://www.youtube.com/results?search_query=${query.replace(" ", "+")}".also {
                             if (BuildConfig.DEBUG) {
-                                Log.w(
-                                    "YOUTUBE_FETCH",
-                                    "⚠️ Fallback YouTube search URL used for $query"
-                                )
+                                Log.w("YOUTUBE_FETCH", "⚠️ Fallback YouTube search URL used for $query")
                             }
                         }
                 } else {
@@ -230,12 +245,7 @@ Format the output as a single HTML string (no JSON, no markdown).
                 if (BuildConfig.DEBUG) {
                     Log.e("YOUTUBE_FETCH", "❌ Error fetching YouTube link for $title: ${e.message}")
                 }
-                    "https://www.youtube.com/results?search_query=${
-                        ("$topic $title").replace(
-                            " ",
-                            "+"
-                        )
-                    }"
+                "https://www.youtube.com/results?search_query=${("$topic $title").replace(" ", "+")}"
             }
 
             val moduleData = hashMapOf(
@@ -258,15 +268,14 @@ Format the output as a single HTML string (no JSON, no markdown).
                 if (BuildConfig.DEBUG) {
                     Log.d("AI_MODULE_UPLOAD", "✅ Uploaded $moduleId → $title")
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 if (BuildConfig.DEBUG) {
                     Log.e("AI_MODULE_UPLOAD", "❌ Failed to upload $moduleId: ${e.message}")
                 }
             }
         }
 
-        onComplete(true)
+        return true
     }
 
 
