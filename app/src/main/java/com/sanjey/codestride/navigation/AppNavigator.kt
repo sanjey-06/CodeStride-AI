@@ -3,15 +3,18 @@ package com.sanjey.codestride.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.sanjey.codestride.common.Constants.Routes
 import com.sanjey.codestride.ui.screens.auth.*
 import com.sanjey.codestride.ui.screens.chatbot.ChatbotScreen
 import com.sanjey.codestride.ui.screens.home.HomeScreen
 import com.sanjey.codestride.ui.screens.main.MainScreen
 import com.sanjey.codestride.ui.screens.onboarding.OnboardingScreen
+import com.sanjey.codestride.ui.screens.profile.CompletedRoadmapsScreen
 import com.sanjey.codestride.ui.screens.profile.ProfileScreen
 import com.sanjey.codestride.ui.screens.quiz.QuizScreen
 import com.sanjey.codestride.ui.screens.roadmap.ExploreCareerScreen
@@ -74,40 +77,74 @@ fun AppNavigator() {
         }
 
 
-        composable("${Routes.LEARNING}/{roadmapId}") { backStackEntry ->
+        composable(
+            route = "${Routes.LEARNING}/{roadmapId}?isCompleted={isCompleted}",
+            arguments = listOf(
+                navArgument("roadmapId") { type = NavType.StringType },
+                navArgument("isCompleted") { type = NavType.BoolType; defaultValue = false }
+            )
+        ) { backStackEntry ->
             val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""
+            val isCompleted = backStackEntry.arguments?.getBoolean("isCompleted") ?: false
+
             LearningScreen(
                 roadmapId = roadmapId,
                 navController = navController,
-                roadmapViewModel = roadmapViewModel
+                roadmapViewModel = roadmapViewModel,
+                isCompleted = isCompleted // 👈 NEW
             )
         }
 
+
         composable(Routes.CHATBOT) { ChatbotScreen(navController) }
 
-        composable("${Routes.QUIZ_SCREEN}/{roadmapId}/{moduleId}/{quizId}") { backStackEntry ->
+
+        // ✅ Quiz screen also gets isCompleted flag
+        composable(
+            route = "${Routes.QUIZ_SCREEN}/{roadmapId}/{moduleId}/{quizId}?isCompleted={isCompleted}",
+            arguments = listOf(
+                navArgument("roadmapId") { type = NavType.StringType },
+                navArgument("moduleId") { type = NavType.StringType },
+                navArgument("quizId") { type = NavType.StringType },
+                navArgument("isCompleted") { type = NavType.BoolType; defaultValue = false }
+            )
+        ) { backStackEntry ->
             val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""
             val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
             val quizId = backStackEntry.arguments?.getString("quizId") ?: ""
+            val isCompleted = backStackEntry.arguments?.getBoolean("isCompleted") ?: false
+
             QuizScreen(
                 navController = navController,
                 roadmapId = roadmapId,
                 moduleId = moduleId,
                 quizId = quizId,
                 roadmapViewModel = roadmapViewModel,
+                isCompleted = isCompleted
             )
         }
 
         composable(Routes.EXPLORE_ROADMAPS) { ExploreRoadmapsScreen(navController) }
         composable(Routes.EXPLORE_CAREER) { ExploreCareerScreen(navController) }
+        composable(Routes.COMPLETED_ROADMAPS) { CompletedRoadmapsScreen(navController) }
 
-        composable("${Routes.LEARNING_CONTENT}/{roadmapId}/{moduleId}") { backStackEntry ->
+        composable(
+            route = "${Routes.LEARNING_CONTENT}/{roadmapId}/{moduleId}?isCompleted={isCompleted}",
+            arguments = listOf(
+                navArgument("roadmapId") { type = NavType.StringType },
+                navArgument("moduleId") { type = NavType.StringType },
+                navArgument("isCompleted") { type = NavType.BoolType; defaultValue = false }
+            )
+        ) { backStackEntry ->
             val roadmapId = backStackEntry.arguments?.getString("roadmapId") ?: ""
             val moduleId = backStackEntry.arguments?.getString("moduleId") ?: ""
+            val isCompleted = backStackEntry.arguments?.getBoolean("isCompleted") ?: false
+
             LearningContentScreen(
                 navController = navController,
                 roadmapId = roadmapId,
-                moduleId = moduleId
+                moduleId = moduleId,
+                isCompleted = isCompleted
             )
         }
     }

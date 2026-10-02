@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -39,6 +40,9 @@ import kotlinx.coroutines.launch
 fun ExploreRoadmapsScreen(navController: NavController) {
     val roadmapViewModel: RoadmapViewModel = hiltViewModel()
 
+    val isGenerating by roadmapViewModel.isGeneratingAiRoadmap.collectAsState()
+
+
     // ✅ Load roadmaps on first launch
     LaunchedEffect(Unit) {
         roadmapViewModel.loadRoadmaps()
@@ -54,121 +58,137 @@ fun ExploreRoadmapsScreen(navController: NavController) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        // 🔷 Top Banner
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(bannerHeight)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.homescreen_background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.6f))
-            )
-
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier
-                    .padding(16.dp)
-                    .statusBarsPadding()
-                    .size(24.dp)
-                    .align(Alignment.TopStart)
-                    .clickable { navController.popBackStack() }
-            )
-
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Explore Roadmaps",
-                    fontFamily = PixelFont,
-                    fontSize = 22.sp,
-                    color = Color.White
-                )
-            }
-        }
-
-
-        // 🔲 Grid of Roadmaps
-        Surface(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)),
-            color = Color.White
+                .background(Color.Black)
         ) {
-            when (roadmapsState) {
-                is UiState.Idle -> {}
-                is UiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = CustomBlue)
+            // 🔷 Top Banner
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(bannerHeight)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.homescreen_background),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f))
+                )
+
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .statusBarsPadding()
+                        .size(24.dp)
+                        .align(Alignment.TopStart)
+                        .clickable { navController.popBackStack() }
+                )
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Explore Roadmaps",
+                        fontFamily = PixelFont,
+                        fontSize = 22.sp,
+                        color = Color.White
+                    )
+                }
+            }
+
+
+            // 🔲 Grid of Roadmaps
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)),
+                color = Color.White
+            ) {
+                when (roadmapsState) {
+                    is UiState.Idle -> {}
+                    is UiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = CustomBlue)
+                        }
                     }
-                }
 
-                is UiState.Error -> {
-                    Text("Failed to load roadmaps", color = Color.Red, modifier = Modifier.padding(16.dp))
-                }
+                    is UiState.Error -> {
+                        Text(
+                            "Failed to load roadmaps",
+                            color = Color.Red,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
 
-                is UiState.Empty -> {
-                    Text("No roadmaps available", color = Color.Gray, modifier = Modifier.padding(16.dp))
-                }
+                    is UiState.Empty -> {
+                        Text(
+                            "No roadmaps available",
+                            color = Color.Gray,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
 
-                is UiState.Success -> {
-                    val roadmaps = (roadmapsState as UiState.Success).data
+                    is UiState.Success -> {
+                        val roadmaps = (roadmapsState as UiState.Success).data
 
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(28.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(roadmaps) { roadmap ->
-                            RoadmapIconCard(roadmap = roadmap) {
-                                selectedRoadmap = roadmap
-                                showPreviewDialog = true
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            contentPadding = PaddingValues(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(28.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(roadmaps) { roadmap ->
+                                RoadmapIconCard(roadmap = roadmap) {
+                                    selectedRoadmap = roadmap
+                                    showPreviewDialog = true
+                                }
                             }
-                        }
 
-                        item(span = { GridItemSpan(2) }) {
-                            Text(
-                                text = "More Roadmaps coming soon.....😊",
-                                fontFamily = PixelFont,
-                                fontSize = 16.sp,
-                                color = Color.Black,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                        }
+                            item(span = { GridItemSpan(2) }) {
+                                Text(
+                                    text = "More Roadmaps coming soon.....😊",
+                                    fontFamily = PixelFont,
+                                    fontSize = 16.sp,
+                                    color = Color.Black,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
 
-                        // ✅ Full-width item for the AI Generator
-                        item(span = { GridItemSpan(2) }) {
-                            AiGeneratorSection { topic ->
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    val newId = roadmapViewModel.generateAiRoadmapAndReturnId(topic)
-                                    if (newId != null) {
-                                        if (roadmapViewModel.hasActiveRoadmap()) {
-                                            newRoadmapId = newId           // ✅ Reuse existing var
-                                            showReplaceDialog = true       // ✅ Reuse existing dialog
-                                        } else {
-                                            roadmapViewModel.startRoadmap(newId)
-                                            navController.navigate("learning/$newId")
+                            // ✅ Full-width item for the AI Generator
+                            item(span = { GridItemSpan(2) }) {
+                                AiGeneratorSection { topic ->
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        val newId =
+                                            roadmapViewModel.generateAiRoadmapAndReturnId(topic)
+                                        if (newId != null) {
+                                            if (roadmapViewModel.hasActiveRoadmap()) {
+                                                newRoadmapId =
+                                                    newId           // ✅ Reuse existing var
+                                                showReplaceDialog =
+                                                    true       // ✅ Reuse existing dialog
+                                            } else {
+                                                roadmapViewModel.startRoadmap(newId)
+                                                navController.navigate("learning/$newId")
+                                            }
                                         }
                                     }
                                 }
@@ -176,11 +196,15 @@ fun ExploreRoadmapsScreen(navController: NavController) {
                         }
                     }
                 }
+
             }
 
         }
-
+        if (isGenerating) {
+            LoadingCardExplore("Building your roadmap…")
+        }
     }
+
 
     // ✅ Preview Dialog for roadmap details
     if (showPreviewDialog && selectedRoadmap != null) {
@@ -243,9 +267,48 @@ fun ExploreRoadmapsScreen(navController: NavController) {
             }
         }
     )
-
-
 }
+
+
+@Composable
+fun LoadingCardExplore(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.padding(24.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(color = CustomBlue)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = message,
+                    fontFamily = PixelFont,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "⚠️ This roadmap is AI-generated and may not be fully accurate.",
+                    fontSize = 12.sp,
+                    fontFamily = SoraFont,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+
 
 @Composable
 fun RoadmapIconCard(roadmap: Roadmap, onClick: () -> Unit) {

@@ -29,7 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
-fun LearningContentScreen(navController: NavController, roadmapId: String, moduleId: String) {
+fun LearningContentScreen(navController: NavController, roadmapId: String, moduleId: String,isCompleted: Boolean = false) {
     val viewModel: ModuleViewModel = hiltViewModel()
     val roadmapViewmodel: RoadmapViewModel = hiltViewModel()
     val title by viewModel.moduleTitle.collectAsState()
@@ -39,15 +39,23 @@ fun LearningContentScreen(navController: NavController, roadmapId: String, modul
     val moduleHtmlState by viewModel.moduleHtmlState.collectAsState()
 
     // ✅ Fetch content on launch
-    LaunchedEffect(moduleId) {
+    LaunchedEffect(moduleId, isCompleted) {
         viewModel.fetchModuleDetails(roadmapId, moduleId)
-        viewModel.generateContentIfNeeded(
-            topic = roadmapId.removePrefix("ai_").replace("_", " "),
-            roadmapId = roadmapId,
-            moduleId = moduleId
-        )
-        roadmapViewmodel.updateStreak(roadmapId) // ✅ This is what triggers streak logic
+
+        if (!isCompleted) {
+            // Active mode – generate content if missing
+            viewModel.generateContentIfNeeded(
+                topic = roadmapId.removePrefix("ai_").replace("_", " "),
+                roadmapId = roadmapId,
+                moduleId = moduleId
+            )
+            roadmapViewmodel.updateStreak(roadmapId)
+        } else {
+            // Completed mode – just load stored HTML (no AI or streak updates)
+            viewModel.loadCompletedModules(roadmapId)
+        }
     }
+
 
 
     val configuration = LocalConfiguration.current

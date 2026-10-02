@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.common.FireProgressBar
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.common.getAvatarResourceId
@@ -274,6 +275,24 @@ fun ProfileScreen(
                             modifier = Modifier.padding(top = 12.dp)
                         )
                     }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = { navController.navigate(Constants.Routes.COMPLETED_ROADMAPS) },
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Text(
+                        text = "View Completed Roadmaps",
+                        fontFamily = PixelFont,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

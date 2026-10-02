@@ -12,12 +12,14 @@ class ModerationRepository @Inject constructor(
             val response = moderationApi.checkContent(
                 ModerationRequest(input = text)
             )
-            // If flagged = true → content is unsafe
-            !response.results.firstOrNull()?.flagged.orFalse()
+            // Only block if flagged = true
+            !(response.results.firstOrNull()?.flagged.orFalse())
         } catch (e: Exception) {
-            false // if API fails, be cautious and block
+            // If moderation API fails, allow instead of blocking
+            true
         }
     }
 }
 
 fun Boolean?.orFalse(): Boolean = this ?: false
+

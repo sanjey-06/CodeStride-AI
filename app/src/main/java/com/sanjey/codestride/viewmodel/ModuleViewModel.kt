@@ -2,6 +2,8 @@ package com.sanjey.codestride.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Module
 import com.sanjey.codestride.data.repository.AiGenerationRepository
@@ -10,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
@@ -56,6 +59,33 @@ class ModuleViewModel @Inject constructor(
             }
         }
     }
+
+    fun loadCompletedModules(roadmapId: String) {
+        viewModelScope.launch {
+            _modulesState.value = UiState.Loading
+            try {
+                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+                val firestore = FirebaseFirestore.getInstance()
+
+                val snapshot = firestore.collection("users")
+                    .document(userId)
+                    .collection("completed_roadmaps")
+                    .document(roadmapId)
+                    .collection("modules")
+                    .get()
+                    .await()
+
+                val modules = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(Module::class.java)?.copy(id = doc.id)
+                }
+
+                _modulesState.value = UiState.Success(modules)
+            } catch (e: Exception) {
+                _modulesState.value = UiState.Error("Failed to load completed modules: ${e.message}")
+            }
+        }
+    }
+
 
     fun generateContentIfNeeded(topic: String, roadmapId: String, moduleId: String) {
         viewModelScope.launch {

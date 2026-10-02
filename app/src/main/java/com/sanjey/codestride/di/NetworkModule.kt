@@ -25,7 +25,7 @@ object NetworkModule {
                     .addHeader(
                         "Authorization",
                         "Bearer ${BuildConfig.OPENAI_API_KEY}"
-                    ) // TODO: Replace with secure key management
+                    )
                     .build()
                 chain.proceed(request)
             }
@@ -39,6 +39,30 @@ object NetworkModule {
     }
 
     @Provides
-    fun provideAiApiService(retrofit: Retrofit): AiApiService =
-        retrofit.create(AiApiService::class.java)
+    fun provideAiApiService(retrofit: Retrofit): AiApiService {
+        // 🔎 Log before creating service
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("AI_TRACE", "🛠 Creating AiApiService from Retrofit")
+        }
+
+        // 🔎 Dump method signatures & annotations (so we see if R8 stripped them)
+        AiApiService::class.java.methods.forEach { m ->
+            if (BuildConfig.DEBUG) {
+                android.util.Log.d(
+                    "AI_TRACE",
+                    "📜 Method: ${m.name}, return=${m.genericReturnType}, " +
+                            "params=${m.parameterTypes.joinToString()}, " +
+"annotations=${m.annotations.joinToString()}"
+)
+}
+}
+
+val service = retrofit.create(AiApiService::class.java)
+
+// 🔎 Log after creation
+if (BuildConfig.DEBUG) {
+    android.util.Log.d("AI_TRACE", "✅ AiApiService created: $service")
+}
+return service
+}
 }

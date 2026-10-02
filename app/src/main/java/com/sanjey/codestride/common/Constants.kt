@@ -7,7 +7,6 @@ object Constants {
     const val YOUTUBE_API_KEY = BuildConfig.YOUTUBE_API_KEY
 
 
-
     // ✅ Navigation Routes
     object Routes {
         const val SPLASH = "splash"
@@ -25,6 +24,7 @@ object Constants {
         const val LEARNING_CONTENT = "learning_content"
         const val EXPLORE_ROADMAPS = "explore_roadmaps"
         const val EXPLORE_CAREER = "explore_career"
+        const val COMPLETED_ROADMAPS = "completed_roadmaps"
     }
 
     // ✅ Firestore Paths

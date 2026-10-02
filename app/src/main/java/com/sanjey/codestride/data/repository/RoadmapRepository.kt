@@ -1,7 +1,9 @@
 package com.sanjey.codestride.data.repository
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.sanjey.codestride.BuildConfig
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.Roadmap
 import kotlinx.coroutines.channels.awaitClose
@@ -135,13 +137,16 @@ class RoadmapRepository @Inject constructor(
         val listener = firestore.collection(Constants.FirestorePaths.ROADMAPS)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    trySend(emptyList()) // send empty instead of closing/crashing
                     return@addSnapshotListener
                 }
+
                 val roadmaps = snapshot?.documents?.mapNotNull { doc ->
-                    val roadmap = doc.toObject(Roadmap::class.java)
-                    roadmap?.copy(id = doc.id)  // ✅ Include document ID
+                    runCatching {
+                        doc.toObject(Roadmap::class.java)?.copy(id = doc.id)
+                    }.getOrNull() // safely skip malformed docs
                 } ?: emptyList()
+
                 trySend(roadmaps)
             }
         awaitClose { listener.remove() }
@@ -167,7 +172,6 @@ class RoadmapRepository @Inject constructor(
             if (moduleId != "completed_all" && !completed.contains(moduleId)) {
                 completed.add(moduleId)
             }
-
             val baseCollection = if (roadmapId.startsWith("ai_")) "ai_roadmaps" else Constants.FirestorePaths.ROADMAPS
 
             val modulesSnapshot = firestore.collection(baseCollection)
@@ -185,7 +189,7 @@ class RoadmapRepository @Inject constructor(
             val today = LocalDate.now().toString()
 
             val remainingModules = allModules.filterNot { completed.contains(it) }
-            val newCurrent = if (remainingModules.isEmpty()) {
+            val newCurrentModule = if (remainingModules.isEmpty()) {
                 "completed_all"
             } else {
                 remainingModules.first()
@@ -195,15 +199,113 @@ class RoadmapRepository @Inject constructor(
             docRef.update(
                 mapOf(
                     "completed_modules" to completed.distinct(), // ✅ remove duplicates
-                    "current_module" to newCurrent,
+                    "current_module" to newCurrentModule,
                     "lastLearnedDate" to today
                 )
             ).await()
+            // ✅ NEW: If user completed all modules, mark roadmap as permanently completed
+            if (newCurrentModule == "completed_all") {
+                val userDoc = firestore.collection("users").document(userId)
+                val userSnapshot = userDoc.get().await()
+                val completedList = (userSnapshot.get("completedRoadmaps") as? List<*>)?.filterIsInstance<String>()?.toMutableList() ?: mutableListOf()
 
+                if (!completedList.contains(roadmapId)) {
+                    completedList.add(roadmapId)
+                    userDoc.update("completedRoadmaps", completedList).await()
+                }
+
+                // 🟢 Save full roadmap content for viewing later
+                saveCompletedRoadmap(userId, roadmapId)
+            }
         } catch (_: Exception) {
         }
 
     }
+
+    suspend fun saveCompletedRoadmap(userId: String, roadmapId: String) {
+        try {
+            val baseCollection =
+                if (roadmapId.startsWith("ai_")) "ai_roadmaps" else Constants.FirestorePaths.ROADMAPS
+
+            // Fetch roadmap document
+            val roadmapDoc = firestore.collection(baseCollection).document(roadmapId).get().await()
+            val roadmapData = roadmapDoc.data ?: return
+
+            // Reference for completed_roadmaps under user
+            val userCompletedRef = firestore.collection("users")
+                .document(userId)
+                .collection("completed_roadmaps")
+                .document(roadmapId)
+
+            // Save the roadmap metadata
+            userCompletedRef.set(roadmapData).await()
+
+            // Fetch all modules
+            val modulesSnapshot = firestore.collection(baseCollection)
+                .document(roadmapId)
+                .collection(Constants.FirestorePaths.MODULES)
+                .get()
+                .await()
+
+            // Copy each module with its content, quiz, and YouTube URL
+            for (moduleDoc in modulesSnapshot.documents) {
+                val moduleData = moduleDoc.data ?: continue
+                val moduleId = moduleDoc.id
+
+                // Save module
+                userCompletedRef.collection(Constants.FirestorePaths.MODULES)
+                    .document(moduleId)
+                    .set(moduleData)
+                    .await()
+
+                // Fetch quizzes (if exist)
+                val quizSnapshot = firestore.collection(baseCollection)
+                    .document(roadmapId)
+                    .collection(Constants.FirestorePaths.MODULES)
+                    .document(moduleId)
+                    .collection(Constants.FirestorePaths.QUIZZES)
+                    .get()
+                    .await()
+
+                for (quizDoc in quizSnapshot.documents) {
+                    val quizData = quizDoc.data ?: continue
+                    val quizId = quizDoc.id
+
+                    val quizRef = userCompletedRef
+                        .collection(Constants.FirestorePaths.MODULES)
+                        .document(moduleId)
+                        .collection(Constants.FirestorePaths.QUIZZES)
+                        .document(quizId)
+
+                    quizRef.set(quizData).await()
+
+                    // Fetch questions for this quiz
+                    val questionSnapshot = firestore.collection(baseCollection)
+                        .document(roadmapId)
+                        .collection(Constants.FirestorePaths.MODULES)
+                        .document(moduleId)
+                        .collection(Constants.FirestorePaths.QUIZZES)
+                        .document(quizId)
+                        .collection(Constants.FirestorePaths.QUESTIONS)
+                        .get()
+                        .await()
+
+                    for (questionDoc in questionSnapshot.documents) {
+                        val qData = questionDoc.data ?: continue
+                        quizRef.collection(Constants.FirestorePaths.QUESTIONS)
+                            .document(questionDoc.id)
+                            .set(qData)
+                            .await()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            if (BuildConfig.DEBUG) {
+                Log.e("ROADMAP_REPO", "❌ Failed to save completed roadmap: ${e.message}")
+            }
+        }
+    }
+
 
 
 

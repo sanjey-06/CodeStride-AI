@@ -154,15 +154,14 @@ class RoadmapViewModel @Inject constructor(
         }
     }
 
-
     suspend fun generateAiRoadmapAndReturnId(topic: String): String? = withContext(Dispatchers.IO) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@withContext null
 
-        // ✅ Moderation check before creating roadmap
+        // Moderation check
         val safe = moderationRepository.isContentSafe(topic)
         if (!safe) {
             if (BuildConfig.DEBUG) {
-                Log.e("ROADMAP_AI", "❌ Inappropriate topic entered: $topic")
+                 Log.e("ROADMAP_AI", "❌ Blocked topic (in release too): $topic")
             }
             return@withContext null
         }
@@ -174,32 +173,34 @@ class RoadmapViewModel @Inject constructor(
             "description" to "Custom roadmap for $topic",
             "icon" to "ic_none",
             "created_by" to userId,
-            "isCustom" to true
+            "is_custom" to true   // 🔧 use snake_case for Firestore consistency
         )
 
-        _isGeneratingAiRoadmap.value = true   // ✅ start loading
+        _isGeneratingAiRoadmap.value = true
 
         try {
             val firestore = FirebaseFirestore.getInstance()
             val roadmapRef = firestore.collection("ai_roadmaps").document(roadmapId)
             roadmapRef.set(roadmapData).await()
 
-            aiGenerationRepository.generateAndStoreRoadmap(topic, roadmapId) {
-                if (BuildConfig.DEBUG) {
-                    Log.d("ROADMAP_AI", "All AI modules uploaded for $roadmapId")
-                }
+            // ✅ Wait until AI modules are fully generated
+            aiGenerationRepository.generateAndStoreRoadmap(topic, roadmapId)
+
+            if (BuildConfig.DEBUG) {
+                Log.d("ROADMAP_AI", "✅ All AI modules uploaded for $roadmapId")
             }
 
             return@withContext roadmapId
         } catch (e: Exception) {
             if (BuildConfig.DEBUG) {
-                Log.e("ROADMAP_AI", "Error creating AI roadmap: ${e.message}")
+                Log.e("ROADMAP_AI", "🔥 Error creating AI roadmap", e) // always logs, not only debug
             }
             return@withContext null
         } finally {
-            _isGeneratingAiRoadmap.value = false   // ✅ stop loading
+            _isGeneratingAiRoadmap.value = false
         }
     }
+
 
 
 
@@ -228,6 +229,77 @@ class RoadmapViewModel @Inject constructor(
             _currentRoadmapTitle.value = roadmap?.title ?: "Learning"
         }
     }
+
+
+    fun loadCompletedRoadmaps() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        viewModelScope.launch {
+            _roadmapsState.value = UiState.Loading
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+                val userDoc = firestore.collection("users").document(userId).get().await()
+                val completedIds = (userDoc.get("completedRoadmaps") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+
+                val completedRoadmaps = completedIds.mapNotNull { id ->
+                    repository.getRoadmapById(id)
+                }
+
+                _roadmapsState.value =
+                    if (completedRoadmaps.isNotEmpty()) UiState.Success(completedRoadmaps)
+                    else UiState.Empty
+            } catch (e: Exception) {
+                _roadmapsState.value = UiState.Error("Failed to load completed roadmaps: ${e.message}")
+            }
+        }
+    }
+
+    fun saveCompletedRoadmap(roadmapId: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        viewModelScope.launch {
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+
+                // ✅ Get modules from the actual roadmap (handles AI or normal)
+                val roadmapCollection = if (roadmapId.startsWith("ai_")) "ai_roadmaps" else "roadmaps"
+                val modulesSnapshot = firestore.collection(roadmapCollection)
+                    .document(roadmapId)
+                    .collection("modules")
+                    .get()
+                    .await()
+
+                // ✅ Copy module data into user's completed_roadmaps collection
+                val userModulesRef = firestore.collection("users")
+                    .document(userId)
+                    .collection("completed_roadmaps")
+                    .document(roadmapId)
+                    .collection("modules")
+
+                modulesSnapshot.documents.forEach { moduleDoc ->
+                    val moduleData = moduleDoc.data ?: return@forEach
+                    userModulesRef.document(moduleDoc.id).set(moduleData).await()
+                }
+
+                // ✅ Add roadmapId to user's completedRoadmaps list
+                val userRef = firestore.collection("users").document(userId)
+                firestore.runTransaction { transaction ->
+                    val userSnapshot = transaction.get(userRef)
+                    val existing = userSnapshot.get("completedRoadmaps") as? List<*> ?: emptyList<Any>()
+                    val completed = existing.filterIsInstance<String>().toMutableList()
+                    if (!completed.contains(roadmapId)) completed.add(roadmapId)
+                    transaction.update(userRef, "completedRoadmaps", completed)
+                }.await()
+
+                Log.d("ROADMAP_DEBUG", "✅ Completed roadmap $roadmapId saved successfully with ${modulesSnapshot.size()} modules")
+
+            } catch (e: Exception) {
+                Log.e("ROADMAP_DEBUG", "❌ Failed to save completed roadmap: ${e.message}")
+            }
+        }
+    }
+
+
 
     fun getRoadmapTitleAndIcon(roadmapId: String?): Pair<String, Int> {
         val normalizedId = roadmapId?.trim()?.lowercase() ?: ""

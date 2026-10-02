@@ -1,21 +1,69 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+#############################################
+# Firebase
+#############################################
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+#############################################
+# Hilt / Dagger
+#############################################
+-keep class dagger.hilt.** { *; }
+-keep class dagger.** { *; }
+-keep class javax.inject.** { *; }
+-keep class * extends androidx.lifecycle.ViewModel
+-dontwarn dagger.hilt.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+#############################################
+# Kotlin Coroutines
+#############################################
+-keep class kotlinx.coroutines.** { *; }
+-dontwarn kotlinx.coroutines.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+#############################################
+# Jetpack Compose
+#############################################
+-keep class androidx.compose.** { *; }
+-keep class androidx.activity.** { *; }
+-keep class androidx.lifecycle.** { *; }
+-dontwarn androidx.compose.**
+
+#############################################
+# Retrofit + OkHttp + Gson
+#############################################
+-keepattributes Signature, InnerClasses, EnclosingMethod, *Annotation*, RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+-keep class retrofit2.** { *; }
+-keep interface com.sanjey.codestride.data.remote.** { *; }   # ✅ keep API interfaces
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+-keep class com.google.gson.** { *; }
+-keep class com.google.gson.reflect.TypeToken
+-keep class * extends com.google.gson.reflect.TypeToken
+
+#############################################
+# Firestore & Data Models
+#############################################
+-keep class com.sanjey.codestride.data.model.** { *; }
+-keep class com.sanjey.codestride.data.model.ai.** { *; }
+
+#############################################
+# YouTube API Models
+#############################################
+-keep class com.sanjey.codestride.data.remote.YouTubeResponse { *; }
+-keep class com.sanjey.codestride.data.remote.YouTubeVideoItem { *; }
+-keep class com.sanjey.codestride.data.remote.VideoId { *; }
+
+#############################################
+# AiApiService suspend return type metadata
+#############################################
+-keepclassmembers interface com.sanjey.codestride.data.remote.AiApiService {
+    <methods>;
+}
+# Keep Retrofit generics
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+
+# Coroutines continuation for suspend functions
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+
+# Keep AI models for Gson
+-keep class com.sanjey.codestride.data.model.ai.** { *; }

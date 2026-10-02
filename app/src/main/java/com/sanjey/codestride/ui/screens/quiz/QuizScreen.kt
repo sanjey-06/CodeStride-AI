@@ -43,6 +43,7 @@ fun QuizScreen(
     moduleId: String,
     quizId: String,
     roadmapViewModel: RoadmapViewModel,
+    isCompleted: Boolean = false,
     quizViewModel: QuizViewModel = hiltViewModel()
 ) {
     // ✅ Collect State from ViewModel
@@ -57,12 +58,17 @@ fun QuizScreen(
 
 
 
-    LaunchedEffect(roadmapId, moduleId, quizId) {
+    LaunchedEffect(roadmapId, moduleId, quizId, isCompleted) {
         showInitialLoader = true
-        quizViewModel.generateQuizIfNeeded(roadmapId, moduleId, quizId)
         quizViewModel.loadQuizData(roadmapId, moduleId, quizId)
+
+        if (!isCompleted) {
+            quizViewModel.generateQuizIfNeeded(roadmapId, moduleId, quizId)
+        }
+
         showInitialLoader = false
     }
+
     if (showInitialLoader) {
         val screenHeight = LocalConfiguration.current.screenHeightDp.dp
         val bannerHeight = screenHeight * 0.18f
@@ -160,19 +166,23 @@ fun QuizScreen(
                         options = currentQuestion!!.options,
                         selectedOption = selectedOption,
                         onOptionSelect = { quizViewModel.selectOption(it) },
-                        onSubmit = { quizViewModel.submitCurrentAnswer( roadmapId = roadmapId,
-                            moduleId = moduleId,
-                            roadmapViewModel = roadmapViewModel) },
+                        onSubmit = {
+                            if (!isCompleted) {
+                                quizViewModel.submitCurrentAnswer(
+                                    roadmapId = roadmapId,
+                                    moduleId = moduleId,
+                                    roadmapViewModel = roadmapViewModel
+                                )
+                            }
+                        },
                         submitEnabled = selectedOption != null
                     )
                 }
 
                 QuizResultState.Passed, QuizResultState.Failed -> {
-                    if (quizResultState == QuizResultState.Passed) {
+                    if (quizResultState == QuizResultState.Passed && !isCompleted) {
                         val homeViewModel: HomeViewModel = hiltViewModel()
-
                         LaunchedEffect(Unit) {
-                            //roadmapViewModel.updateProgress(roadmapId, moduleId)
                             val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
                             if (userId != null && quizDetails != null) {
                                 quizViewModel.saveBadge(userId, quizDetails.badgeTitle, quizDetails.badgeImage, roadmapId, moduleId)
@@ -180,6 +190,7 @@ fun QuizScreen(
                             }
                         }
                     }
+
 
 
                     ResultUI(
@@ -195,7 +206,7 @@ fun QuizScreen(
                                 popUpTo(Constants.Routes.ROADMAP) { inclusive = false }
                                 launchSingleTop = true
                             }
-                        }
+                        },
 
                     )
                 }
@@ -348,7 +359,8 @@ fun ResultUI(
     isPassed: Boolean,
     quizDetails: Quiz?,
     onRetry: () -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    isCompleted: Boolean = false
 ) {
     val scrollState = rememberScrollState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
@@ -484,7 +496,8 @@ fun ResultUI(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Button(
-                                onClick = onRetry,
+                                onClick = { if (!isCompleted) onRetry.invoke() },
+                                enabled = !isCompleted,
                                 shape = RoundedCornerShape(50),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                                 modifier = Modifier
@@ -495,7 +508,7 @@ fun ResultUI(
                             }
 
                             Button(
-                                onClick = onNext,
+                                onClick = { onNext.invoke() },
                                 shape = RoundedCornerShape(50),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (isPassed) Color(0xFF03A9F4) else Color.Gray

@@ -1,6 +1,7 @@
 package com.sanjey.codestride.ui.screens.roadmap
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,13 +41,17 @@ import com.sanjey.codestride.viewmodel.ModuleViewModel
 import com.sanjey.codestride.viewmodel.RoadmapViewModel
 
 @Composable
-fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewModel: RoadmapViewModel) {
+fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewModel: RoadmapViewModel,
+                   isCompleted: Boolean = false
+) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val bannerHeight = screenHeight * 0.15f
     val scrollState = rememberScrollState()
 
     val moduleViewModel: ModuleViewModel = hiltViewModel()
     var showCongratsDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
 
 
 
@@ -54,11 +59,15 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
     val progressState by roadmapViewModel.progressState.collectAsState()
     val roadmapTitle by roadmapViewModel.currentRoadmapTitle
 
-    LaunchedEffect(roadmapId) {
-        moduleViewModel.loadModules(roadmapId)
+    LaunchedEffect(roadmapId, isCompleted) {
+        if (isCompleted) {
+            moduleViewModel.loadCompletedModules(roadmapId)
+        } else {
+            moduleViewModel.loadModules(roadmapId)
+        }
         roadmapViewModel.loadRoadmapTitle(roadmapId)
-
     }
+
 
     LaunchedEffect(modulesState) {
     }
@@ -154,8 +163,7 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                 } else emptyList()
 
                             val isFirstModule = index == 0
-                            val isUnlocked =
-                                isFirstModule || completedModules.contains(moduleList[index - 1].id)
+                            val isUnlocked = isCompleted || isFirstModule || completedModules.contains(moduleList[index - 1].id)
 
                             var showDialog by remember { mutableStateOf(false) }
 
@@ -179,9 +187,8 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                             Button(
                                                 onClick = {
-                                                    roadmapViewModel.updateStreak(roadmapId)
-                                                    navController.navigate("learning_content/$roadmapId/${module.id}")
-                                                },
+                                                    if (!isCompleted) roadmapViewModel.updateStreak(roadmapId)
+                                                    navController.navigate("learning_content/$roadmapId/${module.id}?isCompleted=$isCompleted") },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
                                                 shape = RoundedCornerShape(12.dp)
@@ -190,12 +197,11 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                             }
 
                                             Spacer(modifier = Modifier.height(10.dp))
-                                            val context = LocalContext.current
 
                                             if (module.ytUrl.isNotBlank()) {
                                                 Button(
                                                     onClick = {
-                                                        roadmapViewModel.updateStreak(roadmapId)
+                                                        if (!isCompleted) roadmapViewModel.updateStreak(roadmapId)
                                                         val intent = Intent(Intent.ACTION_VIEW, module.ytUrl.toUri())
                                                         context.startActivity(intent)
                                                     },
@@ -209,11 +215,23 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
 
                                             Spacer(modifier = Modifier.height(10.dp))
 
+                                            if (!isCompleted && index < moduleList.size - 1 && !completedModules.contains(moduleList[index].id)) {
+                                                Text(
+                                                    text = "👉 Complete this quiz to unlock the next module",
+                                                    color = Color.Yellow,
+                                                    fontFamily = SoraFont,
+                                                    fontSize = 12.sp,
+                                                    modifier = Modifier.padding(vertical = 8.dp),
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+
+
                                             Button(
                                                 onClick = {
-                                                    val route = "${Constants.Routes.QUIZ_SCREEN}/$roadmapId/${module.id}/${module.quizId}"
+                                                    val route = "${Constants.Routes.QUIZ_SCREEN}/$roadmapId/${module.id}/${module.quizId}?isCompleted=$isCompleted"
                                                     navController.navigate(route)
-                                                    roadmapViewModel.updateStreak(roadmapId)
+                                                    if (!isCompleted) roadmapViewModel.updateStreak(roadmapId)
                                                 },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 colors = ButtonDefaults.buttonColors(containerColor = CustomBlue),
@@ -257,7 +275,15 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                     .fillMaxWidth()
                                     .offset(y = yOffset) // 👈 dynamic offset
                                     .padding(horizontal = 24.dp)
-                                    .clickable(enabled = isUnlocked) { if (isUnlocked) showDialog = true }
+                                    .clickable{
+                                        if (isUnlocked){
+                                            showDialog = true
+                                        } else{
+                                            Toast
+                                                .makeText(context, "Please complete the previous quiz to unlock this module", Toast.LENGTH_SHORT)
+                                                .show()
+                                        }
+                                    }
                             ) {
                                 val backgroundColor = if (isUnlocked) Color(0xFF4CAF50) else Color(0xFFBDBDBD)
 
@@ -295,11 +321,11 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                         ) {
                             Button(
                                 onClick = {
-                                    if (isCompletedAll) {
+                                    if (isCompletedAll && !isCompleted) {
                                         showCongratsDialog = true   // trigger dialog
                                     }
                                 },
-                                enabled = isCompletedAll,
+                                enabled = !isCompleted && isCompletedAll,
                                 modifier = Modifier
                                     .align(Alignment.Center)
                                     .fillMaxWidth(0.85f)
@@ -356,7 +382,12 @@ fun LearningScreen(roadmapId: String, navController: NavController, roadmapViewM
                                         Spacer(modifier = Modifier.height(20.dp))
                                         Button(
                                             onClick = {
+                                                // ✅ Save completed roadmap data before navigating home
+                                                roadmapViewModel.saveCompletedRoadmap(roadmapId)
+
                                                 showCongratsDialog = false
+                                                Toast.makeText(context, "Roadmap saved to Completed list!", Toast.LENGTH_SHORT).show()
+
                                                 navController.navigate("home") {
                                                     popUpTo("home") { inclusive = true }
                                                 }
