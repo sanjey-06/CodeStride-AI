@@ -3,6 +3,7 @@
 # =========================
 /build
 /app/build
+/app/release
 /captures
 .externalNativeBuild
 .cxx
@@ -47,7 +48,7 @@ google-services.json
 # =========================
 # Firebase CLI config
 # =========================
-.firebasearc
+.firebaserc
 
 # =========================
 # Backup / temp files
