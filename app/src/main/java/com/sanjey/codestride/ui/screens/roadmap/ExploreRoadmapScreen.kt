@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
 import com.sanjey.codestride.R
 import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.common.getIconResource
@@ -36,11 +39,22 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun ExploreRoadmapsScreen(navController: NavController) {
     val roadmapViewModel: RoadmapViewModel = hiltViewModel()
 
     val isGenerating by roadmapViewModel.isGeneratingAiRoadmap.collectAsState()
+
+    // Show generation errors as a Toast (floats above the app - no layout change)
+    val context = LocalContext.current
+    val aiRoadmapError by roadmapViewModel.aiRoadmapError.collectAsState()
+    LaunchedEffect(aiRoadmapError) {
+        aiRoadmapError?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            roadmapViewModel.clearAiRoadmapError()
+        }
+    }
 
 
     // ✅ Load roadmaps on first launch

@@ -14,7 +14,8 @@ import com.sanjey.codestride.common.getIconResource
 import com.sanjey.codestride.data.model.ProgressState
 import com.sanjey.codestride.data.model.Roadmap
 import com.sanjey.codestride.data.repository.AiGenerationRepository
-import com.sanjey.codestride.data.repository.ModerationRepository
+import com.sanjey.codestride.data.remote.backend.BackendError
+import kotlinx.coroutines.CancellationException
 import com.sanjey.codestride.data.repository.RoadmapRepository
 import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,7 +33,6 @@ class RoadmapViewModel @Inject constructor(
     private val repository: RoadmapRepository,
     private val userRepository: UserRepository,
     private val aiGenerationRepository: AiGenerationRepository,
-    private val moderationRepository: ModerationRepository
 ) : ViewModel() {
 
     private val _roadmapsState = MutableStateFlow<UiState<List<Roadmap>>>(UiState.Idle)
@@ -49,6 +49,14 @@ class RoadmapViewModel @Inject constructor(
 
     private val _isGeneratingAiRoadmap = MutableStateFlow(false)
     val isGeneratingAiRoadmap: StateFlow<Boolean> = _isGeneratingAiRoadmap
+
+    /** Friendly message when AI roadmap generation fails (null = no error). Screens show it as a Toast. */
+    private val _aiRoadmapError = MutableStateFlow<String?>(null)
+    val aiRoadmapError: StateFlow<String?> = _aiRoadmapError
+
+    fun clearAiRoadmapError() {
+        _aiRoadmapError.value = null
+    }
 
 
 
@@ -157,52 +165,46 @@ class RoadmapViewModel @Inject constructor(
     suspend fun generateAiRoadmapAndReturnId(topic: String): String? = withContext(Dispatchers.IO) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@withContext null
 
-        // Moderation check
-        val safe = moderationRepository.isContentSafe(topic)
-        if (!safe) {
-            if (BuildConfig.DEBUG) {
-                 Log.e("ROADMAP_AI", "❌ Blocked topic (in release too): $topic")
-            }
-            return@withContext null
-        }
-
-        val roadmapId = "ai_" + topic.lowercase().replace(" ", "_")
-
-        val roadmapData = mapOf(
-            "title" to topic.replaceFirstChar { it.uppercase() },
-            "description" to "Custom roadmap for $topic",
-            "icon" to "ic_none",
-            "created_by" to userId,
-            "is_custom" to true   // 🔧 use snake_case for Firestore consistency
-        )
-
         _isGeneratingAiRoadmap.value = true
+        _aiRoadmapError.value = null
 
         try {
-            val firestore = FirebaseFirestore.getInstance()
-            val roadmapRef = firestore.collection("ai_roadmaps").document(roadmapId)
-            roadmapRef.set(roadmapData).await()
+            // 1️⃣ Ask the Worker FIRST (moderation + daily limit + AI all happen there).
+            //    Nothing is written to Firestore unless this succeeds.
+            val modules = aiGenerationRepository.fetchAiRoadmap(topic).getOrElse { e ->
+                _aiRoadmapError.value = (e as? BackendError)?.userMessage
+                    ?: "Couldn't generate roadmap. Please try again."
+                return@withContext null
+            }
 
-            // ✅ Wait until AI modules are fully generated
-            aiGenerationRepository.generateAndStoreRoadmap(topic, roadmapId)
+            // 2️⃣ Save the roadmap + its modules
+            val roadmapId = "ai_" + topic.lowercase().replace(" ", "_")
+            val roadmapData = mapOf(
+                "title" to topic.replaceFirstChar { it.uppercase() },
+                "description" to "Custom roadmap for $topic",
+                "icon" to "ic_none",
+                "created_by" to userId,
+                "is_custom" to true   // 🔧 use snake_case for Firestore consistency
+            )
+            FirebaseFirestore.getInstance().collection("ai_roadmaps").document(roadmapId).set(roadmapData).await()
+            aiGenerationRepository.storeRoadmapModules(topic, roadmapId, modules)
 
             if (BuildConfig.DEBUG) {
                 Log.d("ROADMAP_AI", "✅ All AI modules uploaded for $roadmapId")
             }
-
-            return@withContext roadmapId
+            roadmapId
+        } catch (e: CancellationException) {
+            throw e // screen closed - not an error
         } catch (e: Exception) {
             if (BuildConfig.DEBUG) {
-                Log.e("ROADMAP_AI", "🔥 Error creating AI roadmap", e) // always logs, not only debug
+                Log.e("ROADMAP_AI", "🔥 Error saving AI roadmap", e)
             }
-            return@withContext null
+            _aiRoadmapError.value = "Couldn't save the roadmap. Please try again."
+            null
         } finally {
             _isGeneratingAiRoadmap.value = false
         }
     }
-
-
-
 
 
     fun updateProgress(roadmapId: String, moduleId: String) {

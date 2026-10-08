@@ -1,5 +1,6 @@
 package com.sanjey.codestride.ui.screens.roadmap
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +46,16 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
     var showDialog by remember { mutableStateOf(false) }
     var newRoadmapId by remember { mutableStateOf<String?>(null) }
     val isGenerating by roadmapViewModel.isGeneratingAiRoadmap.collectAsState()
+
+    // Show generation errors as a Toast (floats above the app - no layout change)
+    val context = LocalContext.current
+    val aiRoadmapError by roadmapViewModel.aiRoadmapError.collectAsState()
+    LaunchedEffect(aiRoadmapError) {
+        aiRoadmapError?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            roadmapViewModel.clearAiRoadmapError()
+        }
+    }
 
 
     val currentRoadmapId by roadmapViewModel.currentRoadmapId.collectAsState()
@@ -229,7 +241,10 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
 
                 var showErrorState by remember { mutableStateOf(false) }
 
+                var lastTopic by remember { mutableStateOf("") }
+
                 AiGeneratorSection { topic ->
+                    lastTopic = topic
                     CoroutineScope(Dispatchers.Main).launch {
                         val newId = roadmapViewModel.generateAiRoadmapAndReturnId(topic)
 
@@ -257,7 +272,7 @@ fun RoadmapScreen(appNavController: NavController, roadmapViewModel: RoadmapView
                         Button(
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    val retryId = roadmapViewModel.generateAiRoadmapAndReturnId("Retry Topic")
+                                    val retryId = roadmapViewModel.generateAiRoadmapAndReturnId(lastTopic)
                                     if (retryId != null) {
                                         showErrorState = false
                                         roadmapViewModel.startRoadmap(retryId)

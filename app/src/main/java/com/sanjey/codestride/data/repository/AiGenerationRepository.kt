@@ -18,146 +18,22 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import retrofit2.Call
 import javax.inject.Inject
+import com.sanjey.codestride.data.model.backend.RoadmapRequest
+import com.sanjey.codestride.data.remote.backend.CodeStrideApi
+import com.sanjey.codestride.data.remote.backend.backendCall
 
 class AiGenerationRepository @Inject constructor(
-    private val api: AiApiService
+    private val api: AiApiService,
+    private val backend: CodeStrideApi
 ) {
-    private suspend fun generateRoadmap(topic: String): List<RoadmapItem> {
-        val prompt = """
-You are an expert curriculum designer and HTML writer.
-
-Create a 10-step beginner-friendly roadmap for learning "$topic".
-
-Each step must include these 5 fields:
-
-1. "title": A concise module name (Title Case, max 6 words)
-2. "description": One-sentence summary of what the learner will achieve
-3. "link": A relevant YouTube video URL. Use "https://www.youtube.com/watch?v=xxxxx" if unknown.
-4. "html_content": A rich, detailed HTML tutorial-style section with:
-
-    - A <h2> title for the topic
-    - 3 to 5 <p> paragraphs explaining the concept in depth
-    - One <ul><li></li></ul> list with examples, tools, or tips
-    - One <pre><code> block with a relevant code example (with comments)
-    - Use <b> and <i> tags for emphasis
-    - If helpful, include a real-world analogy or use-case
-5. "quizId": A unique string identifier for the module's quiz (e.g., "quiz1", "quiz2")
-
-
-Important:
-
-- Make the content feel like a short blog tutorial
-- Do not skip paragraphs or code
-- Format response as a pure JSON array with 10 items only (no markdown wrapping)
-""".trimIndent()
-
-        if (BuildConfig.DEBUG) {
-            Log.d("AI_DEBUG", "🟡 Starting AI roadmap generation for topic: $topic")
-            Log.d("AI_DEBUG", "📝 Prompt size = ${prompt.length} characters")
-        }
-
-        val startTime = System.currentTimeMillis()
-
-        return try {
-            if (BuildConfig.DEBUG) {
-            Log.d("AI_TRACE", "1️⃣ About to call getAiRoadmap()")
-            Log.d("AI_STEP", "🚀 Calling getAiRoadmap on Retrofit...")
-            Log.d("AI_PROMPT_USED", "Prompt:\n$prompt")
-                Log.d("AI_PARAMS", "Tokens: 2000, Temp: 0.7, Model: gpt-3.5-turbo")
-           }
-
-            val response = api.getAiRoadmap(
-                AiRequest(
-                    model = "gpt-3.5-turbo",
-                    messages = listOf(Message(content = prompt)),
-                    max_tokens = 2000,
-                    temperature = 0.7
-                )
-            )
-
-            if (BuildConfig.DEBUG) {
-                Log.d("AI_STEP", "✅ Retrofit returned response object")
-                Log.d("AI_TRACE", "2️⃣ Retrofit call returned successfully")
-            }
-
-
-            val duration = System.currentTimeMillis() - startTime
-           if (BuildConfig.DEBUG) {
-                Log.d("AI_DEBUG", "✅ OpenAI response received in ${duration}ms")
-            }
-            val innerJson = response.choices.firstOrNull()?.message?.content
-            Log.d("AI_STEP", "📝 Extracted innerJson = ${innerJson?.take(200)}") // limit to 200 chars
-
-
-            if (innerJson == null) {
-               if (BuildConfig.DEBUG) {
-                    Log.e("AI_DEBUG", "❌ AI returned null content")
-                }
-                return emptyList()
-            }
-            if (BuildConfig.DEBUG) {
-            Log.d("AI_RAW_JSON", "🔥 Raw AI response:\n$innerJson")
-            }
-
-            // 🔹 Clean and parse JSON
-            val cleanedJson = sanitizeAiJson(innerJson)
-            if (BuildConfig.DEBUG) {
-                Log.d("AI_RAW_JSON", "✅ Cleaned JSON:\n$cleanedJson")
-                }
-
-            val parsedArray: Array<RoadmapItem> = Gson().fromJson(cleanedJson, Array<RoadmapItem>::class.java)
-            val parsed = parsedArray.toList()
-
-            if (parsed.size != 10) {
-               if (BuildConfig.DEBUG) {
-                    Log.w("AI_DEBUG", "⚠️ Expected 10 modules, got ${parsed.size}.")}
-            }
-           if (BuildConfig.DEBUG) {
-            Log.d("AI_DEBUG", "✅ Parsed ${parsed.size} modules successfully")
-        }
-            parsed
-
-        } catch (e: Exception) {
-            val duration = System.currentTimeMillis() - startTime
-           if (BuildConfig.DEBUG) {
-            Log.e("AI_TRACE", "🔥 Exception in generateRoadmap()", e)
-            Log.e("AI_STEP", "🔥 Exception before/after Retrofit: ${e::class.java} → ${e.message}", e)
-            Log.e("AI_ERROR", "❌ Failed to generate roadmap: ${e.message} (after ${duration}ms)")
-        }
-            emptyList()
-        }
+    /**
+     * Asks the Worker for a 10-step roadmap (POST /roadmap).
+     * The Worker handles moderation, the daily limit, the prompt and JSON checking.
+     * Every step's link is the YouTube placeholder, so storeRoadmapModules() searches YouTube.
+     */
+    suspend fun fetchAiRoadmap(topic: String): Result<List<RoadmapItem>> = backendCall {
+        backend.roadmap(RoadmapRequest(topic)).items
     }
-
-
-    private fun sanitizeAiJson(raw: String): String {
-        var result = raw.trim()
-
-        // 1. Remove markdown code fences
-        if (result.startsWith("```json")) {
-            result = result.removePrefix("```json").trim()
-        }
-        if (result.endsWith("```")) {
-            result = result.removeSuffix("```").trim()
-        }
-
-        // 2. Extract only the JSON array part
-        val start = result.indexOf("[")
-        val end = result.lastIndexOf("]")
-        if (start != -1 && end != -1 && end > start) {
-            result = result.substring(start, end + 1)
-        }
-
-        // 3. Escape unescaped quotes inside html_content
-        result = result.replace(Regex("(?<=html_content\":\\s?\").*?(?=\")")) {
-            it.value.replace("\"", "\\\"")
-        }
-
-        return result
-    }
-
-
-
-
 
     suspend fun generateModuleContent(topic: String, moduleTitle: String): String {
         val prompt = """
@@ -196,23 +72,11 @@ Format the output as a single HTML string (no JSON, no markdown).
 
 
 
-    suspend fun generateAndStoreRoadmap(
+    suspend fun storeRoadmapModules(
         topic: String,
-        roadmapId: String
-    ): Boolean {
-        if (BuildConfig.DEBUG) {
-            Log.d("AI_MODULE_UPLOAD", "🚀 Generating roadmap for topic: $topic")
-        }
-
-        val modules = generateRoadmap(topic)
-
-        if (modules.isEmpty()) {
-           if (BuildConfig.DEBUG) {
-                Log.e("AI_MODULE_UPLOAD", "❌ No modules generated for topic: $topic")
-           }
-            return false
-        }
-
+        roadmapId: String,
+        modules: List<RoadmapItem>
+    ) {
         val firestore = Firebase.firestore
 
         modules.forEachIndexed { index, module ->
@@ -274,8 +138,6 @@ Format the output as a single HTML string (no JSON, no markdown).
                 }
             }
         }
-
-        return true
     }
 
 
