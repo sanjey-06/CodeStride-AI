@@ -42,6 +42,11 @@ android {
             "YOUTUBE_API_KEY",
             "\"${project.findProperty("YOUTUBE_API_KEY") ?: ""}\""
         )
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"https://codestride-api.sanjeyts06.workers.dev/\""
+        )
     }
 
         buildTypes {
