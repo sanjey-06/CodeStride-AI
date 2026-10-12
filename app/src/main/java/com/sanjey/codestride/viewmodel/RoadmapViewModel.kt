@@ -20,6 +20,7 @@ import com.sanjey.codestride.data.repository.RoadmapRepository
 import com.sanjey.codestride.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -110,10 +111,21 @@ class RoadmapViewModel @Inject constructor(
 
 
 
+    // Which user the current-roadmap listener belongs to, and the listener itself.
+    private var observedUserId: String? = null
+    private var currentRoadmapJob: Job? = null
+
     // ✅ Observe current roadmap as Flow from repository
+    // Safe to call many times: it starts ONE listener per signed-in user.
+    // Called at app start (often before login, when it does nothing) and again
+    // from HomeScreen after login, so a fresh install + login still picks up the roadmap.
     fun observeCurrentRoadmap() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        viewModelScope.launch {
+        if (userId == observedUserId && currentRoadmapJob?.isActive == true) return
+
+        observedUserId = userId
+        currentRoadmapJob?.cancel() // a different user signed in -> drop the old listener
+        currentRoadmapJob = viewModelScope.launch {
 
             repository.observeCurrentRoadmap(userId).collectLatest { roadmapId ->
 

@@ -53,6 +53,12 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 
     val currentRoadmapId by roadmapViewModel.currentRoadmapId.collectAsState()
 
+    // Start listening for the user's current roadmap now that they're signed in.
+    // (AppNavigator's call runs at app start - before login on a fresh install - and does nothing then.)
+    LaunchedEffect(Unit) {
+        roadmapViewModel.observeCurrentRoadmap()
+    }
+
     LaunchedEffect(homeState) {
     }
     var showDialog by remember { mutableStateOf(false) }
@@ -202,7 +208,12 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    val (title, iconResId) = roadmapViewModel.getRoadmapTitleAndIcon(currentRoadmapId)
+                    // Title/icon: from the roadmap id once it's known; until then use HomeViewModel's
+                    // data - the same source as the progress bar - so the card never mixes the two.
+                    val (title, iconResId) = if (currentRoadmapId != null)
+                        roadmapViewModel.getRoadmapTitleAndIcon(currentRoadmapId)
+                    else
+                        data.currentRoadmap.title to data.currentRoadmap.iconResId
 
                     RoadmapCard(
                         iconResId = iconResId,
