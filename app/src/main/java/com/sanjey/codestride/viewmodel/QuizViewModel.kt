@@ -12,10 +12,12 @@
     import com.sanjey.codestride.data.repository.AiGenerationRepository
     import com.sanjey.codestride.data.repository.FirebaseRepository
     import com.sanjey.codestride.data.repository.ModuleRepository
+    import com.sanjey.codestride.data.remote.backend.BackendError
     import dagger.hilt.android.lifecycle.HiltViewModel
     import kotlinx.coroutines.flow.MutableStateFlow
     import kotlinx.coroutines.flow.StateFlow
     import kotlinx.coroutines.launch
+    import kotlinx.coroutines.CancellationException
     import javax.inject.Inject
 
     enum class QuizResultState {
@@ -72,7 +74,11 @@
                         _questionsState.value = UiState.Success(questions)
                         (currentQuestion as MutableStateFlow).value = questions.first()
                     } else {
-                        _questionsState.value = UiState.Empty
+                        // Keep a generation error visible (e.g. "No internet") instead of
+                        // replacing it with "No questions available"
+                        if (_questionsState.value !is UiState.Error) {
+                            _questionsState.value = UiState.Empty
+                        }
                     }
                 } catch (e: Exception) {
                     _quizDetailsState.value = UiState.Error("Failed to load quiz")
@@ -160,50 +166,54 @@
                     badgeDescription = "" // static badges have no description
                 }
 
-                // If quiz doesn't exist yet, generate it
                 if (quizDetails == null || questions.isEmpty()) {
                     val module = moduleRepository.getModuleById(roadmapId, moduleId)
 
-                    val generated = aiGenerationRepository.generateQuiz(
-                        roadmapId,
-                        module?.title ?: "Learning"
-                    )
+                    // The real topic ("ai_kotlin" -> "kotlin"), same as LearningContentScreen does
+                    val topic = roadmapId.removePrefix("ai_").replace("_", " ")
 
-                    if (generated.isNotEmpty()) {
+                    aiGenerationRepository.generateQuiz(topic, module?.title ?: "Learning")
+                        .onSuccess { generated ->
+                            val aiQuiz = Quiz(
+                                id = quizId,
+                                passingScore = 3,
+                                totalQuestions = generated.size,
+                                badgeImage = badgeImage,
+                                badgeTitle = badgeTitle,
+                                badgeDescription = badgeDescription
+                            )
+                            firebaseRepository.saveAIQuiz(
+                                roadmapId,
+                                moduleId,
+                                quizId,
+                                aiQuiz,
+                                generated
+                            )
 
-                        val aiQuiz = Quiz(
-                            id = quizId,
-                            passingScore = 3,
-                            totalQuestions = generated.size,
-                            badgeImage = badgeImage,
-                            badgeTitle = badgeTitle,
-                            badgeDescription = badgeDescription
-                        )
-
-                        firebaseRepository.saveAIQuiz(roadmapId, moduleId, quizId, aiQuiz, generated)
-                    } else {
-                        if (BuildConfig.DEBUG) {
-                            Log.w("QUIZ_DEBUG", "No questions generated, quiz not saved")
+                            // Show the new questions now (loadQuizData ran before they existed)
+                            loadQuizData(roadmapId, moduleId, quizId)
                         }
-                    }
+                        .onFailure { e ->
+                            // Limit reached / AI busy / no internet -> the screen's existing error text
+                            _questionsState.value = UiState.Error(
+                                (e as? BackendError)?.userMessage
+                                    ?: "Couldn't create the quiz. Please try again."
+                            )
+                        }
                 } else {
+
                     if (BuildConfig.DEBUG) {
                         Log.d("QUIZ_DEBUG", "Quiz already exists, skipping generation")
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e // screen closed - not an error
+
             } catch (e: Exception) {
                 if (BuildConfig.DEBUG) {
                     Log.e("QUIZ_DEBUG", "generateQuizIfNeeded error: ${e.message}", e)
                 }
             }
         }
-
-
-
-
-
-
-
-
 
     }

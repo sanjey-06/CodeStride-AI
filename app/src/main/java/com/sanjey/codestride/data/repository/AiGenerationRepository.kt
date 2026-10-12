@@ -3,13 +3,10 @@ package com.sanjey.codestride.data.repository
 import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import com.google.gson.Gson
 import com.sanjey.codestride.BuildConfig
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.Question
 import com.sanjey.codestride.data.model.RoadmapItem
-import com.sanjey.codestride.data.model.ai.AiRequest
-import com.sanjey.codestride.data.model.ai.Message
 import com.sanjey.codestride.data.remote.AiApiService
 import com.sanjey.codestride.data.remote.YouTubeApiClient
 import com.sanjey.codestride.data.remote.YouTubeResponse
@@ -24,7 +21,6 @@ import com.sanjey.codestride.data.remote.backend.backendCall
 import com.sanjey.codestride.data.model.backend.ModuleRequest
 
 class AiGenerationRepository @Inject constructor(
-    private val api: AiApiService,
     private val backend: CodeStrideApi
 ) {
     /**
@@ -43,8 +39,6 @@ class AiGenerationRepository @Inject constructor(
     suspend fun generateModuleContent(topic: String, moduleTitle: String): Result<String> = backendCall {
         backend.moduleContent(ModuleRequest(topic, moduleTitle)).html
     }
-
-
 
 
     suspend fun storeRoadmapModules(
@@ -144,65 +138,12 @@ class AiGenerationRepository @Inject constructor(
         }
 
 
-    suspend fun generateQuiz(topic: String, moduleTitle: String): List<Question> {
-        if (BuildConfig.DEBUG) {
-            Log.d(
-                "QUIZ_DEBUG",
-                "🚀 Starting AI quiz generation → topic=$topic, moduleTitle=$moduleTitle"
-            )
-        }
-
-        val prompt = """
-You are an expert quiz maker.
-
-Create a multiple-choice quiz for the topic "$moduleTitle" in the "$topic" learning roadmap.
-
-Requirements:
-- 5 questions
-- Each question has exactly 4 options
-- Only ONE correct answer per question
-- Provide a detailed explanation for the correct answer
-- Return in pure JSON array format, where each object contains:
-    - question_text (string)
-    - options (array of 4 strings)
-    - correct_answer (string)
-""".trimIndent()
-
-
-        return try {
-            if (BuildConfig.DEBUG) {
-                Log.d("QUIZ_DEBUG", "📡 Sending prompt to AI (${prompt.length} chars)")
-            }
-
-            val response = api.getAiRoadmap(
-                AiRequest(
-                    model = "gpt-3.5-turbo",
-                    messages = listOf(Message(content = prompt)),
-                    max_tokens = 1000,
-                    temperature = 0.7
-                )
-            )
-
-
-            val innerJson = response.choices.firstOrNull()?.message?.content?.trim().orEmpty()
-            if (BuildConfig.DEBUG) {
-                Log.d("QUIZ_DEBUG", "🔥 Raw AI output: $innerJson")
-            }
-
-
-            var cleanedJson = innerJson
-            if (cleanedJson.startsWith("```json")) {
-                cleanedJson = cleanedJson.removePrefix("```json").trim()
-            }
-            if (cleanedJson.endsWith("```")) {
-                cleanedJson = cleanedJson.removeSuffix("```").trim()
-            }
-
-            return Gson().fromJson(cleanedJson, Array<Question>::class.java).toList()
-
-        } catch (e: Exception) {
-            emptyList()
-        }
+    /**
+     * Asks the Worker for a 5-question quiz (POST /quiz).
+     * The Worker checks every question: exactly 4 options, and correct_answer is one of them.
+     */
+    suspend fun generateQuiz(topic: String, moduleTitle: String): Result<List<Question>> = backendCall {
+        backend.quiz(ModuleRequest(topic, moduleTitle)).questions
     }
 
 }

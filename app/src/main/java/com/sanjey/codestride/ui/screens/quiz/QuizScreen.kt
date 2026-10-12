@@ -126,89 +126,90 @@ fun QuizScreen(
                 }
             }
         }
-    }
+    } else {
 
 
-    when {
-        questionsState is UiState.Loading || quizDetailsState is UiState.Loading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = CustomBlue)
-            }
-        }
-
-        questionsState is UiState.Error -> {
-            val error = (questionsState as UiState.Error).message
-            Text(
-                text = "Error: $error",
-                color = Color.Red,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-
-        questionsState is UiState.Empty -> {
-            Text(
-                text = "No questions available",
-                color = Color.Gray,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-
-        questionsState is UiState.Success -> {
-            val questions = (questionsState as UiState.Success).data
-            val quizDetails = (quizDetailsState as? UiState.Success)?.data
-
-            when (quizResultState) {
-                QuizResultState.None -> {
-                    QuizContentUI(
-                        navController = navController,
-                        questionText = currentQuestion!!.questionText,
-                        questionNumber = "Question ${currentIndex + 1} of ${questions.size}",
-                        options = currentQuestion!!.options,
-                        selectedOption = selectedOption,
-                        onOptionSelect = { quizViewModel.selectOption(it) },
-                        onSubmit = {
-                            if (!isCompleted) {
-                                quizViewModel.submitCurrentAnswer(
-                                    roadmapId = roadmapId,
-                                    moduleId = moduleId,
-                                    roadmapViewModel = roadmapViewModel
-                                )
-                            }
-                        },
-                        submitEnabled = selectedOption != null
-                    )
+        when {
+            questionsState is UiState.Loading || quizDetailsState is UiState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = CustomBlue)
                 }
+            }
 
-                QuizResultState.Passed, QuizResultState.Failed -> {
-                    if (quizResultState == QuizResultState.Passed && !isCompleted) {
-                        val homeViewModel: HomeViewModel = hiltViewModel()
-                        LaunchedEffect(Unit) {
-                            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-                            if (userId != null && quizDetails != null) {
-                                quizViewModel.saveBadge(userId, quizDetails.badgeTitle, quizDetails.badgeImage, roadmapId, moduleId)
-                                homeViewModel.refreshBadges()
-                            }
-                        }
+            questionsState is UiState.Error -> {
+                val error = (questionsState as UiState.Error).message
+                Text(
+                    text = "Error: $error",
+                    color = Color.Red,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+
+            questionsState is UiState.Empty -> {
+                Text(
+                    text = "No questions available",
+                    color = Color.Gray,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+
+            questionsState is UiState.Success -> {
+                val questions = (questionsState as UiState.Success).data
+                val quizDetails = (quizDetailsState as? UiState.Success)?.data
+
+                when (quizResultState) {
+                    QuizResultState.None -> {
+                        QuizContentUI(
+                            navController = navController,
+                            questionText = currentQuestion!!.questionText,
+                            questionNumber = "Question ${currentIndex + 1} of ${questions.size}",
+                            options = currentQuestion!!.options,
+                            selectedOption = selectedOption,
+                            onOptionSelect = { quizViewModel.selectOption(it) },
+                            onSubmit = {
+                                if (!isCompleted) {
+                                    quizViewModel.submitCurrentAnswer(
+                                        roadmapId = roadmapId,
+                                        moduleId = moduleId,
+                                        roadmapViewModel = roadmapViewModel
+                                    )
+                                }
+                            },
+                            submitEnabled = selectedOption != null
+                        )
                     }
 
-
-
-                    ResultUI(
-                        score = score,
-                        totalQuestions = questions.size,
-                        isPassed = (quizResultState == QuizResultState.Passed),
-                        quizDetails = quizDetails,
-                        onRetry = { quizViewModel.resetQuiz()
-                            quizViewModel.loadQuizData(roadmapId, moduleId, quizId) // ✅ Force reload
-                            },
-                        onNext = {
-                            navController.navigate("${Constants.Routes.LEARNING}/$roadmapId") {
-                                popUpTo(Constants.Routes.ROADMAP) { inclusive = false }
-                                launchSingleTop = true
+                    QuizResultState.Passed, QuizResultState.Failed -> {
+                        if (quizResultState == QuizResultState.Passed && !isCompleted) {
+                            val homeViewModel: HomeViewModel = hiltViewModel()
+                            LaunchedEffect(Unit) {
+                                val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                                if (userId != null && quizDetails != null) {
+                                    quizViewModel.saveBadge(userId, quizDetails.badgeTitle, quizDetails.badgeImage, roadmapId, moduleId)
+                                    homeViewModel.refreshBadges()
+                                }
                             }
-                        },
+                        }
 
-                    )
+
+
+                        ResultUI(
+                            score = score,
+                            totalQuestions = questions.size,
+                            isPassed = (quizResultState == QuizResultState.Passed),
+                            quizDetails = quizDetails,
+                            onRetry = { quizViewModel.resetQuiz()
+                                quizViewModel.loadQuizData(roadmapId, moduleId, quizId) // ✅ Force reload
+                                },
+                            onNext = {
+                                navController.navigate("${Constants.Routes.LEARNING}/$roadmapId") {
+                                    popUpTo(Constants.Routes.ROADMAP) { inclusive = false }
+                                    launchSingleTop = true
+                                }
+                            },
+
+                        )
+                    }
                 }
             }
         }
