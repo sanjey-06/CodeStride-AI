@@ -52,12 +52,6 @@
 -keep class com.sanjey.codestride.data.remote.YouTubeVideoItem { *; }
 -keep class com.sanjey.codestride.data.remote.VideoId { *; }
 
-#############################################
-# AiApiService suspend return type metadata
-#############################################
--keepclassmembers interface com.sanjey.codestride.data.remote.AiApiService {
-    <methods>;
-}
 # Keep Retrofit generics
 -keep,allowobfuscation,allowshrinking interface retrofit2.Call
 -keep,allowobfuscation,allowshrinking class retrofit2.Response

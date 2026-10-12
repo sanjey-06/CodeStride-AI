@@ -7,7 +7,6 @@ import com.sanjey.codestride.BuildConfig
 import com.sanjey.codestride.common.Constants
 import com.sanjey.codestride.data.model.Question
 import com.sanjey.codestride.data.model.RoadmapItem
-import com.sanjey.codestride.data.remote.AiApiService
 import com.sanjey.codestride.data.remote.YouTubeApiClient
 import com.sanjey.codestride.data.remote.YouTubeResponse
 import kotlinx.coroutines.ExperimentalCoroutinesApi

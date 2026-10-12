@@ -34,11 +34,6 @@ android {
 
         buildConfigField(
             "String",
-            "OPENAI_API_KEY",
-            "\"${project.findProperty("OPENAI_API_KEY") ?: ""}\""
-        )
-        buildConfigField(
-            "String",
             "YOUTUBE_API_KEY",
             "\"${project.findProperty("YOUTUBE_API_KEY") ?: ""}\""
         )
