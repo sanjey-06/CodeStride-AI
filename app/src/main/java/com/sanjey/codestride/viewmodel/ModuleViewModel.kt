@@ -8,7 +8,9 @@ import com.sanjey.codestride.common.UiState
 import com.sanjey.codestride.data.model.Module
 import com.sanjey.codestride.data.repository.AiGenerationRepository
 import com.sanjey.codestride.data.repository.ModuleRepository
+import com.sanjey.codestride.data.remote.backend.BackendError
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -95,19 +97,27 @@ class ModuleViewModel @Inject constructor(
                 val module = repository.getModuleById(roadmapId, moduleId)
 
                 if (module?.customContent.isNullOrBlank()) {
-                    val html = aiGenerationRepository.generateModuleContent(topic, module?.title ?: "Learning")
-                    if (html.isNotBlank()) {
-                        repository.updateModuleContent(roadmapId, moduleId, html)
-                        _moduleHtmlState.value = UiState.Success(html)
-                    } else {
-                        _moduleHtmlState.value = UiState.Error("Failed to generate content")
-                    }
+                    // Not generated yet -> ask the Worker, then save it so it's only generated once
+                    aiGenerationRepository.generateModuleContent(topic, module?.title ?: "Learning")
+                        .onSuccess { html ->
+                            repository.updateModuleContent(roadmapId, moduleId, html)
+                            _moduleHtmlState.value = UiState.Success(html)
+                        }
+                        .onFailure { e ->
+                            // Limit reached / AI busy / no internet -> shown by the screen's existing error text
+                            _moduleHtmlState.value = UiState.Error(
+                                (e as? BackendError)?.userMessage ?: "Failed to generate content"
+                            )
+                        }
                 } else {
+                    // Already generated earlier -> show the saved HTML (no AI call, no limit used)
                     _moduleHtmlState.value = UiState.Success(module?.customContent ?: "")
                 }
 
+            } catch (e: CancellationException) {
+                throw e // screen closed - not an error
             } catch (e: Exception) {
-                _moduleHtmlState.value = UiState.Error("Something went wrong: ${e.message}")
+                _moduleHtmlState.value = UiState.Error("Something went wrong. Please try again.")
             }
         }
     }

@@ -21,6 +21,7 @@ import javax.inject.Inject
 import com.sanjey.codestride.data.model.backend.RoadmapRequest
 import com.sanjey.codestride.data.remote.backend.CodeStrideApi
 import com.sanjey.codestride.data.remote.backend.backendCall
+import com.sanjey.codestride.data.model.backend.ModuleRequest
 
 class AiGenerationRepository @Inject constructor(
     private val api: AiApiService,
@@ -35,39 +36,13 @@ class AiGenerationRepository @Inject constructor(
         backend.roadmap(RoadmapRequest(topic)).items
     }
 
-    suspend fun generateModuleContent(topic: String, moduleTitle: String): String {
-        val prompt = """
-You are an expert curriculum designer and HTML writer.
-
-Write a rich HTML tutorial for the topic: "$moduleTitle" as part of the "$topic" learning roadmap.
-
-The tutorial must include:
-
-- A <h2> title
-- 3 to 5 <p> paragraphs explaining the concept clearly
-- One <ul><li></li></ul> list (tools, tips, features)
-- One <pre><code> code block with comments
-- Use <b> and <i> tags for emphasis
-- Include a real-world analogy if helpful
-
-Format the output as a single HTML string (no JSON, no markdown).
-""".trimIndent()
-
-        return try {
-            val response = api.getAiRoadmap(
-                AiRequest(
-                    model = "gpt-3.5-turbo",
-                    messages = listOf(Message(content = prompt)),
-                    max_tokens = 1500,
-                    temperature = 0.7
-                )
-            )
-            response.choices.firstOrNull()?.message?.content?.trim().orEmpty()
-        } catch (e: Exception) {
-            ""
-        }
+    /**
+     * Asks the Worker for a module's HTML tutorial (POST /module-content).
+     * Same prompt as before - it now lives in the Worker.
+     */
+    suspend fun generateModuleContent(topic: String, moduleTitle: String): Result<String> = backendCall {
+        backend.moduleContent(ModuleRequest(topic, moduleTitle)).html
     }
-
 
 
 
