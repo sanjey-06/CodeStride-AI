@@ -10,9 +10,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sanjey.codestride.ui.theme.CustomBlue
 import com.sanjey.codestride.ui.theme.PixelFont
 import com.sanjey.codestride.ui.theme.SoraFont
+import com.sanjey.codestride.viewmodel.UsageViewModel
 
 @Composable
 fun AiGeneratorSection(onGenerate: (String) -> Unit) {
@@ -72,20 +74,27 @@ private fun GenerateAiPromptDialog(
 ) {
     var topic by remember { mutableStateOf("") }
 
+    // Remaining AI roadmaps today (loaded each time the popup opens)
+    val usageViewModel: UsageViewModel = hiltViewModel()
+    val quota by usageViewModel.roadmapQuota.collectAsState()
+    LaunchedEffect(Unit) { usageViewModel.refresh() }
+    val limitReached = quota?.remaining == 0
+
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(
-                onClick = {
-                    if (topic.isNotBlank()) {
-                        onGenerate(topic.trim())
-                        onDismiss()
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                shape = RoundedCornerShape(50.dp)
-            ) {
-                Text("Generate", fontFamily = PixelFont, color = Color.Black)
+            // "3 of 5 AI roadmaps left today" / "Daily limit reached · resets at 1:00 AM"
+            quota?.let { q ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (q.remaining > 0)
+                        "${q.remaining} of ${q.limit} AI roadmaps left today"
+                    else
+                        "Daily limit reached · resets at ${q.resetTime}",
+                    fontFamily = SoraFont,
+                    fontSize = 12.sp,
+                    color = if (q.remaining > 0) Color.White.copy(alpha = 0.7f) else Color(0xFFFF8A80)
+                )
             }
         },
         dismissButton = {
@@ -117,6 +126,20 @@ private fun GenerateAiPromptDialog(
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(color = Color.White)
                 )
+
+                // "3 of 5 AI roadmaps left today" / "Daily limit reached · resets at 1:00 AM"
+                quota?.let { q ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (q.remaining > 0)
+                            "${q.remaining} of ${q.limit} AI roadmaps left today"
+                        else
+                            "Daily limit reached · resets at ${q.resetTime}",
+                        fontFamily = SoraFont,
+                        fontSize = 12.sp,
+                        color = if (q.remaining > 0) Color.White.copy(alpha = 0.7f) else Color(0xFFFF8A80)
+                    )
+                }
             }
         },
         containerColor = Color.Black,

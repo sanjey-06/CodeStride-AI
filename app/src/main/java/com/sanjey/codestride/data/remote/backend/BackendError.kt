@@ -104,7 +104,7 @@ private fun fromHttp(e: HttpException): BackendError {
 }
 
 /** "2026-10-09T00:00:00.000Z" -> "1:00 AM" in the phone's time zone. */
-private fun formatResetTime(resetAt: String?): String =
+fun formatResetTime(resetAt: String?): String =
     try {
         val instant = Instant.parse(resetAt)
         DateTimeFormatter.ofPattern("h:mm a").withZone(ZoneId.systemDefault()).format(instant)
