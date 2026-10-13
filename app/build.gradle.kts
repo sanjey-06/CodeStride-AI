@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.sanjey.codestride"
-    compileSdk = 35
+    compileSdk = 36
 
     buildFeatures {
         compose = true
@@ -26,9 +26,10 @@ android {
 
         applicationId = "com.sanjey.codestride"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 8
-        versionName = "1.0.7"
+        //noinspection EditedTargetSdkVersion
+        targetSdk = 36
+        versionCode = 9
+        versionName = "1.0.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
